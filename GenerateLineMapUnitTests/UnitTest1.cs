@@ -49,7 +49,7 @@ namespace GenerateLineMapUnitTests
 			using (var consoleOutput = new ConsoleOutput())
 			{
 				// Check exit is normal
-				StartConsoleApplication("/report TestApp1.exe").Should().Be(0);
+				StartConsoleApplication("GenerateLineMap.exe", "/report TestApp1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
 				consoleOutput.Ouput.Should().Contain("Retrieved 10 lines");
@@ -74,17 +74,33 @@ namespace GenerateLineMapUnitTests
 		}
 
 
+		[TestMethod]
+		public void TestFailingTestApp()
+		{
+			using (var consoleOutput = new ConsoleOutput())
+			{
+				// make sure there's no PDB
+				if (File.Exists("TestApp1.pdb")) File.Delete("TestApp1.pdb");
+
+				StartConsoleApplication("TestApp1.exe").Should().Be(0);
+
+				// Check that help information shown correctly.
+				consoleOutput.Ouput.Should().Contain("Program.cs:line 21");
+			}
+		}
+
+
 		/// <span class="code-SummaryComment"><summary></span>
 		/// Starts the console application.
 		/// <span class="code-SummaryComment"></summary></span>
 		/// <span class="code-SummaryComment"><param name="arguments">The arguments for console application. </span>
 		/// Specify empty string to run with no arguments</param />
 		/// <span class="code-SummaryComment"><returns>exit code</returns></span>
-		private int StartConsoleApplication(string arguments)
+		private int StartConsoleApplication(string app, string arguments = "")
 		{
 			// Initialize process here
 			Process proc = new Process();
-			proc.StartInfo.FileName = "GenerateLineMap.exe";
+			proc.StartInfo.FileName = app;
 			// add arguments as whole string
 			proc.StartInfo.Arguments = arguments;
 
