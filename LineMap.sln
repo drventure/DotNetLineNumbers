@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateLineMap", "Generate
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VB", "VB", "{B544155D-E941-447E-A241-6876B495F15E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateLineMapUnitTests", "GenerateLineMapUnitTests\GenerateLineMapUnitTests.csproj", "{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,7 +36,6 @@ Global
 		{126BA7F9-CD7D-4BB3-8D2A-B011A385FC16}.Release|x86.ActiveCfg = Release|Any CPU
 		{126BA7F9-CD7D-4BB3-8D2A-B011A385FC16}.Release|x86.Build.0 = Release|Any CPU
 		{090A2EEF-A905-4DD8-BF39-12BD5FD5E515}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{090A2EEF-A905-4DD8-BF39-12BD5FD5E515}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{090A2EEF-A905-4DD8-BF39-12BD5FD5E515}.Debug|x64.ActiveCfg = Debug|x64
 		{090A2EEF-A905-4DD8-BF39-12BD5FD5E515}.Debug|x64.Build.0 = Debug|x64
 		{090A2EEF-A905-4DD8-BF39-12BD5FD5E515}.Debug|x86.ActiveCfg = Debug|x86
@@ -57,6 +58,18 @@ Global
 		{EA13AB2D-71F0-4634-911B-84BFD0D29232}.Release|x64.Build.0 = Release|Any CPU
 		{EA13AB2D-71F0-4634-911B-84BFD0D29232}.Release|x86.ActiveCfg = Release|Any CPU
 		{EA13AB2D-71F0-4634-911B-84BFD0D29232}.Release|x86.Build.0 = Release|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Debug|x64.Build.0 = Debug|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Debug|x86.Build.0 = Debug|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Release|x64.ActiveCfg = Release|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Release|x64.Build.0 = Release|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Release|x86.ActiveCfg = Release|Any CPU
+		{BDBD9ED6-511D-45D4-8B3B-4AA51FD13CFB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

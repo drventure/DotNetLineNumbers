@@ -42,7 +42,9 @@ namespace GenerateLineMap
 
 			try
 			{
-				foreach (string s in Environment.GetCommandLineArgs())
+				//skip the first arg cause it's this apps filename
+				var cmdArgs = args.Skip(1).ToList();
+				foreach (string s in cmdArgs)
 				{
 					var bHandled = false;
 
@@ -114,8 +116,7 @@ namespace GenerateLineMap
 						}
 					}
 				}
-
-
+				
 				Console.WriteLine(string.Format("{0} v{1}", AsmInfo.Title, AsmInfo.Version));
 
 				Console.WriteLine(AsmInfo.Description);
