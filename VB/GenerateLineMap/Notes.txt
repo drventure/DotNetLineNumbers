@@ -1,0 +1,5 @@
+﻿GenerateLineMap Utility for Extracting and embedding line maps into EXEs/DLLs
+Darin Higgins
+Oct-2011
+
+NOTE: Must be compiled with .net 3.5 because of the MONO.CECIL framework dependancy
