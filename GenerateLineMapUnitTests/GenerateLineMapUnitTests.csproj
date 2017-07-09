@@ -56,6 +56,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleOutput.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -66,6 +67,10 @@
     <ProjectReference Include="..\GenerateLineMap\GenerateLineMap.csproj">
       <Project>{ea13ab2d-71f0-4634-911b-84bfd0d29232}</Project>
       <Name>GenerateLineMap</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestApp1\TestApp1.csproj">
+      <Project>{126ba7f9-cd7d-4bb3-8d2a-b011a385fc16}</Project>
+      <Name>TestApp1</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />

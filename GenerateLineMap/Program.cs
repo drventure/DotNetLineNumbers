@@ -18,27 +18,29 @@ namespace GenerateLineMap
 	/// This is a command line utility, so this is the main entry point.
 	/// </summary>
 	/// <remarks></remarks>
-	static class Program
+	public static class Program
 	{
 		static AssemblyInfo AsmInfo = new Microsoft.VisualBasic.ApplicationServices.AssemblyInfo(Assembly.GetExecutingAssembly());
 
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-		public static extern void LoadLibrary(string lpFileName);
+		internal static extern void LoadLibrary(string lpFileName);
 
 
 		/// <summary>
 		/// Command line application entry point
 		/// </summary>
 		/// <remarks></remarks>
-		static void Main(string[] args)
+		public static void Main(string[] args)
 		{
 			string fileName = "";
 			bool bReport = false;
 			bool bFile = false;
 			bool bAPIResource = true;
 			bool bNETResource = false;
-			int exitcode = 0;
 			string outfile = "";
+
+			//assume success
+			Environment.ExitCode = 0;
 
 			try
 			{
@@ -127,16 +129,14 @@ namespace GenerateLineMap
 				if (fileName.Length == 0)
 				{
 					ShowHelp();
-					Environment.Exit(0);
+					return;
 				}
 
 				// extract the necessary dbghelp.dll
-
 				if (ExtractDbgHelp())
 				{
 					Console.WriteLine("Unable to extract dbghelp.dll to this folder.");
-
-					Environment.Exit(0);
+					return;
 				}
 
 				var lmb = new LineMapBuilder(fileName, outfile);
@@ -175,11 +175,11 @@ namespace GenerateLineMap
 				// let em know we had a failure
 
 				Console.WriteLine(string.Format("Unable to complete operation. Error: {0}\r\n\r\n{1}", ex.Message, ex.StackTrace));
-				exitcode = 1;
+				Environment.ExitCode = 1;
 			}
 
 			// Return an exit code of 0 on success, 1 on failure
-			Environment.Exit(exitcode);
+			// NOTE that there are several early returns in this routine
 		}
 
 

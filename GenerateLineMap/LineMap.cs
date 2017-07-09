@@ -262,7 +262,7 @@ string lpName, Int16 wLanguage);
 				{
 					if (Index >= 0 & Index < this.Count)
 					{
-						return this[Index];
+						return base[Index];
 					}
 					else
 					{
@@ -271,7 +271,7 @@ string lpName, Int16 wLanguage);
 				}
 				set 
 				{
-					this[Index] = value;
+					base[Index] = value;
 				}
 			}
 		}

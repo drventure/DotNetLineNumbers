@@ -11,16 +11,11 @@ namespace GenerateLineMapUnitTests
 	[TestClass]
 	public class GenerateLineMapUnitTests
 	{
-		TextWriter m_normalOutput;
-		StringWriter m_testingConsole;
-		StringBuilder m_testingSB;
-
 		[TestInitialize]
-		public void TestFixtureInitialize()
+		public void TestInitialize()
 		{
 			// Set current folder to testing folder
-			string assemblyCodeBase =
-				System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
+			string assemblyCodeBase = System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
 
 			// Get directory name
 			string dirName = Path.GetDirectoryName(assemblyCodeBase);
@@ -31,34 +26,6 @@ namespace GenerateLineMapUnitTests
 
 			// set current folder
 			Environment.CurrentDirectory = dirName;
-
-			// Initialize string builder to replace console
-			m_testingSB = new StringBuilder();
-			m_testingConsole = new StringWriter(m_testingSB);
-
-			// swap normal output console with testing console - to reuse 
-			// it later
-			m_normalOutput = System.Console.Out;
-			System.Console.SetOut(m_testingConsole);
-		}
-
-		[TestCleanup]
-		public void TestFixtureCleanup()
-		{
-			// set normal output stream to the console
-			System.Console.SetOut(m_normalOutput);
-		}
-
-		public void SetUp()
-		{
-			// clear string builder
-			m_testingSB.Remove(0, m_testingSB.Length);
-		}
-
-		public void TearDown()
-		{
-			// Verbose output in console
-			m_normalOutput.Write(m_testingSB.ToString());
 		}
 
 
@@ -73,6 +40,37 @@ namespace GenerateLineMapUnitTests
 				// Check that help information shown correctly.
 				consoleOutput.Ouput.Should().Contain("GenerateLineMap");
 			}
+		}
+
+
+		[TestMethod]
+		public void TestGenerateReportViaCommandLine()
+		{
+			using (var consoleOutput = new ConsoleOutput())
+			{
+				// Check exit is normal
+				StartConsoleApplication("/report TestApp1.exe").Should().Be(0);
+
+				// Check that help information shown correctly.
+				consoleOutput.Ouput.Should().Contain("Retrieved 10 lines");
+			}
+		}
+
+
+		[TestMethod]
+		public void TestGenerateReport()
+		{
+			// invoke the app main directly
+			GenerateLineMap.Program.Main(new string[] { "path", "/report", "TestApp1.exe" });
+
+			var filename = "TestApp1.exe.linemapreport";
+			File.Exists(filename).Should().BeTrue();
+
+			var buf = File.ReadAllText("TestApp1.exe.linemapreport");
+			buf.Should().Contain("SYMBOLS:");
+			buf.Should().Contain("LINE NUMBERS:");
+			buf.Should().Contain("NAMES:");
+			buf.Should().Contain("testapp1.program");
 		}
 
 
@@ -110,34 +108,6 @@ namespace GenerateLineMapUnitTests
 
 			// return exit code
 			return proc.ExitCode;
-		}
-	}
-
-
-	public class ConsoleOutput : IDisposable
-	{
-		private StringWriter stringWriter;
-		private TextWriter originalOutput;
-
-		public ConsoleOutput()
-		{
-			stringWriter = new StringWriter();
-			originalOutput = Console.Out;
-			Console.SetOut(stringWriter);
-		}
-
-		public string Ouput
-		{
-			get
-			{
-				return stringWriter.ToString();
-			}
-		}
-
-		public void Dispose()
-		{
-			Console.SetOut(originalOutput);
-			stringWriter.Dispose();
 		}
 	}
 }

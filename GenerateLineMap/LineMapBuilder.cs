@@ -331,7 +331,7 @@ namespace GenerateLineMap
 			//pStreamToFile(Me.Filename & ".linemap", alm.ToStream);
 
 			// write the report
-			pCheckToWriteReport(alm);
+			WriteReport(alm);
 		}
 
 
@@ -357,7 +357,7 @@ namespace GenerateLineMap
 							  EncryptedStream);
 
 			// write the report
-			pCheckToWriteReport(alm);
+			WriteReport(alm);
 		}
 
 
@@ -382,7 +382,7 @@ namespace GenerateLineMap
 							  EncryptedStream);
 
 			// write the report
-			pCheckToWriteReport(alm);
+			WriteReport(alm);
 		}
 
 
@@ -390,9 +390,9 @@ namespace GenerateLineMap
 		/// Internal function to write out a line map report if asked to
 		/// </summary>
 		/// <remarks></remarks>
-		private void pCheckToWriteReport(LineMap.AssemblyLineMap AssemblyLineMap)
+		private void WriteReport(LineMap.AssemblyLineMap AssemblyLineMap)
 		{
-
+			//only write it if requested
 			if (this.CreateMapReport)
 			{
 				Console.WriteLine("Creating symbol buffer report");
