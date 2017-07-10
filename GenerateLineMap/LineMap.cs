@@ -21,7 +21,6 @@ using System.Xml;
 /// <editHistory></editHistory>
 public class LineMap
 {
-
 	private const string LINEMAPNAMESPACE = "http://schemas.linemap.net";
 
 	/// <summary>
@@ -480,7 +479,7 @@ string lpName, Int16 wLanguage);
 						break; // TODO: might not be correct. Was : Exit Do
 					if (l < 1024)
 						Array.Resize(ref buf, l);
-					DecryptedStream.Write(buf, 0, Information.UBound(buf) + 1);
+					DecryptedStream.Write(buf, 0, buf.GetUpperBound(0) + 1);
 					if (l < 1024)
 						break; // TODO: might not be correct. Was : Exit Do
 				}
@@ -517,7 +516,7 @@ string lpName, Int16 wLanguage);
 					break; // TODO: might not be correct. Was : Exit Do
 				if (l < 1024)
 					Array.Resize(ref buf, l);
-				UncompressedStream.Write(buf, 0, Information.UBound(buf) + 1);
+				UncompressedStream.Write(buf, 0, buf.GetUpperBound(0) + 1);
 				if (l < 1024)
 					break; // TODO: might not be correct. Was : Exit Do
 			}
@@ -632,8 +631,8 @@ string lpName, Int16 wLanguage);
 				return alm;
 			}
 		}
-
 	}
+
+
 	public static AssemblyLineMapCollection AssemblyLineMaps = new AssemblyLineMapCollection();
 }
-		  

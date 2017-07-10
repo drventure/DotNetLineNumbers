@@ -75,14 +75,17 @@ namespace GenerateLineMapUnitTests
 
 
 		[TestMethod]
-		public void TestFailingTestApp()
+		public void TestForProperLineNumInTestApp()
 		{
 			using (var consoleOutput = new ConsoleOutput())
 			{
-				// make sure there's no PDB
+				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1-1.exe", "TestApp1.exe" });
+
+				//make sure PDB doesn't exist anymore
 				if (File.Exists("TestApp1.pdb")) File.Delete("TestApp1.pdb");
 
-				StartConsoleApplication("TestApp1.exe").Should().Be(0);
+				//execute test app, should file and write stack trace to console
+				StartConsoleApplication("TestApp1-1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
 				consoleOutput.Ouput.Should().Contain("Program.cs:line 21");
