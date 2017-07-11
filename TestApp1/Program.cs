@@ -22,6 +22,7 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
+
 				var buf = "ERROR: " + ex.ToString();
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine(buf);

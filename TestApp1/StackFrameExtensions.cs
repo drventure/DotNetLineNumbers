@@ -8,69 +8,71 @@ using System.Threading.Tasks;
 
 namespace TestApp1
 {
-	class StackFrameExtensions
+	public static class ExceptionExtensions
 	{
+		private const string ERRCLASSNAME = "ExceptionExtensions";
+
+
 		/// <summary>
 		/// turns a single stack frame object into an informative string
 		/// </summary>
 		/// <param name="FrameNum"></param>
 		/// <param name="sf"></param>
 		/// <returns></returns>
-		private string StackFrameToString(int FrameNum, StackFrame sf)
+		private static string StackFrameToString(int FrameNum, StackFrame sf)
 		{
 			System.Text.StringBuilder sb = new System.Text.StringBuilder();
 			int intParam = 0;
 			MemberInfo mi = sf.GetMethod();
 
-			var _with1 = sb;
 			//-- build method name
-			_with1.Append("   ");
+			sb.Append("   ");
 			string MethodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
-			_with1.Append(MethodName);
+			sb.Append(MethodName);
 			//If FrameNum = 1 Then rCachedErr.Method = MethodName
 
 			//-- build method params
 			ParameterInfo[] objParameters = sf.GetMethod().GetParameters();
-			_with1.Append("(");
+			sb.Append("(");
 			intParam = 0;
 			foreach (ParameterInfo objParameter in objParameters)
 			{
 				intParam += 1;
 				if (intParam > 1)
-					_with1.Append(", ");
-				_with1.Append(objParameter.Name);
-				_with1.Append(" As ");
-				_with1.Append(objParameter.ParameterType.Name);
+					sb.Append(", ");
+				sb.Append(objParameter.Name);
+				sb.Append(" As ");
+				sb.Append(objParameter.ParameterType.Name);
 			}
-			_with1.Append(")");
-			_with1.Append(Environment.NewLine);
+			sb.Append(")");
+			sb.Append(Environment.NewLine);
 
 			//-- if source code is available, append location info
-			_with1.Append("       ");
+			sb.Append("       ");
 			//if (strings.InStr(1, Command, "/uselinemap", CompareMethod.Text) == 0 && string.IsNullOrEmpty(Interaction.Environ("uselinemap")) 
 			if (sf.GetFileName() != null && sf.GetFileName().Length != 0)
 			{
 				//---- the PDB appears to be available, since the above elements are 
 				//     not blank, so just use it's information
 
-				_with1.Append(System.IO.Path.GetFileName(sf.GetFileName()));
+				sb.Append(System.IO.Path.GetFileName(sf.GetFileName()));
 				dynamic Line = sf.GetFileLineNumber();
 				if (Line != 0)
 				{
-					_with1.Append(": line ");
-					_with1.Append(string.Format("{0:#0000}", Line));
+					sb.Append(": line ");
+					sb.Append(string.Format("{0:#0000}", Line));
 				}
 				dynamic col = sf.GetFileColumnNumber();
 				if (col != 0)
 				{
-					_with1.Append(", col ");
-					_with1.Append(string.Format("{0:#00}", sf.GetFileColumnNumber()));
+					sb.Append(", col ");
+					sb.Append(string.Format("{0:#00}", sf.GetFileColumnNumber()));
 				}
 				//-- if IL is available, append IL location info
 				if (sf.GetILOffset() != StackFrame.OFFSET_UNKNOWN)
 				{
-					_with1.Append(", IL ");
-					_with1.Append(string.Format("{0:#0000}", sf.GetILOffset()));
+					sb.Append(", IL ");
+					sb.Append(string.Format("{0:#0000}", sf.GetILOffset()));
 				}
 			}
 			else
@@ -79,7 +81,7 @@ namespace TestApp1
 				//     any embedded linemap information
 				string FileName = System.IO.Path.GetFileName(ParentAssembly.CodeBase);
 				//If FrameNum = 1 Then rCachedErr.FileName = FileName
-				_with1.Append(FileName);
+				sb.Append(FileName);
 				//---- Get the native code offset and convert to a line number
 				//     first, make sure our linemap is loaded
 				try
@@ -91,10 +93,10 @@ namespace TestApp1
 					MapStackFrameToSourceLine(sf, ref Line, ref SourceFile);
 					if (Line != 0)
 					{
-						_with1.Append(": Source File - ");
-						_with1.Append(SourceFile);
-						_with1.Append(": Line ");
-						_with1.Append(string.Format("{0:#0000}", Line));
+						sb.Append(": Source File - ");
+						sb.Append(SourceFile);
+						sb.Append(": Line ");
+						sb.Append(string.Format("{0:#0000}", Line));
 					}
 
 				}
@@ -112,22 +114,22 @@ namespace TestApp1
 					dynamic IL = sf.GetILOffset();
 					if (IL != StackFrame.OFFSET_UNKNOWN)
 					{
-						_with1.Append(": IL ");
-						_with1.Append(string.Format("{0:#00000}", IL));
+						sb.Append(": IL ");
+						sb.Append(string.Format("{0:#00000}", IL));
 					}
 				}
 			}
-			_with1.Append(Environment.NewLine);
+			sb.Append(Environment.NewLine);
 			return sb.ToString();
 		}
 
 
-		private Assembly _parentAssembly = null;
+		private static Assembly _parentAssembly = null;
 		/// <summary>
 		/// Retrieve the root assembly of the executing assembly
 		/// </summary>
 		/// <returns></returns>
-		private Assembly ParentAssembly
+		private static Assembly ParentAssembly
 		{
 			get
 			{
@@ -156,7 +158,7 @@ namespace TestApp1
 		/// <param name="Line"></param>
 		/// <param name="SourceFile"></param>
 		/// <remarks></remarks>
-		private void MapStackFrameToSourceLine(StackFrame sf, ref int Line, ref string SourceFile)
+		private static void MapStackFrameToSourceLine(StackFrame sf, ref int Line, ref string SourceFile)
 		{
 			//---- first, get the base addr of the method
 			//     if possible
@@ -211,5 +213,464 @@ namespace TestApp1
 				return;
 			}
 		}
+
+
+
+		/// <summary>
+		/// translate exception object to string, with additional system info
+		/// </summary>
+		/// <param name="Ex"></param>
+		/// <returns></returns>
+		private static string ExceptionToString(Exception Ex)
+		{
+			try
+			{
+				StringBuilder sb = new StringBuilder();
+
+				if ((Ex.InnerException != null))
+				{
+					//-- sometimes the original exception is wrapped in a more relevant outer exception
+					//-- the detail exception is the "inner" exception
+					//-- see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
+					sb.Append("(Inner Exception)");
+					sb.Append(Environment.NewLine);
+					sb.Append(ExceptionToString(Ex.InnerException));
+					sb.Append(Environment.NewLine);
+					sb.Append("(Outer Exception)");
+					sb.Append(Environment.NewLine);
+				}
+				//-- get general system and app information
+				sb.Append(SysInfoToString());
+
+				//-- get exception-specific information
+				sb.Append("Exception Source:      ");
+				try
+				{
+					sb.Append(Ex.Source);
+				}
+				catch (Exception e)
+				{
+					sb.Append(e.Message);
+				}
+				sb.Append(Environment.NewLine);
+
+				sb.Append("Exception Type:        ");
+				try
+				{
+					sb.Append(Ex.GetType().FullName);
+				}
+				catch (Exception e)
+				{
+					sb.Append(e.Message);
+				}
+				sb.Append(Environment.NewLine);
+
+				sb.Append("Exception Message:     ");
+				try
+				{
+					sb.Append(Ex.Message);
+				}
+				catch (Exception e)
+				{
+					sb.Append(e.Message);
+				}
+				sb.Append(Environment.NewLine);
+
+				sb.Append("Exception Target Site: ");
+				try
+				{
+					sb.Append(Ex.TargetSite.Name);
+				}
+				catch (Exception e)
+				{
+					sb.Append(e.Message);
+				}
+				sb.Append(Environment.NewLine);
+
+				try
+				{
+					string x = EnhancedStackTrace(Ex);
+					sb.Append(x);
+				}
+				catch (Exception e)
+				{
+					sb.Append(e.Message);
+				}
+				sb.Append(Environment.NewLine);
+
+				return sb.ToString();
+
+			}
+			catch (Exception ex2)
+			{
+				return string.Format("Error '{0}' while generating exception description", ex2.Message);
+			}
+		}
+
+
+
+		/// <summary>
+		/// gather some system information that is helpful to diagnosing
+		/// exception
+		/// </summary>
+		/// <param name="Ex"></param>
+		/// <returns></returns>
+		private static string SysInfoToString(Exception Ex = null)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			//If Err.Number <> 0 Then
+			//    .Append("Error code:            ")
+			//    .Append(Err.Number)
+			//    .Append(Environment.NewLine)
+			//End If
+
+			//If Len(Err.Description) <> 0 Then
+			//    .Append("Error Description:     ")
+			//    .Append(Err.Description)
+			//    .Append(Environment.NewLine)
+			//End If
+
+			//'---- report the line or ERL location as available
+			//If Err.Line <> 0 Then
+			//    .Append("Error Line:            ")
+			//    .Append(Err.Line)
+			//    If Err.Erl <> 0 AndAlso Err.Erl <> Err.Line Then
+			//        .Append("  (Location " & Err.Erl.ToString & ")")
+			//    End If
+			//    .Append(Environment.NewLine)
+			//ElseIf Err.Erl <> 0 Then
+			//    .Append("Error Location:        ")
+			//    .Append(Err.Erl)
+			//    .Append(Environment.NewLine)
+			//End If
+
+			//If Err.Column <> 0 Then
+			//    .Append("Error Column:          ")
+			//    .Append(Err.Column)
+			//    .Append(Environment.NewLine)
+			//End If
+
+			//If Len(Err.FileName) <> 0 Then
+			//    .Append("Error Module:          ")
+			//    .Append(Err.FileName)
+			//    .Append(Environment.NewLine)
+			//End If
+
+			//If Len(Err.Method) <> 0 Then
+			//    .Append("Error Method:          ")
+			//    .Append(Err.Method)
+			//    .Append(Environment.NewLine)
+			//End If
+
+			sb.Append("Date and Time:         ");
+			sb.Append(DateTime.Now);
+			sb.Append(Environment.NewLine);
+
+			sb.Append("Machine Name:          ");
+			try
+			{
+				sb.Append(Environment.MachineName);
+			}
+			catch (Exception e)
+			{
+				sb.Append(e.Message);
+			}
+			sb.Append(Environment.NewLine);
+
+			sb.Append("IP Address:            ");
+			sb.Append(GetCurrentIP());
+			sb.Append(Environment.NewLine);
+
+			sb.Append("Current User:          ");
+			sb.Append(UserIdentity());
+			sb.Append(Environment.NewLine);
+			sb.Append(Environment.NewLine);
+
+			sb.Append("Application Domain:    ");
+			try
+			{
+				sb.Append(System.AppDomain.CurrentDomain.FriendlyName);
+			}
+			catch (Exception e)
+			{
+				sb.Append(e.Message);
+			}
+
+
+			sb.Append(Environment.NewLine);
+			sb.Append("Assembly Codebase:     ");
+			try
+			{
+				sb.Append(ParentAssembly.CodeBase);
+			}
+			catch (Exception e)
+			{
+				sb.Append(e.Message);
+			}
+			sb.Append(Environment.NewLine);
+
+			sb.Append("Assembly Full Name:    ");
+			try
+			{
+				sb.Append(ParentAssembly.FullName);
+			}
+			catch (Exception e)
+			{
+				sb.Append(e.Message);
+			}
+			sb.Append(Environment.NewLine);
+
+			sb.Append("Assembly Version:      ");
+			try
+			{
+				sb.Append(ParentAssembly.GetName().Version.ToString());
+			}
+			catch (Exception e)
+			{
+				sb.Append(e.Message);
+			}
+			sb.Append(Environment.NewLine);
+
+			sb.Append("Assembly Build Date:   ");
+			try
+			{
+				sb.Append(AssemblyBuildDate(ParentAssembly).ToString());
+			}
+			catch (Exception e)
+			{
+				sb.Append(e.Message);
+			}
+			sb.Append(Environment.NewLine);
+			sb.Append(Environment.NewLine);
+
+			if (Ex != null)
+			{
+				sb.Append(EnhancedStackTrace(Ex));
+			}
+
+			return sb.ToString();
+		}
+
+
+
+		/// <summary>
+		/// get IP address of this machine
+		/// not an ideal method for a number of reasons (guess why!)
+		/// but the alternatives are very ugly
+		/// </summary>
+		/// <returns></returns>
+		private static string GetCurrentIP()
+		{
+			try
+			{
+				return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
+			}
+			catch (Exception ex)
+			{
+				return "127.0.0.1";
+			}
+		}
+
+
+
+		/// <summary>
+		/// retrieve user identity with fallback on error to safer method
+		/// </summary>
+		/// <returns></returns>
+		private static string UserIdentity()
+		{
+			string strTemp = CurrentWindowsIdentity();
+			if (string.IsNullOrEmpty(strTemp))
+			{
+				strTemp = CurrentEnvironmentIdentity();
+			}
+			return strTemp;
+		}
+
+
+
+		/// <summary>
+		///  exception-safe WindowsIdentity.GetCurrent retrieval returns "domain\username"
+		///  per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
+		/// </summary>
+		/// <returns></returns>
+		private static string CurrentWindowsIdentity()
+		{
+			try
+			{
+				return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+			}
+			catch (Exception ex)
+			{
+				return "";
+			}
+		}
+
+
+		/// <summary>
+		/// exception-safe "domain\username" retrieval from Environment
+		/// </summary>
+		/// <returns></returns>
+		private static string CurrentEnvironmentIdentity()
+		{
+			try
+			{
+				return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
+			}
+			catch (Exception ex)
+			{
+				return "";
+			}
+		}
+
+
+
+		/// <summary>
+		/// returns build datetime of assembly
+		/// assumes default assembly value in AssemblyInfo:
+		/// {Assembly: AssemblyVersion("1.0.*")}
+		///
+		/// filesystem create time is used, if revision and build were overridden by user
+		/// </summary>
+		/// <param name="objAssembly"></param>
+		/// <param name="bForceFileDate"></param>
+		/// <returns></returns>
+		private static DateTime AssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
+		{
+			System.Version objVersion = objAssembly.GetName().Version;
+			DateTime dtBuild = default(DateTime);
+
+			if (bForceFileDate)
+			{
+				dtBuild = AssemblyFileTime(objAssembly);
+			}
+			else
+			{
+				dtBuild = ((DateTime.Parse("01/01/2000")).AddDays(objVersion.Build).AddSeconds(objVersion.Revision * 2));
+				if (TimeZone.IsDaylightSavingTime(DateTime.Now, TimeZone.CurrentTimeZone.GetDaylightChanges(DateTime.Now.Year)))
+				{
+					dtBuild = dtBuild.AddHours(1);
+				}
+				if (dtBuild > DateTime.Now | objVersion.Build < 730 | objVersion.Revision == 0)
+				{
+					dtBuild = AssemblyFileTime(objAssembly);
+				}
+			}
+
+			return dtBuild;
+		}
+
+
+		/// <summary>
+		/// exception-safe file attrib retrieval; we don't care if this fails
+		/// </summary>
+		/// <param name="objAssembly"></param>
+		/// <returns></returns>
+		private static DateTime AssemblyFileTime(System.Reflection.Assembly objAssembly)
+		{
+			try
+			{
+				return System.IO.File.GetLastWriteTime(objAssembly.Location);
+			}
+			catch (Exception ex)
+			{
+				return DateTime.MinValue;
+			}
+		}
+
+
+		/// <summary>
+		/// Provides enhanced stack tracing output that includes line numbers, IL Position, and even column
+		/// numbers when PDB files are available
+		/// </summary>
+		/// <param name="thisException"></param>
+		/// <returns></returns>
+		public static string ToString(this Exception thisException)
+		{
+			return InternalEnhancedStackTrace(thisException);
+		}
+
+
+
+
+		//--
+		//-- enhanced stack trace generator (exception)
+		//--
+		private static string InternalEnhancedStackTrace(Exception objException)
+		{
+			if (objException == null)
+			{
+				return EnhancedStackTrace(new StackTrace(true), ERRCLASSNAME);
+			}
+			else
+			{
+				return EnhancedStackTrace(new StackTrace(objException, true));
+			}
+		}
+
+
+
+		/// <summary>
+		/// enhanced stack trace generator (no params)
+		/// </summary>
+		/// <returns></returns>
+		private static string EnhancedStackTrace()
+		{
+			return EnhancedStackTrace(new StackTrace(true), ERRCLASSNAME);
+		}
+
+
+
+		/// <summary>
+		/// Provides enhanced stack tracing output that includes line numbers, IL Position, and even column
+		/// numbers when PDB files are available
+		/// </summary>
+		/// <param name="thisException"></param>
+		/// <returns></returns>
+		public static string EnhancedStackTrace(this Exception thisException)
+		{
+			return InternalEnhancedStackTrace(thisException);
+		}
+
+		/// <summary>
+		/// enhanced stack trace generator
+		/// </summary>
+		/// <param name="objStackTrace"></param>
+		/// <param name="SkipClassNameToSkip"></param>
+		/// <returns></returns>
+		private static string EnhancedStackTrace(StackTrace objStackTrace, string SkipClassNameToSkip = "")
+		{
+
+			int intFrame = 0;
+
+			System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+			sb.Append(Environment.NewLine);
+			sb.Append("---- Stack Trace ----");
+			sb.Append(Environment.NewLine);
+
+			int FrameNum = 0;
+			for (intFrame = 0; intFrame <= objStackTrace.FrameCount - 1; intFrame++)
+			{
+				StackFrame sf = objStackTrace.GetFrame(intFrame);
+
+				if (SkipClassNameToSkip.Length > 0 && sf.GetMethod().DeclaringType.Name.IndexOf(SkipClassNameToSkip) > -1)
+				{
+					//---- don't include frames with this name
+					//     this lets of keep any ERR class frames out of
+					//     the strack trace, they'd just be clutter
+				}
+				else
+				{
+					FrameNum += 1;
+					sb.Append(StackFrameToString(FrameNum, sf));
+				}
+			}
+			sb.Append(Environment.NewLine);
+
+			return sb.ToString();
+		}
+
 	}
 }

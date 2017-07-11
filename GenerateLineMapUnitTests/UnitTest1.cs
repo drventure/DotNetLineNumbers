@@ -35,7 +35,7 @@ namespace GenerateLineMapUnitTests
 			using (var consoleOutput = new ConsoleOutput())
 			{
 				// Check exit is normal
-				StartConsoleApplication("").Should().Be(0);
+				StartConsoleApplication("GenerateLineMap.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
 				consoleOutput.Ouput.Should().Contain("GenerateLineMap");
