@@ -173,7 +173,7 @@ namespace GenerateLineMap
 		{
 			int Result;
 			IntPtr hUpdate = ResourceAPIs.BeginUpdateResource(this.FileName, 0);
-			if (hUpdate.ToInt32() == 0)
+			if (hUpdate == IntPtr.Zero)
 			{
 				throw new ResWriteCantOpenException(this.FileName, Marshal.GetLastWin32Error());
 			}

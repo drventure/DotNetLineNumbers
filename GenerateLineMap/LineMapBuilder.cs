@@ -570,7 +570,7 @@ namespace GenerateLineMap
 			// the target file has to exist
 			if (this.Filename != filename)
 			{
-				System.IO.File.Copy(this.Filename, filename);
+				System.IO.File.Copy(this.Filename, filename, true);
 			}
 
 			// convert memorystream to byte array and write out to 

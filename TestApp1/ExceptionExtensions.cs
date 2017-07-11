@@ -1,17 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace TestApp1
+
+namespace ExceptionExtensions
 {
 	public static class ExceptionExtensions
 	{
 		private const string ERRCLASSNAME = "ExceptionExtensions";
-
+		public static bool UsePDB {get; set;}
 
 		/// <summary>
 		/// turns a single stack frame object into an informative string
@@ -49,20 +48,19 @@ namespace TestApp1
 
 			//-- if source code is available, append location info
 			sb.Append("       ");
-			//if (strings.InStr(1, Command, "/uselinemap", CompareMethod.Text) == 0 && string.IsNullOrEmpty(Interaction.Environ("uselinemap")) 
-			if (sf.GetFileName() != null && sf.GetFileName().Length != 0)
+			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && ExceptionExtensions.UsePDB)
 			{
 				//---- the PDB appears to be available, since the above elements are 
 				//     not blank, so just use it's information
 
 				sb.Append(System.IO.Path.GetFileName(sf.GetFileName()));
-				dynamic Line = sf.GetFileLineNumber();
+				var Line = sf.GetFileLineNumber();
 				if (Line != 0)
 				{
 					sb.Append(": line ");
-					sb.Append(string.Format("{0:#0000}", Line));
+					sb.Append(string.Format("{0}", Line));
 				}
-				dynamic col = sf.GetFileColumnNumber();
+				var col = sf.GetFileColumnNumber();
 				if (col != 0)
 				{
 					sb.Append(", col ");
@@ -79,9 +77,17 @@ namespace TestApp1
 			{
 				//---- the PDB is not available, so attempt to retrieve 
 				//     any embedded linemap information
-				string FileName = System.IO.Path.GetFileName(ParentAssembly.CodeBase);
+				string Filename;
+				if (ParentAssembly != null)
+				{
+					Filename = System.IO.Path.GetFileName(ParentAssembly.CodeBase);
+				}
+				else
+				{
+					Filename = "Unable to determine Assembly Filename";
+				}
 				//If FrameNum = 1 Then rCachedErr.FileName = FileName
-				sb.Append(FileName);
+				sb.Append(Filename);
 				//---- Get the native code offset and convert to a line number
 				//     first, make sure our linemap is loaded
 				try
@@ -111,7 +117,7 @@ namespace TestApp1
 				finally
 				{
 					//-- native code offset is always available
-					dynamic IL = sf.GetILOffset();
+					var IL = sf.GetILOffset();
 					if (IL != StackFrame.OFFSET_UNKNOWN)
 					{
 						sb.Append(": IL ");
@@ -134,14 +140,19 @@ namespace TestApp1
 			get
 			{
 				if (_parentAssembly == null)
-				{ 
+				{
 					if (Assembly.GetEntryAssembly() != null)
 					{
-						_parentAssembly = System.Reflection.Assembly.GetCallingAssembly();
+						_parentAssembly = Assembly.GetEntryAssembly();
+					}
+					else if (Assembly.GetCallingAssembly() != null)
+					{
+						_parentAssembly = Assembly.GetCallingAssembly();
 					}
 					else
 					{
-						_parentAssembly = System.Reflection.Assembly.GetEntryAssembly();
+						//TODO questionable
+						_parentAssembly = Assembly.GetExecutingAssembly();
 					}
 				}
 				return _parentAssembly;
@@ -174,7 +185,7 @@ namespace TestApp1
 				return;
 
 			//---- retrieve the cache
-			dynamic alm = LineMap.AssemblyLineMaps[sf.GetMethod().DeclaringType.Assembly.CodeBase];
+			var alm = LineMap.AssemblyLineMaps[sf.GetMethod().DeclaringType.Assembly.CodeBase];
 
 			//---- does the symbols list contain the metadata token for this method?
 			MemberInfo mi = sf.GetMethod();
@@ -185,10 +196,10 @@ namespace TestApp1
 
 			//---- all is good so get the line offset (as close as possible, considering any optimizations that
 			//     might be in effect)
-			dynamic ILOffset = sf.GetILOffset();
+			var ILOffset = sf.GetILOffset();
 			if (ILOffset != StackFrame.OFFSET_UNKNOWN)
 			{
-				Int64 Addr = alm.Symbols(mdtokn).Address + ILOffset;
+				Int64 Addr = alm.Symbols[mdtokn].Address + ILOffset;
 
 				//---- now start hunting down the line number entry
 				//     use a simple search. LINQ might make this easier
@@ -197,7 +208,7 @@ namespace TestApp1
 				int i = 1;
 				for (i = alm.AddressToLineMap.Count - 1; i >= 0; i += -1)
 				{
-					if (alm.AddressToLineMap(i).Address <= Addr)
+					if (alm.AddressToLineMap[i].Address <= Addr)
 					{
 						break;
 					}
@@ -205,8 +216,8 @@ namespace TestApp1
 				//---- since the address may end up between line numbers,
 				//     always return the line num found
 				//     even if it's not an exact match
-				Line = alm.AddressToLineMap(i).Line;
-				SourceFile = alm.Names(alm.AddressToLineMap(i).SourceFileIndex);
+				Line = alm.AddressToLineMap[i].Line;
+				SourceFile = alm.Names[alm.AddressToLineMap[i].SourceFileIndex];
 			}
 			else
 			{
@@ -221,7 +232,7 @@ namespace TestApp1
 		/// </summary>
 		/// <param name="Ex"></param>
 		/// <returns></returns>
-		private static string ExceptionToString(Exception Ex)
+		public static string ToStringExtended(this Exception Ex)
 		{
 			try
 			{
@@ -234,7 +245,7 @@ namespace TestApp1
 					//-- see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
 					sb.Append("(Inner Exception)");
 					sb.Append(Environment.NewLine);
-					sb.Append(ExceptionToString(Ex.InnerException));
+					sb.Append(Ex.InnerException.ToString());
 					sb.Append(Environment.NewLine);
 					sb.Append("(Outer Exception)");
 					sb.Append(Environment.NewLine);
@@ -578,20 +589,6 @@ namespace TestApp1
 				return DateTime.MinValue;
 			}
 		}
-
-
-		/// <summary>
-		/// Provides enhanced stack tracing output that includes line numbers, IL Position, and even column
-		/// numbers when PDB files are available
-		/// </summary>
-		/// <param name="thisException"></param>
-		/// <returns></returns>
-		public static string ToString(this Exception thisException)
-		{
-			return InternalEnhancedStackTrace(thisException);
-		}
-
-
 
 
 		//--

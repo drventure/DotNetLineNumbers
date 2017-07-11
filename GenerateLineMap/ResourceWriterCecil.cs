@@ -75,33 +75,33 @@ public class ResourceWriterCecil
 		//---- have to enumerate this way
 		for (var x = 0; x <= _Resources.Count - 1; x++)
 		{
-			dynamic res = _Resources[x];
+			var res = _Resources[x];
 			if (res.Name.Contains(".Resources.resources"))
 			{
 				//---- Have to assume this is the root application's .net resources.
 				//     That might not be the case though.
 
 				//---- cast as embeded resource to get at the data
-				dynamic EmbededResource = (Mono.Cecil.EmbeddedResource)res;
+				var EmbededResource = (Mono.Cecil.EmbeddedResource)res;
 
 				//---- a Resource reader is required to read the resource data
-				dynamic ResReader = new ResourceReader(new MemoryStream(EmbededResource.GetResourceData));
+				var ResReader = new ResourceReader(new MemoryStream(EmbededResource.GetResourceData()));
 
 				//---- Use this output stream to capture all the resource data from the 
 				//     existing resource block, so we can add the new resource into it
-				dynamic MemStreamOut = new MemoryStream();
-				dynamic ResWriter = new System.Resources.ResourceWriter(MemStreamOut);
-				dynamic ResEnumerator = ResReader.GetEnumerator;
+				var MemStreamOut = new MemoryStream();
+				var ResWriter = new System.Resources.ResourceWriter(MemStreamOut);
+				var ResEnumerator = ResReader.GetEnumerator();
 				byte[] resdata = null;
-				while (ResEnumerator.MoveNext)
+				while (ResEnumerator.MoveNext())
 				{
-					dynamic resname = (string)ResEnumerator.Key;
+					var resname = (string)ResEnumerator.Key;
 					string restype = "";
 					//---- if we come across a resource named the same as the one
 					//     we're about to add, skip it
 					if (Strings.StrComp(resname, ResourceName, CompareMethod.Text) != 0)
 					{
-						ResReader.GetResourceData(resname, restype, resdata);
+						ResReader.GetResourceData(resname, out restype, out resdata);
 						ResWriter.AddResourceData(resname, restype, resdata);
 					}
 				}
@@ -113,7 +113,7 @@ public class ResourceWriterCecil
 
 				//---- update the resource
 				var buf = MemStreamOut.ToArray();
-				dynamic NewEmbedRes = new EmbeddedResource(res.Name, res.Attributes, buf);
+				var NewEmbedRes = new EmbeddedResource(res.Name, res.Attributes, buf);
 				_Resources.Remove(res);
 				_Resources.Add(NewEmbedRes);
 				//---- gotta bail out, there can't be 2 embedded resource chunks, right?

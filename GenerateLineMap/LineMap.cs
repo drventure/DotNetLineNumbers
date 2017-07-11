@@ -238,7 +238,7 @@ string lpName, Int16 wLanguage);
 			public new int Add(string Name)
 			{
 				Name = Name.ToLower();
-				dynamic i = this.IndexOf(Name);
+				var i = this.IndexOf(Name);
 				if (i >= 0)
 					return i;
 
@@ -268,7 +268,7 @@ string lpName, Int16 wLanguage);
 						return string.Empty;
 					}
 				}
-				set 
+				set
 				{
 					base[Index] = value;
 				}
@@ -341,8 +341,8 @@ string lpName, Int16 wLanguage);
 			try
 			{
 				//---- Get the hInstance of the indicated exe/dll image
-				dynamic curmodule = Assembly.GetLoadedModules()[0];
-				dynamic hInst = System.Runtime.InteropServices.Marshal.GetHINSTANCE(curmodule);
+				var curmodule = Assembly.GetLoadedModules()[0];
+				var hInst = System.Runtime.InteropServices.Marshal.GetHINSTANCE(curmodule);
 
 				//---- retrieve a handle to the Linemap resource
 				//     Since it's a standard Win32 resource, the nice .NET resource functions
@@ -351,33 +351,46 @@ string lpName, Int16 wLanguage);
 				//     Important Note: The FindResourceEx function appears to be case
 				//     sensitive in that you really HAVE to pass in UPPER CASE search
 				//     arguments
-				dynamic hres = LineMap.FindResourceEx(hInst.ToInt32, LineMapKeys.ResTypeName, LineMapKeys.ResName, LineMapKeys.ResLang);
-
-				//---- Load the resource to get it into memory
-				dynamic hresdata = LineMap.LoadResource(hInst, hres);
-
-				IntPtr lpdata = LineMap.LockResource(hresdata);
-				dynamic sz = LineMap.SizeofResource(hInst, hres);
+				var hres = LineMap.FindResourceEx(hInst.ToInt32(), LineMapKeys.ResTypeName, LineMapKeys.ResName, LineMapKeys.ResLang);
 
 				byte[] bytes = null;
-				if (lpdata != IntPtr.Zero & sz > 0)
+				if (hres != IntPtr.Zero)
 				{
-					//---- able to lock it,
-					//     so copy the data into a byte array
-					bytes = new byte[sz];
-					LineMap.CopyMemory(ref bytes[0], lpdata, sz);
-					LineMap.FreeResource(hresdata);
+					//---- Load the resource to get it into memory
+					var hresdata = LineMap.LoadResource(hInst, hres);
 
-					//---- deserialize the symbol map and line num list
-					using (System.IO.MemoryStream MemStream = new MemoryStream(bytes))
+					IntPtr lpdata = LineMap.LockResource(hresdata);
+					var sz = LineMap.SizeofResource(hInst, hres);
+
+					if (lpdata != IntPtr.Zero & sz > 0)
 					{
-						//---- release the byte array to free up the memory
-						bytes = null;
-						//---- and depersist the object
-						Stream temp = MemStream;
-						var temp2 = DecryptStream(ref temp);
-						Transfer(Depersist(DecompressStream(ref temp2)));
+						//---- able to lock it,
+						//     so copy the data into a byte array
+						bytes = new byte[sz];
+						LineMap.CopyMemory(ref bytes[0], lpdata, sz);
+						LineMap.FreeResource(hresdata);
 					}
+				}
+				else
+				{
+					//Check for a side by side linemap file
+					string mapfile = this.FileName + ".linemap";
+					if (File.Exists(mapfile))
+					{
+						//load it from there
+						bytes = File.ReadAllBytes(mapfile);
+					}
+				}
+
+				//---- deserialize the symbol map and line num list
+				using (System.IO.MemoryStream MemStream = new MemoryStream(bytes))
+				{
+					//---- release the byte array to free up the memory
+					bytes = null;
+					//---- and depersist the object
+					Stream temp = MemStream;
+					var temp2 = DecryptStream(ref temp);
+					Transfer(Depersist(DecompressStream(ref temp2)));
 				}
 
 			}
@@ -467,14 +480,14 @@ string lpName, Int16 wLanguage);
 				//---- IV is 16 byte array
 				Enc.IV = LineMapKeys.ENCIV;
 
-				dynamic cryptoStream = new System.Security.Cryptography.CryptoStream(EncryptedStream, Enc.CreateDecryptor(), System.Security.Cryptography.CryptoStreamMode.Read);
+				var cryptoStream = new System.Security.Cryptography.CryptoStream(EncryptedStream, Enc.CreateDecryptor(), System.Security.Cryptography.CryptoStreamMode.Read);
 
 				byte[] buf = null;
 				buf = new byte[1024];
 				MemoryStream DecryptedStream = new MemoryStream();
 				while (EncryptedStream.Length > 0)
 				{
-					dynamic l = cryptoStream.Read(buf, 0, 1024);
+					var l = cryptoStream.Read(buf, 0, 1024);
 					if (l == 0)
 						break; // TODO: might not be correct. Was : Exit Do
 					if (l < 1024)
@@ -511,7 +524,7 @@ string lpName, Int16 wLanguage);
 			MemoryStream UncompressedStream = new MemoryStream();
 			while (CompressedStream.Length > 0)
 			{
-				dynamic l = GZip.Read(buf, 0, 1024);
+				var l = GZip.Read(buf, 0, 1024);
 				if (l == 0)
 					break; // TODO: might not be correct. Was : Exit Do
 				if (l < 1024)
@@ -531,8 +544,8 @@ string lpName, Int16 wLanguage);
 
 			if (MemoryStream.Length != 0)
 			{
-				dynamic binaryDictionaryreader = XmlDictionaryReader.CreateBinaryReader(MemoryStream, new XmlDictionaryReaderQuotas());
-				dynamic serializer = new DataContractSerializer(typeof(AssemblyLineMap));
+				var binaryDictionaryreader = XmlDictionaryReader.CreateBinaryReader(MemoryStream, new XmlDictionaryReaderQuotas());
+				var serializer = new DataContractSerializer(typeof(AssemblyLineMap));
 				return (AssemblyLineMap)serializer.ReadObject(binaryDictionaryreader);
 			}
 			else
@@ -553,8 +566,8 @@ string lpName, Int16 wLanguage);
 		{
 			System.IO.MemoryStream MemStream = new System.IO.MemoryStream();
 
-			dynamic binaryDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(MemStream);
-			dynamic serializer = new DataContractSerializer(typeof(AssemblyLineMap));
+			var binaryDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(MemStream);
+			var serializer = new DataContractSerializer(typeof(AssemblyLineMap));
 			serializer.WriteObject(binaryDictionaryWriter, this);
 			binaryDictionaryWriter.Flush();
 
@@ -572,9 +585,9 @@ string lpName, Int16 wLanguage);
 		/// <remarks></remarks>
 		public void AddAddressToLine(Int32 Line, Int64 Address, string SourceFile, string ObjectName)
 		{
-			dynamic SourceFileIndex = this.Names.Add(SourceFile);
-			dynamic ObjectNameIndex = this.Names.Add(ObjectName);
-			dynamic atl = new AssemblyLineMap.AddressToLine(Line, Address, SourceFile, SourceFileIndex, ObjectName, ObjectNameIndex);
+			var SourceFileIndex = this.Names.Add(SourceFile);
+			var ObjectNameIndex = this.Names.Add(ObjectName);
+			var atl = new AssemblyLineMap.AddressToLine(Line, Address, SourceFile, SourceFileIndex, ObjectName, ObjectNameIndex);
 			this.AddressToLineMap.Add(atl);
 		}
 	}
@@ -609,7 +622,7 @@ string lpName, Int16 wLanguage);
 			}
 			else
 			{
-				dynamic alm = new AssemblyLineMap(FileName);
+				var alm = new AssemblyLineMap(FileName);
 				this.Add(FileName, alm);
 				return alm;
 			}
@@ -618,7 +631,7 @@ string lpName, Int16 wLanguage);
 
 		public AssemblyLineMap Add(Assembly Assembly)
 		{
-			dynamic FileName = Assembly.CodeBase;
+			var FileName = Assembly.CodeBase;
 			if (this.ContainsKey(FileName))
 			{
 				//---- no need, already loaded (should it reload?)
@@ -626,7 +639,7 @@ string lpName, Int16 wLanguage);
 			}
 			else
 			{
-				dynamic alm = new AssemblyLineMap(Assembly);
+				var alm = new AssemblyLineMap(Assembly);
 				this.Add(FileName, alm);
 				return alm;
 			}

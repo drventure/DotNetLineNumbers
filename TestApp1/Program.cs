@@ -4,11 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using ExceptionExtensions;
+
+
 namespace TestApp1
 {
-	class Program
+	public class Program
 	{
-		static void Main(string[] args)
+		public static void Main(string[] args)
 		{
 			try
 			{
@@ -22,8 +25,10 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
-
-				var buf = "ERROR: " + ex.ToString();
+				ExceptionExtensions.ExceptionExtensions.UsePDB = false;
+				var buf = "ERROR: " + ex.ToStringExtended();
+				Console.WriteLine(buf);
+				buf = "ERROR: " + ex.ToString();
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine(buf);
 			}

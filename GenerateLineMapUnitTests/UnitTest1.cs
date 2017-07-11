@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Diagnostics;
+
 
 namespace GenerateLineMapUnitTests
 {
@@ -52,7 +53,7 @@ namespace GenerateLineMapUnitTests
 				StartConsoleApplication("GenerateLineMap.exe", "/report TestApp1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Retrieved 10 lines");
+				consoleOutput.Ouput.Should().Contain("Retrieved 620 lines");
 			}
 		}
 
@@ -75,6 +76,22 @@ namespace GenerateLineMapUnitTests
 
 
 		[TestMethod]
+		public void TestForProperLineNumInTestAppViaFileMap()
+		{
+			using (var consoleOutput = new ConsoleOutput())
+			{
+				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1.exe", "/file", "TestApp1.exe" });
+
+				//call the console app main routine
+				TestApp1.Program.Main(new string[] { });
+
+				// Check that help information shown correctly.
+				consoleOutput.Ouput.Should().Contain("Program.cs:line 24");
+			}
+		}
+
+
+		[TestMethod]
 		public void TestForProperLineNumInTestApp()
 		{
 			using (var consoleOutput = new ConsoleOutput())
@@ -88,7 +105,7 @@ namespace GenerateLineMapUnitTests
 				StartConsoleApplication("TestApp1-1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Program.cs:line 21");
+				consoleOutput.Ouput.Should().Contain("Program.cs:line 24");
 			}
 		}
 

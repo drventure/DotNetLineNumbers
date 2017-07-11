@@ -256,17 +256,17 @@ Public Class LineMap
                 Dim curmodule = Assembly.GetLoadedModules()(0)
                 Dim hInst = System.Runtime.InteropServices.Marshal.GetHINSTANCE(curmodule)
 
-                '---- retrieve a handle to the Linemap resource
-                '     Since it's a standard Win32 resource, the nice .NET resource functions
-                '     can't be used
-                '
-                '     Important Note: The FindResourceEx function appears to be case
-                '     sensitive in that you really HAVE to pass in UPPER CASE search
-                '     arguments
-                Dim hres = FindResourceEx(hInst.ToInt32, LineMapKeys.ResTypeName, LineMapKeys.ResName, LineMapKeys.ResLang)
+				'---- retrieve a handle to the Linemap resource
+				'     Since it's a standard Win32 resource, the nice .NET resource functions
+				'     can't be used
+				'
+				'     Important Note: The FindResourceEx function appears to be case
+				'     sensitive in that you really HAVE to pass in UPPER CASE search
+				'     arguments
+				Dim hres = FindResourceEx(hInst.ToInt32(), LineMapKeys.ResTypeName, LineMapKeys.ResName, LineMapKeys.ResLang)
 
-                '---- Load the resource to get it into memory
-                Dim hresdata = LoadResource(hInst, hres)
+				'---- Load the resource to get it into memory
+				Dim hresdata = LoadResource(hInst, hres)
 
                 Dim lpdata As IntPtr = LockResource(hresdata)
                 Dim sz = SizeofResource(hInst, hres)

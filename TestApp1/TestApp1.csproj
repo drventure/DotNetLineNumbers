@@ -76,7 +76,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StackFrameExtensions.cs" />
+    <Compile Include="ExceptionExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
