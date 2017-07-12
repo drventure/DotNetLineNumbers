@@ -99,6 +99,7 @@ namespace GenerateLineMapUnitTests
 				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1-1.exe", "TestApp1.exe" });
 
 				//make sure PDB doesn't exist anymore
+				//there's seems to be some timing issues with deleting the file so spin till successful
 				while (true)
 				{
 					try
