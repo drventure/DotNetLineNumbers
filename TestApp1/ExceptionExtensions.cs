@@ -101,8 +101,8 @@ namespace ExceptionExtensions
 					{
 						sb.Append(": Source File - ");
 						sb.Append(SourceFile);
-						sb.Append(": Line ");
-						sb.Append(string.Format("{0:#0000}", Line));
+						sb.Append(": line ");
+						sb.Append(string.Format("{0}", Line));
 					}
 
 				}

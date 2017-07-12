@@ -53,7 +53,7 @@ namespace GenerateLineMapUnitTests
 				StartConsoleApplication("GenerateLineMap.exe", "/report TestApp1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Retrieved 620 lines");
+				consoleOutput.Ouput.Should().Contain("Retrieved 12 strings");
 			}
 		}
 
@@ -71,7 +71,7 @@ namespace GenerateLineMapUnitTests
 			buf.Should().Contain("SYMBOLS:");
 			buf.Should().Contain("LINE NUMBERS:");
 			buf.Should().Contain("NAMES:");
-			buf.Should().Contain("testapp1.program");
+			buf.Should().Contain("TestApp1.Program");
 		}
 
 
@@ -86,7 +86,7 @@ namespace GenerateLineMapUnitTests
 				TestApp1.Program.Main(new string[] { });
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Program.cs:line 24");
+				consoleOutput.Ouput.Should().Contain("Program.cs: line 24");
 			}
 		}
 
@@ -99,13 +99,26 @@ namespace GenerateLineMapUnitTests
 				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1-1.exe", "TestApp1.exe" });
 
 				//make sure PDB doesn't exist anymore
-				if (File.Exists("TestApp1.pdb")) File.Delete("TestApp1.pdb");
+				while (true)
+				{
+					try
+					{
+						if (File.Exists("TestApp1.pdb"))
+						{
+							File.SetAttributes("TestApp1.pdb", FileAttributes.Normal);
+							File.Delete("TestApp1.pdb");
+						}
+						break;
+					}
+					catch
+					{ }
+				}
 
 				//execute test app, should file and write stack trace to console
 				StartConsoleApplication("TestApp1-1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Program.cs:line 24");
+				consoleOutput.Ouput.Should().Contain("Program.cs: line 24");
 			}
 		}
 

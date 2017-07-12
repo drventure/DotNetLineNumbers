@@ -237,7 +237,8 @@ string lpName, Int16 wLanguage);
 			/// <returns></returns>
 			public new int Add(string Name)
 			{
-				Name = Name.ToLower();
+				//Don't lower case everything
+				//Name = Name.ToLower();
 				var i = this.IndexOf(Name);
 				if (i >= 0)
 					return i;
