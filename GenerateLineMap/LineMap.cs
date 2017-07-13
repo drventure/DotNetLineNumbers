@@ -1,4 +1,29 @@
-﻿
+﻿#region MIT License
+/*
+    MIT License
+
+    Copyright (c) 2016 Darin Higgins
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+ */
+#endregion
+
 using Microsoft.VisualBasic;
 using System;
 using System.Collections;
@@ -135,7 +160,7 @@ string lpName, Int16 wLanguage);
 		[DataContract(Namespace = LineMap.LINEMAPNAMESPACE)]
 		public class AddressToLine
 		{
-			//---- these members must get serialized
+			// these members must get serialized
 			[DataMember()]
 			public Int64 Address;
 			[DataMember()]
@@ -145,7 +170,7 @@ string lpName, Int16 wLanguage);
 			[DataMember()]
 
 			public int ObjectNameIndex;
-			//---- these members do not need to be serialized
+			// these members do not need to be serialized
 			public string SourceFile;
 
 			public string ObjectName;
@@ -186,13 +211,13 @@ string lpName, Int16 wLanguage);
 		[DataContract(Namespace = LineMap.LINEMAPNAMESPACE)]
 		public class SymbolInfo
 		{
-			//---- these need to be persisted
+			// these need to be persisted
 			[DataMember()]
 			public long Address;
 			[DataMember()]
 
 			public long Token;
-			//---- these aren't persisted
+			// these aren't persisted
 
 			public string Name;
 
@@ -243,7 +268,7 @@ string lpName, Int16 wLanguage);
 				if (i >= 0)
 					return i;
 
-				//---- gotta add the name
+				// gotta add the name
 				base.Add(Name);
 				return this.Count - 1;
 			}
@@ -341,23 +366,23 @@ string lpName, Int16 wLanguage);
 
 			try
 			{
-				//---- Get the hInstance of the indicated exe/dll image
+				// Get the hInstance of the indicated exe/dll image
 				var curmodule = Assembly.GetLoadedModules()[0];
 				var hInst = System.Runtime.InteropServices.Marshal.GetHINSTANCE(curmodule);
 
-				//---- retrieve a handle to the Linemap resource
-				//     Since it's a standard Win32 resource, the nice .NET resource functions
-				//     can't be used
+				// retrieve a handle to the Linemap resource
+				// Since it's a standard Win32 resource, the nice .NET resource functions
+				// can't be used
 				//
-				//     Important Note: The FindResourceEx function appears to be case
-				//     sensitive in that you really HAVE to pass in UPPER CASE search
-				//     arguments
+				// Important Note: The FindResourceEx function appears to be case
+				// sensitive in that you really HAVE to pass in UPPER CASE search
+				// arguments
 				var hres = LineMap.FindResourceEx(hInst.ToInt32(), LineMapKeys.ResTypeName, LineMapKeys.ResName, LineMapKeys.ResLang);
 
 				byte[] bytes = null;
 				if (hres != IntPtr.Zero)
 				{
-					//---- Load the resource to get it into memory
+					// Load the resource to get it into memory
 					var hresdata = LineMap.LoadResource(hInst, hres);
 
 					IntPtr lpdata = LineMap.LockResource(hresdata);
@@ -365,8 +390,8 @@ string lpName, Int16 wLanguage);
 
 					if (lpdata != IntPtr.Zero & sz > 0)
 					{
-						//---- able to lock it,
-						//     so copy the data into a byte array
+						// able to lock it,
+						// so copy the data into a byte array
 						bytes = new byte[sz];
 						LineMap.CopyMemory(ref bytes[0], lpdata, sz);
 						LineMap.FreeResource(hresdata);
@@ -383,12 +408,12 @@ string lpName, Int16 wLanguage);
 					}
 				}
 
-				//---- deserialize the symbol map and line num list
+				// deserialize the symbol map and line num list
 				using (System.IO.MemoryStream MemStream = new MemoryStream(bytes))
 				{
-					//---- release the byte array to free up the memory
+					// release the byte array to free up the memory
 					bytes = null;
-					//---- and depersist the object
+					// and depersist the object
 					Stream temp = MemStream;
 					var temp2 = DecryptStream(ref temp);
 					Transfer(Depersist(DecompressStream(ref temp2)));
@@ -398,16 +423,16 @@ string lpName, Int16 wLanguage);
 			catch (Exception ex)
 			{
 				Console.WriteLine("ERROR: {0}", ex.ToString());
-				//---- yes, it's bad form to catch all exceptions like this
-				//     but this is part of an exception handler
-				//     so it really can't be allowed to fail with an exception!
+				// yes, it's bad form to catch all exceptions like this
+				// but this is part of an exception handler
+				// so it really can't be allowed to fail with an exception!
 			}
 
 			try
 			{
 				if (this.Symbols.Count == 0)
 				{
-					//---- weren't able to load resources, so try the LINEMAP file
+					// weren't able to load resources, so try the LINEMAP file
 					Load();
 				}
 
@@ -426,12 +451,12 @@ string lpName, Int16 wLanguage);
 		/// <remarks></remarks>
 		private void Transfer(AssemblyLineMap alm)
 		{
-			//---- transfer Internal variables over
+			// transfer Internal variables over
 			this.AddressToLineMap = alm.AddressToLineMap;
 			this.Symbols = alm.Symbols;
 			this.Names = alm.Names;
 
-			//---- debugging
+			// debugging
 			Debug.Print(this.Symbols.Count.ToString());
 			Debug.Print(this.AddressToLineMap.Count.ToString());
 			Debug.Print(this.Names.Count.ToString());
@@ -459,7 +484,7 @@ string lpName, Int16 wLanguage);
 				}
 			}
 
-			//---- just return an empty stream
+			// just return an empty stream
 			return new MemoryStream();
 		}
 
@@ -476,9 +501,9 @@ string lpName, Int16 wLanguage);
 			{
 				System.Security.Cryptography.RijndaelManaged Enc = new System.Security.Cryptography.RijndaelManaged();
 				Enc.KeySize = 256;
-				//---- KEY is 32 byte array
+				// KEY is 32 byte array
 				Enc.Key = LineMapKeys.ENCKEY;
-				//---- IV is 16 byte array
+				// IV is 16 byte array
 				Enc.IV = LineMapKeys.ENCIV;
 
 				var cryptoStream = new System.Security.Cryptography.CryptoStream(EncryptedStream, Enc.CreateDecryptor(), System.Security.Cryptography.CryptoStreamMode.Read);
@@ -504,7 +529,7 @@ string lpName, Int16 wLanguage);
 			catch (Exception ex)
 			{
 				Console.WriteLine("ERROR: {0}", ex.ToString());
-				//---- any problems, nothing much to do, so return an empty stream
+				// any problems, nothing much to do, so return an empty stream
 				return new MemoryStream();
 			}
 		}
@@ -551,7 +576,7 @@ string lpName, Int16 wLanguage);
 			}
 			else
 			{
-				//---- jsut return an empty object
+				// jsut return an empty object
 				return new AssemblyLineMap();
 			}
 		}
@@ -618,7 +643,7 @@ string lpName, Int16 wLanguage);
 
 			if (this.ContainsKey(FileName))
 			{
-				//---- no need, already loaded (should it reload?)
+				// no need, already loaded (should it reload?)
 				return this[FileName];
 			}
 			else
@@ -635,7 +660,7 @@ string lpName, Int16 wLanguage);
 			var FileName = Assembly.CodeBase;
 			if (this.ContainsKey(FileName))
 			{
-				//---- no need, already loaded (should it reload?)
+				// no need, already loaded (should it reload?)
 				return this[FileName];
 			}
 			else

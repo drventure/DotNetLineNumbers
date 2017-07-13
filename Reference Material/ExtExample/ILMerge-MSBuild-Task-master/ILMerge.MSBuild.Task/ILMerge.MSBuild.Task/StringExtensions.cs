@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016 Darin Higgins
+    Copyright (c) 2016 Emerson Brito
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -30,34 +30,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using ExceptionExtensions;
-
-
-namespace TestApp1
+namespace ILMerge.MsBuild.Task
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			try
-			{
-				var x = 1;
-				var y = 2;
-				var z = 3;
+    static class StringExtensions
+    {
 
-				y = x + z;
+        public static bool HasValue(this string value)
+        {
+            return !string.IsNullOrWhiteSpace(value);
+        }
 
-				throw new FormatException("Unable to format");
-			}
-			catch (Exception ex)
-			{
-				ExceptionExtensions.ExceptionExtensions.UsePDB = false;
-				var buf = "ERROR: " + ex.ToStringExtended();
-				Console.WriteLine(buf);
-				buf = "ERROR: " + ex.ToString();
-				Console.WriteLine(buf);
-				System.Diagnostics.Debug.WriteLine(buf);
-			}
-		}
-	}
+        public static bool IsNumeric(this string value)
+        {
+            float output;
+            return float.TryParse(value, out output);
+        }
+
+    }
 }

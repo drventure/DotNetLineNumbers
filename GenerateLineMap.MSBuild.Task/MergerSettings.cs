@@ -26,38 +26,46 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Script.Serialization;
 
-using ExceptionExtensions;
-
-
-namespace TestApp1
+namespace GenerateLineMap.MsBuild.Task
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			try
-			{
-				var x = 1;
-				var y = 2;
-				var z = 3;
 
-				y = x + z;
+    public class MergerSettings
+    {
 
-				throw new FormatException("Unable to format");
-			}
-			catch (Exception ex)
-			{
-				ExceptionExtensions.ExceptionExtensions.UsePDB = false;
-				var buf = "ERROR: " + ex.ToStringExtended();
-				Console.WriteLine(buf);
-				buf = "ERROR: " + ex.ToString();
-				Console.WriteLine(buf);
-				System.Diagnostics.Debug.WriteLine(buf);
-			}
-		}
-	}
+        public GeneralSettings General { get; set; } = new GeneralSettings();
+
+        public AdvancedSettings Advanced { get; set; } = new AdvancedSettings();
+
+        public string ToJson()
+        {
+            var srl = new JavaScriptSerializer();
+            var json = srl.Serialize(this);
+            return json;
+        }
+
+        public static MergerSettings FromJson(string jsonString)
+        {
+
+            if (string.IsNullOrWhiteSpace(jsonString))
+            {
+                throw new ArgumentNullException(nameof(jsonString));
+            }
+
+            var srl = new JavaScriptSerializer();
+            var obj = srl.Deserialize<MergerSettings>(jsonString);
+
+            return obj;
+
+        }
+
+
+    }
 }

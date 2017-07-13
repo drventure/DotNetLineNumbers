@@ -1,4 +1,30 @@
-﻿using System;
+﻿#region MIT License
+/*
+    MIT License
+
+    Copyright (c) 2016 Darin Higgins
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+ */
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -128,27 +154,27 @@ namespace GenerateLineMap
 		// '' <remarks></remarks>
 		public void Update(object ResType, object ResName, short wLanguage, ref string NewValue)
 		{
-			// ---- make sure there's something to do
+			// make sure there's something to do
 			if ((NewValue.Length == 0))
 			{
 				return;
 			}
 
-			// ---- convert raw string to byte buffer
+			// convert raw string to byte buffer
 			List<byte> buf = new List<byte>();
 			foreach (char c in NewValue.ToCharArray())
 			{
 				buf.Add((byte)c);
 			}
 
-			// ---- and update the resource
+			// and update the resource
 			this.Update(ResType, ResName, wLanguage, ref buf);
 		}
 
 
 		public void Update(object ResType, object ResName, short wLanguage, ref byte[] NewValue)
 		{
-			// ---- make sure there's something to do
+			// make sure there's something to do
 			if ((NewValue.Length == 0))
 			{
 				return;
@@ -156,7 +182,7 @@ namespace GenerateLineMap
 
 			var buf = NewValue.ToList();
 
-			// ---- and update the resource
+			// and update the resource
 			this.Update(ResType, ResName, wLanguage, ref buf);
 		}
 
@@ -178,8 +204,8 @@ namespace GenerateLineMap
 				throw new ResWriteCantOpenException(this.FileName, Marshal.GetLastWin32Error());
 			}
 
-			// ---- guarantee data is aligned to 4 byte boundary
-			//       not sure if this is strictly necessary, but it's documented
+			// guarantee data is aligned to 4 byte boundary
+			//  not sure if this is strictly necessary, but it's documented
 			int l = NewValue.Count;
 			int Mod = (l % 4);
 			if ((Mod > 0))
@@ -190,14 +216,14 @@ namespace GenerateLineMap
 			byte[] buf = new byte[l];
 			NewValue.ToArray().CopyTo(buf, 0);
 
-			// ---- important note, The Typename and Resourcename are
-			//      written as UPPER CASE. I'm not sure why but this appears to 
-			//      be required for the FindResource and FindResourceEx API calls to 
-			//      be able to work properly. Otherwise, they'll never find the resource
-			//      entries...
+			// important note, The Typename and Resourcename are
+			// written as UPPER CASE. I'm not sure why but this appears to 
+			// be required for the FindResource and FindResourceEx API calls to 
+			// be able to work properly. Otherwise, they'll never find the resource
+			// entries...
 			if (ResType is string)
 			{
-				// ---- Restype is a resource type name
+				// Restype is a resource type name
 				if (ResName is string)
 				{
 					Result = ResourceAPIs.UpdateResource(hUpdate, ResType.ToString().ToUpper(), ResName.ToString().ToUpper(), wLanguage, buf, l);
@@ -210,7 +236,7 @@ namespace GenerateLineMap
 			}
 			else
 			{
-				// ---- Restype is a numeric resource ID
+				// Restype is a numeric resource ID
 				if (ResName is string)
 				{
 					Result = ResourceAPIs.UpdateResource(hUpdate, int.Parse(ResType.ToString()), ResName.ToString().ToUpper(), wLanguage, buf, l);
@@ -261,7 +287,7 @@ namespace GenerateLineMap
 
 			if (ResType is string)
 			{
-				// ---- Restype is a resource name
+				// Restype is a resource name
 				if (ResName is string)
 				{
 					Result = ResourceAPIs.UpdateResource(hUpdate, ResType.ToString().ToUpper(), ResName.ToString().ToUpper(), wLanguage, IntPtr.Zero, 0);
@@ -274,7 +300,7 @@ namespace GenerateLineMap
 			}
 			else
 			{
-				// ---- Restype is a numeric resource ID
+				// Restype is a numeric resource ID
 				if (ResName is string)
 				{
 					Result = ResourceAPIs.UpdateResource(hUpdate, int.Parse(ResType.ToString()), ResName.ToString().ToUpper(), wLanguage, IntPtr.Zero, 0);

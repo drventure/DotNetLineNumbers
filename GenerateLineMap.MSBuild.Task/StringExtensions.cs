@@ -30,34 +30,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using ExceptionExtensions;
-
-
-namespace TestApp1
+namespace GenerateLineMap.MsBuild.Task
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			try
-			{
-				var x = 1;
-				var y = 2;
-				var z = 3;
+    static class StringExtensions
+    {
 
-				y = x + z;
+        public static bool HasValue(this string value)
+        {
+            return !string.IsNullOrWhiteSpace(value);
+        }
 
-				throw new FormatException("Unable to format");
-			}
-			catch (Exception ex)
-			{
-				ExceptionExtensions.ExceptionExtensions.UsePDB = false;
-				var buf = "ERROR: " + ex.ToStringExtended();
-				Console.WriteLine(buf);
-				buf = "ERROR: " + ex.ToString();
-				Console.WriteLine(buf);
-				System.Diagnostics.Debug.WriteLine(buf);
-			}
-		}
-	}
+        public static bool IsNumeric(this string value)
+        {
+            float output;
+            return float.TryParse(value, out output);
+        }
+
+    }
 }

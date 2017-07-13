@@ -1,4 +1,30 @@
-﻿using System;
+﻿#region MIT License
+/*
+    MIT License
+
+    Copyright (c) 2016 Darin Higgins
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+ */
+#endregion
+
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -50,8 +76,8 @@ namespace ExceptionExtensions
 			sb.Append("       ");
 			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && ExceptionExtensions.UsePDB)
 			{
-				//---- the PDB appears to be available, since the above elements are 
-				//     not blank, so just use it's information
+				// the PDB appears to be available, since the above elements are 
+				// not blank, so just use it's information
 
 				sb.Append(System.IO.Path.GetFileName(sf.GetFileName()));
 				var Line = sf.GetFileLineNumber();
@@ -75,8 +101,8 @@ namespace ExceptionExtensions
 			}
 			else
 			{
-				//---- the PDB is not available, so attempt to retrieve 
-				//     any embedded linemap information
+				// the PDB is not available, so attempt to retrieve 
+				// any embedded linemap information
 				string Filename;
 				if (ParentAssembly != null)
 				{
@@ -88,8 +114,8 @@ namespace ExceptionExtensions
 				}
 				//If FrameNum = 1 Then rCachedErr.FileName = FileName
 				sb.Append(Filename);
-				//---- Get the native code offset and convert to a line number
-				//     first, make sure our linemap is loaded
+				// Get the native code offset and convert to a line number
+				// first, make sure our linemap is loaded
 				try
 				{
 					LineMap.AssemblyLineMaps.Add(sf.GetMethod().DeclaringType.Assembly);
@@ -108,8 +134,8 @@ namespace ExceptionExtensions
 				}
 				catch (Exception ex)
 				{
-					//---- just catch any exception here, if we can't load the linemap
-					//     oh well, we tried
+					// just catch any exception here, if we can't load the linemap
+					// oh well, we tried
 
 					//TODO Fixup
 					//OnWriteLog(ex, "Unable to load Line Map Resource");
@@ -171,40 +197,40 @@ namespace ExceptionExtensions
 		/// <remarks></remarks>
 		private static void MapStackFrameToSourceLine(StackFrame sf, ref int Line, ref string SourceFile)
 		{
-			//---- first, get the base addr of the method
-			//     if possible
+			// first, get the base addr of the method
+			// if possible
 			Line = 0;
 			SourceFile = string.Empty;
 
-			//---- you have to have symbols to do this
+			// you have to have symbols to do this
 			if (LineMap.AssemblyLineMaps.Count == 0)
 				return;
 
-			//---- first, check if for symbols for the assembly for this stack frame
+			// first, check if for symbols for the assembly for this stack frame
 			if (!LineMap.AssemblyLineMaps.Keys.Contains(sf.GetMethod().DeclaringType.Assembly.CodeBase))
 				return;
 
-			//---- retrieve the cache
+			// retrieve the cache
 			var alm = LineMap.AssemblyLineMaps[sf.GetMethod().DeclaringType.Assembly.CodeBase];
 
-			//---- does the symbols list contain the metadata token for this method?
+			// does the symbols list contain the metadata token for this method?
 			MemberInfo mi = sf.GetMethod();
-			//---- Don't call this mdtoken or PostSharp will barf on it! Jeez
+			// Don't call this mdtoken or PostSharp will barf on it! Jeez
 			long mdtokn = mi.MetadataToken;
 			if (!alm.Symbols.ContainsKey(mdtokn))
 				return;
 
-			//---- all is good so get the line offset (as close as possible, considering any optimizations that
-			//     might be in effect)
+			// all is good so get the line offset (as close as possible, considering any optimizations that
+			// might be in effect)
 			var ILOffset = sf.GetILOffset();
 			if (ILOffset != StackFrame.OFFSET_UNKNOWN)
 			{
 				Int64 Addr = alm.Symbols[mdtokn].Address + ILOffset;
 
-				//---- now start hunting down the line number entry
-				//     use a simple search. LINQ might make this easier
-				//     but I'm not sure how. Also, a binary search would be faster
-				//     but this isn't something that's really performance dependent
+				// now start hunting down the line number entry
+				// use a simple search. LINQ might make this easier
+				// but I'm not sure how. Also, a binary search would be faster
+				// but this isn't something that's really performance dependent
 				int i = 1;
 				for (i = alm.AddressToLineMap.Count - 1; i >= 0; i += -1)
 				{
@@ -213,9 +239,9 @@ namespace ExceptionExtensions
 						break;
 					}
 				}
-				//---- since the address may end up between line numbers,
-				//     always return the line num found
-				//     even if it's not an exact match
+				// since the address may end up between line numbers,
+				// always return the line num found
+				// even if it's not an exact match
 				Line = alm.AddressToLineMap[i].Line;
 				SourceFile = alm.Names[alm.AddressToLineMap[i].SourceFileIndex];
 			}
@@ -331,47 +357,47 @@ namespace ExceptionExtensions
 			StringBuilder sb = new StringBuilder();
 
 			//If Err.Number <> 0 Then
-			//    .Append("Error code:            ")
-			//    .Append(Err.Number)
-			//    .Append(Environment.NewLine)
+			//   .Append("Error code:            ")
+			//   .Append(Err.Number)
+			//   .Append(Environment.NewLine)
 			//End If
 
 			//If Len(Err.Description) <> 0 Then
-			//    .Append("Error Description:     ")
-			//    .Append(Err.Description)
-			//    .Append(Environment.NewLine)
+			//   .Append("Error Description:     ")
+			//   .Append(Err.Description)
+			//   .Append(Environment.NewLine)
 			//End If
 
 			//'---- report the line or ERL location as available
 			//If Err.Line <> 0 Then
-			//    .Append("Error Line:            ")
-			//    .Append(Err.Line)
-			//    If Err.Erl <> 0 AndAlso Err.Erl <> Err.Line Then
-			//        .Append("  (Location " & Err.Erl.ToString & ")")
-			//    End If
-			//    .Append(Environment.NewLine)
+			//   .Append("Error Line:            ")
+			//   .Append(Err.Line)
+			//   If Err.Erl <> 0 AndAlso Err.Erl <> Err.Line Then
+			//   .Append("  (Location " & Err.Erl.ToString & ")")
+			//   End If
+			//   .Append(Environment.NewLine)
 			//ElseIf Err.Erl <> 0 Then
-			//    .Append("Error Location:        ")
-			//    .Append(Err.Erl)
-			//    .Append(Environment.NewLine)
+			//   .Append("Error Location:        ")
+			//   .Append(Err.Erl)
+			//   .Append(Environment.NewLine)
 			//End If
 
 			//If Err.Column <> 0 Then
-			//    .Append("Error Column:          ")
-			//    .Append(Err.Column)
-			//    .Append(Environment.NewLine)
+			//   .Append("Error Column:          ")
+			//   .Append(Err.Column)
+			//   .Append(Environment.NewLine)
 			//End If
 
 			//If Len(Err.FileName) <> 0 Then
-			//    .Append("Error Module:          ")
-			//    .Append(Err.FileName)
-			//    .Append(Environment.NewLine)
+			//   .Append("Error Module:          ")
+			//   .Append(Err.FileName)
+			//   .Append(Environment.NewLine)
 			//End If
 
 			//If Len(Err.Method) <> 0 Then
-			//    .Append("Error Method:          ")
-			//    .Append(Err.Method)
-			//    .Append(Environment.NewLine)
+			//   .Append("Error Method:          ")
+			//   .Append(Err.Method)
+			//   .Append(Environment.NewLine)
 			//End If
 
 			sb.Append("Date and Time:         ");
@@ -502,8 +528,8 @@ namespace ExceptionExtensions
 
 
 		/// <summary>
-		///  exception-safe WindowsIdentity.GetCurrent retrieval returns "domain\username"
-		///  per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
+		/// exception-safe WindowsIdentity.GetCurrent retrieval returns "domain\username"
+		/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
 		/// </summary>
 		/// <returns></returns>
 		private static string CurrentWindowsIdentity()
@@ -654,9 +680,9 @@ namespace ExceptionExtensions
 
 				if (SkipClassNameToSkip.Length > 0 && sf.GetMethod().DeclaringType.Name.IndexOf(SkipClassNameToSkip) > -1)
 				{
-					//---- don't include frames with this name
-					//     this lets of keep any ERR class frames out of
-					//     the strack trace, they'd just be clutter
+					// don't include frames with this name
+					// this lets of keep any ERR class frames out of
+					// the strack trace, they'd just be clutter
 				}
 				else
 				{

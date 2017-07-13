@@ -1,4 +1,30 @@
-﻿using System;
+﻿#region MIT License
+/*
+    MIT License
+
+    Copyright (c) 2016 Darin Higgins
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+ */
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -81,7 +107,7 @@ namespace GenerateLineMap
 					if (string.Compare(s, "/file", true) == 0)
 					{
 						// write the line map to a separate file
-						//     normally, it's written back into the EXE as a resource
+						// normally, it's written back into the EXE as a resource
 
 						bFile = true;
 						bAPIResource = false;
@@ -93,7 +119,7 @@ namespace GenerateLineMap
 					if (string.Compare(s, "/apiresource", true) == 0)
 					{
 						// write the line map to a winAPI resource
-						//     normally, it's written back into the EXE as a.net resource
+						// normally, it's written back into the EXE as a.net resource
 
 						bAPIResource = true;
 						bNETResource = false;
@@ -236,8 +262,8 @@ namespace GenerateLineMap
 				var executing_assembly = Assembly.GetExecutingAssembly();
 
 				// Get our namespace
-				//     Note that this is different from the Appname because we compile to a 
-				//     file call *Raw so that we can run ILMerge and result in the final filename
+				// Note that this is different from the Appname because we compile to a 
+				// file call *Raw so that we can run ILMerge and result in the final filename
 
 				var my_namespace = executing_assembly.EntryPoint.DeclaringType.Namespace;
 

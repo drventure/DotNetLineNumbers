@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016 Darin Higgins
+    Copyright (c) 2016 Emerson Brito
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -27,37 +27,35 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-using ExceptionExtensions;
-
-
-namespace TestApp1
+namespace ILMerge.MsBuild.Task
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			try
-			{
-				var x = 1;
-				var y = 2;
-				var z = 3;
 
-				y = x + z;
+    public class GeneralSettings
+    {
 
-				throw new FormatException("Unable to format");
-			}
-			catch (Exception ex)
-			{
-				ExceptionExtensions.ExceptionExtensions.UsePDB = false;
-				var buf = "ERROR: " + ex.ToStringExtended();
-				Console.WriteLine(buf);
-				buf = "ERROR: " + ex.ToString();
-				Console.WriteLine(buf);
-				System.Diagnostics.Debug.WriteLine(buf);
-			}
-		}
-	}
+        [DataMember(Order = 1)]
+        public string OutputFile { get; set; } = null;
+
+        [DataMember(Order = 2)]
+        public string TargetPlatform { get; set; } = null;
+
+        [DataMember(Order = 3)]
+        public string KeyFile { get; set; } = null;
+
+        [DataMember(Order = 4)]
+        public string AlternativeILMergePath { get; set; } = null;
+
+        [DataMember(Order = 5)]
+        public List<string> InputAssemblies { get; set; }
+
+        public GeneralSettings()
+        {
+            InputAssemblies = new List<string>();
+        }
+
+    }
 }
