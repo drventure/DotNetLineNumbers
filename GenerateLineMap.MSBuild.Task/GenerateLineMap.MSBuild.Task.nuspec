@@ -1,21 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
-    <id>GenerateLineMap.MSBuild.Task</id>
+    <id>$id$</id>
     <version>$version$</version>
-    <title>Generate Line Map MSBuild Task</title>
-    <authors>Darin Higgins</authors>
-    <owners>Darin Higgins</owners>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>http://www.vbfengshui.com</licenseUrl>
+    <projectUrl>http://www.vbfengshui.com</projectUrl>
+    <iconUrl>http://www.vbfengshui.com</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Adds Generate Line Map to Visual Studio 2013/2017 or automated builds.</description>    
+    <description>$description$</description>
+    <releaseNotes></releaseNotes>
     <copyright>Darin Higgins (c) 2017</copyright>
-    <projectUrl>https://github.com/drventure/GenerateLineMap-MSBuild-Task</projectUrl>
-    <licenseUrl>https://github.com/drventure/GenerateLineMap-MSBuild-Task/blob/master/LICENSE</licenseUrl>
     <tags>generatelinemap msbuild dynamics crm 365 merge</tags>
   </metadata>
   <files>
+    <!--
     <file src="..\GenerateLineMap.MSBuild.Task\GenerateLineMap.MSBuild.Task\bin\release\GenerateLineMap.MsBuild.Task.dll" target="tools\GenerateLineMap.MsBuild.Task.dll" />
     <file src="..\GenerateLineMap.MSBuild.Task\GenerateLineMap.MSBuild.Task\bin\release\GenerateLineMap.MsBuild.Task.pdb" target="tools\GenerateLineMap.MsBuild.Task.pdb" />
-    <file src="..\GenerateLineMap.MSBuild.Task\GenerateLineMap.MSBuild.Task\build\GenerateLineMap.MSBuild.Task.targets" target="build\GenerateLineMap.MSBuild.Task.targets" />
+    -->
+    <file src="..\GenerateLineMap.MSBuild.Task\build\GenerateLineMap.MSBuild.Task.targets" target="build\GenerateLineMap.MSBuild.Task.targets" />
   </files>
 </package>

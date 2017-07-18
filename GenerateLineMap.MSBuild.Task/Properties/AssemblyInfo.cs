@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("GenerateLineMap.MSBuild.Task")]
-[assembly: AssemblyDescription("GenerateLineMap MSBuild Task")]
+[assembly: AssemblyDescription("Adds Generate Line Map to Visual Studio 2017 or automated builds.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Darin Higgins")]
 [assembly: AssemblyProduct("GenerateLineMap.MSBuild.Task")]

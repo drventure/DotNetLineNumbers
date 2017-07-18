@@ -26,11 +26,7 @@
 
 using System;
 using System.IO;
-using System.Text;
 
-using FluentAssertions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Diagnostics;
 
 namespace GenerateLineMapUnitTests
 {

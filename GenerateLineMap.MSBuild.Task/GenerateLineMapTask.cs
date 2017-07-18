@@ -38,17 +38,14 @@ using System.Threading.Tasks;
 
 namespace GenerateLineMap.MsBuild.Task
 {
-
     // project properties
     // http://stackoverflow.com/questions/2772426/how-to-access-the-msbuild-s-properties-list-when-coding-a-custom-task
-
 
     // dependencies
     // http://stackoverflow.com/questions/8849289/get-dependent-assemblies
 
-    public class MergeTask : Microsoft.Build.Utilities.Task
+    public class GenerateLineMapTask : Microsoft.Build.Utilities.Task
     {
-
         #region Public Properties
 
         public virtual ITaskItem[] InputAssemblies { get; set; }
@@ -86,7 +83,7 @@ namespace GenerateLineMap.MsBuild.Task
 
         #region Constructors
 
-        public MergeTask()
+        public GenerateLineMapTask()
         {
             this.InputAssemblies = new ITaskItem[0];
         }
@@ -95,78 +92,82 @@ namespace GenerateLineMap.MsBuild.Task
 
         #region Public Methods
 
+		/// <summary>
+		/// This actual Generation of the LineMap is performed here
+		/// </summary>
+		/// <returns></returns>
         public override bool Execute()
         {
+            //LogInputVariables();
 
-            LogInputVariables();
+            //string jsonConfig;
+            //string exePath;
 
-            string jsonConfig;
-            string exePath;
+            //var settings = new MergerSettings();
 
-            var settings = new MergerSettings();
+            //// try to read configuration if file exists
+            //if (!ReadConfigFile(out jsonConfig)) {
+            //    return false;
+            //}
 
-            // try to read configuration if file exists
-            if (!ReadConfigFile(out jsonConfig)) {
-                return false;
-            }
+            //// replace tokens if applicable
+            //if(!string.IsNullOrWhiteSpace(jsonConfig))
+            //{
+            //    jsonConfig = ReplaceTokens(jsonConfig);
+            //}            
 
-            // replace tokens if applicable
-            if(!string.IsNullOrWhiteSpace(jsonConfig))
-            {
-                jsonConfig = ReplaceTokens(jsonConfig);
-            }            
+            //// if json config exists, try to deserialize into settings object
+            //if (!string.IsNullOrWhiteSpace(jsonConfig) && !DeserializeJsonConfig(jsonConfig, out settings)) {
+            //    return false;
+            //}
 
-            // if json config exists, try to deserialize into settings object
-            if (!string.IsNullOrWhiteSpace(jsonConfig) && !DeserializeJsonConfig(jsonConfig, out settings)) {
-                return false;
-            }
+            //if(settings == null)
+            //{
+            //    // create instance if seetings still null which indicates a custom json config was not used
+            //    settings = new MergerSettings();
+            //}
 
-            if(settings == null)
-            {
-                // create instance if seetings still null which indicates a custom json config was not used
-                settings = new MergerSettings();
-            }
-
-            // apply defaults
-            SetDefaults(settings);
+            //// apply defaults
+            //SetDefaults(settings);
             
-            if(settings.General.AlternativeILMergePath.HasValue())
-            {
-                if(!File.Exists(settings.General.AlternativeILMergePath))
-                {
-                    Log.LogError($"An alternative path for GenerateLineMap.exe was provided but the file was not found: {settings.General.AlternativeILMergePath}");
-                    return false;
-                }
-                else
-                {
-                    exePath = settings.General.AlternativeILMergePath;
-                    Log.LogMessage("Using alternative ILMerge path: {0}", settings.General.AlternativeILMergePath);
-                }
-            }
-            else
-            {
-                exePath = this.GetILMergePath();
-            }
+            //if(settings.General.AlternativeILMergePath.HasValue())
+            //{
+            //    if(!File.Exists(settings.General.AlternativeILMergePath))
+            //    {
+            //        Log.LogError($"An alternative path for GenerateLineMap.exe was provided but the file was not found: {settings.General.AlternativeILMergePath}");
+            //        return false;
+            //    }
+            //    else
+            //    {
+            //        exePath = settings.General.AlternativeILMergePath;
+            //        Log.LogMessage("Using alternative ILMerge path: {0}", settings.General.AlternativeILMergePath);
+            //    }
+            //}
+            //else
+            //{
+            //    exePath = this.GetILMergePath();
+            //}
 
-            if(!exePath.HasValue())
-            {
-                Log.LogError("GenerateLineMap.exe was no located. Make sure you have the ILMerge nuget package installed. " 
-                    + "If you defined a custom packages folder in your Nuget.Config it is possible we are having a hard time figuring it out. " 
-                    + "In this case please use attribute 'AlternativeILMergePath' in the configuration file to indicate the full path for GenerateLineMap.exe.");
-                return false;
-            }
+            //if(!exePath.HasValue())
+            //{
+            //    Log.LogError("GenerateLineMap.exe was no located. Make sure you have the ILMerge nuget package installed. " 
+            //        + "If you defined a custom packages folder in your Nuget.Config it is possible we are having a hard time figuring it out. " 
+            //        + "In this case please use attribute 'AlternativeILMergePath' in the configuration file to indicate the full path for GenerateLineMap.exe.");
+            //    return false;
+            //}
 
-            // log configuration file used by this task.
-            LogConfigFile(settings);
+            //// log configuration file used by this task.
+            //LogConfigFile(settings);
 
-            if (!MergeAssemblies(exePath, settings))
-            {
-                return false;
-            }
+			System.Windows.Forms.MessageBox.Show("Just A Test");
 
 
-            return true;
+            //if (!MergeAssemblies(exePath, settings))
+            //{
+            //    return false;
+            //}
 
+			return true;
         }
 
         #endregion
@@ -175,7 +176,6 @@ namespace GenerateLineMap.MsBuild.Task
 
         private void LogInputVariables()
         {
-
             Log.LogMessage($"SolutionDir: {SolutionDir}");
             Log.LogMessage($"SolutionPath: {SolutionPath}");
             Log.LogMessage($"ProjectDir: {ProjectDir}");
@@ -188,7 +188,6 @@ namespace GenerateLineMap.MsBuild.Task
             Log.LogMessage($"TargetArchitecture: {TargetArchitecture}");
             Log.LogMessage($"KeyFile: {KeyFile}");
             Log.LogMessage($"ConfigurationFilePath: {ConfigurationFilePath}");
-
         }
 
         private bool DeserializeJsonConfig(string jsonConfig, out MergerSettings settings)
@@ -217,8 +216,8 @@ namespace GenerateLineMap.MsBuild.Task
             }
 
             return success;
-
         }
+
 
         private string ReplaceTokens(string jsonConfig)
         {
@@ -303,13 +302,11 @@ namespace GenerateLineMap.MsBuild.Task
             {
                 settings.Advanced.SearchDirectories.Add(this.TargetDir);
             }
-
-            
         }
+
 
         private bool MergeAssemblies(string mergerPath, MergerSettings settings)
         {
-
             bool success = true;
             Assembly ilmerge = LoadILMerge(mergerPath);
             Type ilmergeType = ilmerge.GetType("ILMerging.ILMerge", true, true);
@@ -407,12 +404,11 @@ namespace GenerateLineMap.MsBuild.Task
             }
 
             return success;
-
         }
+
 
         private Assembly LoadILMerge(string mergerPath)
         {
-
             if (string.IsNullOrWhiteSpace(mergerPath)) throw new ArgumentNullException(nameof(mergerPath));
 
             Log.LogMessage($"Loading ILMerge from '{mergerPath}'.");
@@ -420,12 +416,11 @@ namespace GenerateLineMap.MsBuild.Task
             Assembly ilmerge = Assembly.LoadFrom(mergerPath);
 
             return ilmerge;
-
         }
+
 
         private bool ReadConfigFile(out string jsonConfig)
         {
-
             jsonConfig = string.Empty;
             bool success = true;
 
@@ -459,12 +454,11 @@ namespace GenerateLineMap.MsBuild.Task
             }
 
             return success;
-
         }
+
 
         public string GetILMergePath()
         {
-
             string exePath = null;
             string errMsg;
             var failedPaths = new List<string>();
@@ -532,12 +526,11 @@ namespace GenerateLineMap.MsBuild.Task
             }
 
             return exePath;
-
         }
+
 
         private string ToAbsolutePath(string relativePath)
         {
-
             // if path is not rooted assume it is relative.
             // convert relative to absolute using project dir as root.
 
@@ -549,8 +542,8 @@ namespace GenerateLineMap.MsBuild.Task
             }
 
             return Path.GetFullPath(Path.Combine(ProjectDir, relativePath));
-
         }
+
 
         private void LogConfigFile(MergerSettings settings)
         {
@@ -566,6 +559,7 @@ namespace GenerateLineMap.MsBuild.Task
             Log.LogMessage("Saving current configuration to: {0}", outputPath);
             File.WriteAllText(outputPath, settings.ToJson(), Encoding.UTF8);
         }
+
 
         private string EscapePath(string path)
         {

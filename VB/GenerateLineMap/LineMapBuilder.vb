@@ -6,7 +6,7 @@ Imports System.Text
 ''' <summary>
 ''' Utility Class to generate a LineMap based on the
 ''' contents of the PDB for a specific EXE or DLL
-''' (c) 2008-2008 Darin Higgins All Rights Reserved
+''' (c) 2008-2017 Darin Higgins All Rights Reserved
 ''' </summary>
 ''' <remarks>
 ''' If some of the functions seem a little odd here, that's mostly because

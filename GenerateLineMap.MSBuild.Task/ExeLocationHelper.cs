@@ -30,9 +30,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace GenerateLineMap.MsBuild.Task
 {
@@ -41,7 +39,6 @@ namespace GenerateLineMap.MsBuild.Task
 
         public static bool TryILMergeInSolutionDir(string solutionDir, out string executablePath)
         {
-
             executablePath = null;
             string basePath = Path.Combine(solutionDir, "packages");
 
