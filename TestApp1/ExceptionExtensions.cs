@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016 Darin Higgins
+    Copyright (c) 2017 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -134,11 +134,8 @@ namespace ExceptionExtensions
 				}
 				catch (Exception ex)
 				{
-					// just catch any exception here, if we can't load the linemap
-					// oh well, we tried
-
-					//TODO Fixup
-					//OnWriteLog(ex, "Unable to load Line Map Resource");
+					//any problems in loading the Linemap, just write to debugger and call it a day
+					System.Diagnostics.Debug.WriteLine(string.Format("Unable to load line map information. Error: {0}", ex.ToString()));
 				}
 				finally
 				{
@@ -503,8 +500,9 @@ namespace ExceptionExtensions
 			{
 				return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
 			}
-			catch (Exception ex)
+			catch 
 			{
+				//just provide a default value
 				return "127.0.0.1";
 			}
 		}
@@ -538,8 +536,9 @@ namespace ExceptionExtensions
 			{
 				return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
 			}
-			catch (Exception ex)
+			catch
 			{
+				//just provide a default value
 				return "";
 			}
 		}
@@ -555,8 +554,9 @@ namespace ExceptionExtensions
 			{
 				return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
 			}
-			catch (Exception ex)
+			catch 
 			{
+				//just provide a default value
 				return "";
 			}
 		}
@@ -610,8 +610,9 @@ namespace ExceptionExtensions
 			{
 				return System.IO.File.GetLastWriteTime(objAssembly.Location);
 			}
-			catch (Exception ex)
+			catch
 			{
+				//just provide a default value
 				return DateTime.MinValue;
 			}
 		}

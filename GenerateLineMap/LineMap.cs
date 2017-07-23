@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016 Darin Higgins
+    Copyright (c) 2017 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -36,9 +36,7 @@ using System.Xml;
 
 
 /// <summary>
-/// Track LineMap information
-/// for persistence purposes
-/// (c) 2008-2009 Darin Higgins All Rights Reserved
+/// Track Line Map information for persistence purposes
 /// </summary>
 /// <remarks></remarks>
 /// <editHistory></editHistory>
@@ -58,8 +56,8 @@ public class LineMap
 
 	#region " API Declarations for working with Resources"
 	private static extern IntPtr FindResourceEx(Int32 hModule, [MarshalAs(UnmanagedType.LPStr)]
-string lpType, [MarshalAs(UnmanagedType.LPStr)]
-string lpName, Int16 wLanguage);
+		string lpType, [MarshalAs(UnmanagedType.LPStr)]
+		string lpName, Int16 wLanguage);
 	[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
 	private static extern IntPtr LoadResource(IntPtr hInstance, IntPtr hResInfo);
 	[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
@@ -83,56 +81,10 @@ string lpName, Int16 wLanguage);
 	internal class LineMapKeys
 	{
 		public static byte[] ENCKEY = new byte[32] {
-			1,
-			2,
-			3,
-			4,
-			5,
-			6,
-			7,
-			8,
-			9,
-			10,
-			11,
-			12,
-			13,
-			14,
-			15,
-			16,
-			17,
-			18,
-			19,
-			20,
-			21,
-			22,
-			23,
-			24,
-			25,
-			26,
-			27,
-			28,
-			29,
-			30,
-			31,
-			32
+			1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
 		};
 		public static byte[] ENCIV = new byte[16] {
-			65,
-			2,
-			68,
-			26,
-			7,
-			178,
-			200,
-			3,
-			65,
-			110,
-			68,
-			13,
-			69,
-			16,
-			200,
-			219
+			65, 2, 68, 26, 7, 178, 200, 3, 65, 110, 68, 13, 69, 16, 200, 219
 		};
 		public static string ResTypeName = "LINEMAP";
 		public static string ResName = "LINEMAPDATA";
@@ -347,8 +299,8 @@ string lpName, Int16 wLanguage);
 		private void Load()
 		{
 			Stream buf = FileToStream(this.FileName + ".linemap");
-			var buf2 = DecryptStream(ref buf);
-			Transfer(Depersist(DecompressStream(ref buf2)));
+			var buf2 = DecryptStream(buf);
+			Transfer(Depersist(DecompressStream(buf2)));
 		}
 
 
@@ -413,15 +365,14 @@ string lpName, Int16 wLanguage);
 					bytes = null;
 					// and depersist the object
 					Stream temp = MemStream;
-					var temp2 = DecryptStream(ref temp);
-					Transfer(Depersist(DecompressStream(ref temp2)));
+					var temp2 = DecryptStream(temp);
+					Transfer(Depersist(DecompressStream(temp2)));
 				}
 
 			}
 			catch (Exception ex)
 			{
-				//TODO FIXUP
-				//Console.WriteLine("ERROR: {0}", ex.ToString());
+				System.Diagnostics.Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
 				// yes, it's bad form to catch all exceptions like this
 				// but this is part of an exception handler
 				// so it really can't be allowed to fail with an exception!
@@ -438,8 +389,7 @@ string lpName, Int16 wLanguage);
 			}
 			catch (Exception ex)
 			{
-				//TODO Fixup
-				//Console.WriteLine("ERROR: {0}", ex.ToString());
+				System.Diagnostics.Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
 			}
 		}
 
@@ -455,11 +405,6 @@ string lpName, Int16 wLanguage);
 			this.AddressToLineMap = alm.AddressToLineMap;
 			this.Symbols = alm.Symbols;
 			this.Names = alm.Names;
-
-			// debugging
-			Debug.Print(this.Symbols.Count.ToString());
-			Debug.Print(this.AddressToLineMap.Count.ToString());
-			Debug.Print(this.Names.Count.ToString());
 		}
 
 
@@ -494,7 +439,7 @@ string lpName, Int16 wLanguage);
 		/// </summary>
 		/// <param name="EncryptedStream"></param>
 		/// <returns></returns>
-		private MemoryStream DecryptStream(ref Stream EncryptedStream)
+		private MemoryStream DecryptStream(Stream EncryptedStream)
 		{
 
 			try
@@ -528,8 +473,7 @@ string lpName, Int16 wLanguage);
 			}
 			catch (Exception ex)
 			{
-				//TODO Fixup
-				//Console.WriteLine("ERROR: {0}", ex.ToString());
+				System.Diagnostics.Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
 				// any problems, nothing much to do, so return an empty stream
 				return new MemoryStream();
 			}
@@ -541,7 +485,7 @@ string lpName, Int16 wLanguage);
 		/// </summary>
 		/// <param name="CompressedStream"></param>
 		/// <returns></returns>
-		private MemoryStream DecompressStream(ref MemoryStream CompressedStream)
+		private MemoryStream DecompressStream(MemoryStream CompressedStream)
 		{
 
 			System.IO.Compression.GZipStream GZip = new System.IO.Compression.GZipStream(CompressedStream, System.IO.Compression.CompressionMode.Decompress);

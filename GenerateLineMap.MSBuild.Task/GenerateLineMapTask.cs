@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016 Darin Higgins
+    Copyright (c) 2017 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -160,12 +160,7 @@ namespace GenerateLineMap.MsBuild.Task
 				return false;
 			}
 
-			// log configuration file used by this task.
-			LogConfigFile(settings);
-
 			return GenerateLineMapBasedOn(settings);
-
-			// return MergeAssemblies(exePath, settings);
 		}
 
 		#endregion
@@ -293,7 +288,7 @@ namespace GenerateLineMap.MsBuild.Task
 					Log.LogMessage("Output directory created.");
 				}
 
-				var outfile = string.Format("/out:\"{0}.new\"", this.TargetPath);
+				var outfile = string.Format("/out:\"{0}\"", this.TargetPath);
 				var cmdline = string.Format("GenerateLineMap {0} {1}", outfile, this.TargetPath);
 				Log.LogMessage("Effectively executing command line: " + cmdline);
 
@@ -301,7 +296,7 @@ namespace GenerateLineMap.MsBuild.Task
 				GenerateLineMap.Program.MSBuildLogger = Log;
 
 				//and actually perform the line map generation
-				GenerateLineMap.Program.Main(new string[] { "{ignoredpathargument}", outfile, "/file", this.TargetPath });
+				GenerateLineMap.Program.Main(new string[] { "{ignoredpathargument}", outfile, this.TargetPath });
 
 				//if (merger.StrongNameLost)
 				//	Log.LogMessage(MessageImportance.High, "StrongNameLost = true");
@@ -319,53 +314,8 @@ namespace GenerateLineMap.MsBuild.Task
 
 			return success;
 		}
-
-
-		private bool MergeAssemblies(string mergerPath, Settings settings)
-		{
-			bool success = true;
-			Assembly ilmerge = LoadILMerge(mergerPath);
-			Type ilmergeType = ilmerge.GetType("ILMerging.ILMerge", true, true);
-			if (ilmergeType == null) throw new InvalidOperationException("Cannot find 'ILMerging.ILMerge' in executable.");
-
-			Log.LogMessage("Instantianting GenerateLineMap.");
-			dynamic merger = Activator.CreateInstance(ilmergeType);
-
-			Log.LogMessage("Setting up GenerateLineMap.");
-
-			string[] tp = settings.General.TargetPlatform.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
-
-			try
-			{
-
-				string outputDir = Path.GetDirectoryName(settings.General.OutputFile);
-				if (!Directory.Exists(outputDir))
-				{
-					Log.LogWarning($"Output directory not found. An attempt to create the directory will be made: {outputDir}");
-					Directory.CreateDirectory(outputDir);
-					Log.LogMessage("Output directory created.");
-				}
-
-				merger.Merge();
-
-				if (merger.StrongNameLost)
-					Log.LogMessage(MessageImportance.High, "StrongNameLost = true");
-			}
-			catch (Exception exception)
-			{
-				Log.LogErrorFromException(exception);
-				success = false;
-			}
-			finally
-			{
-				merger = null;
-				ilmerge = null;
-			}
-
-			return success;
-		}
-
-
+		
+		
 		private Assembly LoadILMerge(string mergerPath)
 		{
 			if (string.IsNullOrWhiteSpace(mergerPath)) throw new ArgumentNullException(nameof(mergerPath));
@@ -493,22 +443,6 @@ namespace GenerateLineMap.MsBuild.Task
 			}
 
 			return Path.GetFullPath(Path.Combine(ProjectDir, relativePath));
-		}
-
-
-		private void LogConfigFile(Settings settings)
-		{
-
-			string outputPath = Path.Combine(Path.GetDirectoryName(settings.General.OutputFile), Path.GetFileNameWithoutExtension(settings.General.OutputFile) + ".merge.json");
-			string outputDir = Path.GetDirectoryName(outputPath);
-
-			if (!Directory.Exists(outputDir))
-			{
-				Directory.CreateDirectory(outputDir);
-			}
-
-			Log.LogMessage("Saving current configuration to: {0}", outputPath);
-			File.WriteAllText(outputPath, settings.ToJson(), Encoding.UTF8);
 		}
 
 

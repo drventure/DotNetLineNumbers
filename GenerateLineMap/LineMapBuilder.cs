@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2016 Darin Higgins
+    Copyright (c) 2017 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,6 @@ namespace GenerateLineMap
 	/// <summary>
 	/// Utility Class to generate a LineMap based on the
 	/// contents of the PDB for a specific EXE or DLL
-	/// (c) 2008-2017 Darin Higgins All Rights Reserved
 	/// </summary>
 	/// <remarks>
 	/// If some of the functions seem a little odd here, that's mostly because
