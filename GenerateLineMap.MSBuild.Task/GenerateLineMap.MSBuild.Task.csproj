@@ -16,7 +16,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -46,11 +46,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
+      <Link>SharedAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="AdvancedSettings.cs" />
     <Compile Include="ExeLocationHelper.cs" />
     <Compile Include="FrameworkInfo.cs" />
     <Compile Include="GeneralSettings.cs" />
-    <Compile Include="MergerSettings.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="GenerateLineMapTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringExtensions.cs" />
@@ -59,13 +62,22 @@
     <None Include="build\GenerateLineMap.MSBuild.Task.targets">
       <SubType>Designer</SubType>
     </None>
-    <None Include="CreatePackage.bat" />
-    <None Include="GenerateLineMap.MSBuild.Task.nuspec" />
+    <None Include="GenerateLineMap.MSBuild.Task.nuspec">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GenerateLineMap\GenerateLineMap.csproj">
+      <Project>{ea13ab2d-71f0-4634-911b-84bfd0d29232}</Project>
+      <Name>GenerateLineMap</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>cd $(ProjectDir)
-CreatePackage 0.0.0.1</PostBuildEvent>
+    <PostBuildEvent>Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

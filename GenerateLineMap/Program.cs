@@ -29,6 +29,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.Build.Utilities;
 
 using Microsoft.VisualBasic.ApplicationServices;
 
@@ -48,6 +49,24 @@ namespace GenerateLineMap
 		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
 		internal static extern void LoadLibrary(string lpFileName);
 
+
+		static Program()
+		{
+			//default to using the console logger
+			Log.Logger = new ConsoleLogger();
+		}
+
+
+		/// <summary>
+		/// Write only prop allows the build task to tell us to use the MSBuild logger instead
+		/// </summary>
+		public static TaskLoggingHelper MSBuildLogger
+		{
+			set
+			{
+				Log.Logger = new MSBuildLogger(value);
+			}
+		}
 
 		/// <summary>
 		/// Command line application entry point
@@ -142,12 +161,12 @@ namespace GenerateLineMap
 					}
 				}
 				
-				Console.WriteLine(string.Format("{0} v{1}", AsmInfo.Title, AsmInfo.Version));
+				Log.LogMessage("{0} v{1}", AsmInfo.Title, AsmInfo.Version);
 
-				Console.WriteLine(AsmInfo.Description);
-				Console.WriteLine(string.Format("   {0}", AsmInfo.Copyright));
+				Log.LogMessage(AsmInfo.Description);
+				Log.LogMessage("   {0}", AsmInfo.Copyright);
 
-				Console.WriteLine();
+				Log.LogMessage("");
 
 				if (fileName.Length == 0)
 				{
@@ -158,7 +177,7 @@ namespace GenerateLineMap
 				// extract the necessary dbghelp.dll
 				if (ExtractDbgHelp())
 				{
-					Console.WriteLine("Unable to extract dbghelp.dll to this folder.");
+					Log.LogWarning("Unable to extract dbghelp.dll to this folder.");
 					return;
 				}
 
@@ -174,21 +193,21 @@ namespace GenerateLineMap
 
 				if (bFile)
 				{
-					Console.WriteLine(String.Format("Creating linemap file for file {0}...", fileName));
+					Log.LogMessage("Creating linemap file for file {0}...", fileName);
 
 					lmb.CreateLineMapFile();
 				}
 
 				if (bAPIResource)
 				{
-					Console.WriteLine(String.Format("Adding linemap WIN resource in file {0}...", fileName));
+					Log.LogMessage("Adding linemap WIN resource in file {0}...", fileName);
 
 					lmb.CreateLineMapAPIResource();
 				}
 
 				if (bNETResource)
 				{
-					Console.WriteLine(String.Format("Adding linemap .NET resource in file {0}...", fileName));
+					String.Format("Adding linemap .NET resource in file {0}...", fileName);
 
 					lmb.CreateLineMapResource();
 				}
@@ -197,7 +216,7 @@ namespace GenerateLineMap
 			{
 				// let em know we had a failure
 
-				Console.WriteLine(string.Format("Unable to complete operation. Error: {0}\r\n\r\n{1}", ex.Message, ex.StackTrace));
+				Log.LogError(ex, "Unable to complete operation.");
 				Environment.ExitCode = 1;
 			}
 
@@ -208,41 +227,41 @@ namespace GenerateLineMap
 
 		private static void ShowHelp()
 		{
-			Console.WriteLine();
-			Console.WriteLine("Usage:");
+			Log.LogMessage("");
+			Log.LogMessage("Usage:");
 
-			Console.WriteLine(String.Format("   {0} FilenameOfExeOrDllFile [options]", AsmInfo));
+			Log.LogMessage("   {0} FilenameOfExeOrDllFile [options]", AsmInfo);
 
-			Console.WriteLine("where options are:");
+			Log.LogMessage("where options are:");
 
-			Console.WriteLine("   [/report] [[/file]|[/resource]|[/apiresource]]");
+			Log.LogMessage("   [/report] [[/file]|[/resource]|[/apiresource]]");
 
-			Console.WriteLine();
-			Console.WriteLine("/report        Generate report of contents of PDB file");
+			Log.LogMessage("");
+			Log.LogMessage("/report        Generate report of contents of PDB file");
 
-			Console.WriteLine("/file          Output a linemap file with the symbol and line num buffers");
+			Log.LogMessage("/file          Output a linemap file with the symbol and line num buffers");
 
-			Console.WriteLine("/resource      (default) Create a linemap .NET resource in the target");
+			Log.LogMessage("/resource      (default) Create a linemap .NET resource in the target");
 
-			Console.WriteLine("               EXE/DLL file");
+			Log.LogMessage("               EXE/DLL file");
 
-			Console.WriteLine("/apiresource   Create a linemap windows resource in the target EXE/DLL file");
+			Log.LogMessage("/apiresource   Create a linemap windows resource in the target EXE/DLL file");
 
-			Console.WriteLine();
-			Console.WriteLine("The default is 'apiresource' which embeds the linemap into");
+			Log.LogMessage("");
+			Log.LogMessage("The default is 'apiresource' which embeds the linemap into");
 
-			Console.WriteLine("the target executable as a standard windows resource.");
+			Log.LogMessage("the target executable as a standard windows resource.");
 
-			Console.WriteLine(".NET resource support is experimental at this point.");
+			Log.LogMessage(".NET resource support is experimental at this point.");
 
-			Console.WriteLine("The 'file' option is mainly for testing. The resulting *.linemap");
+			Log.LogMessage("The 'file' option is mainly for testing. The resulting *.linemap");
 
-			Console.WriteLine("file will contain source names and line numbers but no other");
+			Log.LogMessage("file will contain source names and line numbers but no other");
 
-			Console.WriteLine("information commonly found in PDB files.");
+			Log.LogMessage("information commonly found in PDB files.");
 
-			Console.WriteLine();
-			Console.WriteLine("Returns an exitcode of 0 on success, 1 on failure");
+			Log.LogMessage("");
+			Log.LogMessage("Returns an exitcode of 0 on success, 1 on failure");
 		}
 
 
@@ -305,7 +324,7 @@ namespace GenerateLineMap
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine(string.Format("\r\n!!! Unable to extract dbghelp.dll to current directory. Error: {0}", ex.ToString()));
+				Log.LogError(ex, "\r\n!!! Unable to extract dbghelp.dll to current directory.");
 
 				return true;
 			}

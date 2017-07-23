@@ -15,6 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateLineMapUnitTests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateLineMap.MSBuild.Task", "GenerateLineMap.MSBuild.Task\GenerateLineMap.MSBuild.Task.csproj", "{43FD3A69-730F-4FA0-9036-0897F3B758EE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VersionInfo", "VersionInfo", "{3D89CD87-07DD-49F7-A28F-2D5A27540E24}"
+	ProjectSection(SolutionItems) = preProject
+		VersionInfo\SharedAssemblyInfo.cs = VersionInfo\SharedAssemblyInfo.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

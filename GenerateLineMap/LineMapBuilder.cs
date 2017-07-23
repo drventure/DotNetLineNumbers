@@ -421,7 +421,7 @@ namespace GenerateLineMap
 			//only write it if requested
 			if (this.CreateMapReport)
 			{
-				Console.WriteLine("Creating symbol buffer report");
+				Log.LogMessage("Creating symbol buffer report");
 
 				using (var tw = new StreamWriter(this.Filename + ".linemapreport", false))
 				{
@@ -538,7 +538,7 @@ namespace GenerateLineMap
 			catch (Exception ex)
 			{
 				// return return vars
-				Console.WriteLine(string.Format("Unable to retrieve symbols. Error: {0}", ex.ToString()));
+				Log.LogError(ex, "Unable to retrieve symbols.");
 				_alm.Clear();
 
 				// and rethrow
@@ -546,11 +546,11 @@ namespace GenerateLineMap
 			}
 			finally
 			{
-				Console.WriteLine("Retrieved {0} symbols", _alm.Symbols.Count);
-	
-				Console.WriteLine("Retrieved {0} lines", _alm.AddressToLineMap.Count) ;
-	
-				Console.WriteLine("Retrieved {0} strings", _alm.Names.Count);
+				Log.LogMessage("Retrieved {0} symbols", _alm.Symbols.Count);
+
+				Log.LogMessage("Retrieved {0} lines", _alm.AddressToLineMap.Count) ;
+
+				Log.LogMessage("Retrieved {0} strings", _alm.Names.Count);
 	
 				// release the module
 				if (dwModuleBase != 0) SymUnloadModule64(hProcess, dwModuleBase);
@@ -571,7 +571,7 @@ namespace GenerateLineMap
 		/// <remarks></remarks>
 		private void pStreamToFile(String Filename, MemoryStream MemoryStream)
 		{
-			Console.WriteLine("Writing symbol buffer to file");
+			Log.LogMessage("Writing symbol buffer to file");
 
 			using (var fileStream = new System.IO.FileStream(Filename, FileMode.Create))
 			{ 
@@ -602,7 +602,7 @@ namespace GenerateLineMap
 
 			// convert memorystream to byte array and write out to 
 			// the linemap resource
-			Console.WriteLine("Writing symbol buffer to resource");
+			Log.LogMessage("Writing symbol buffer to resource");
 
 			ResWriter.FileName = filename;
 			var buf = memoryStream.ToArray();
@@ -631,7 +631,7 @@ namespace GenerateLineMap
 			// convert memorystream to byte array and write out to 
 			// the linemap resource
 
-			Console.WriteLine("Writing symbol buffer to resource");
+			Log.LogMessage("Writing symbol buffer to resource");
 
 			ResWriter.FileName = this.Filename;
 			ResWriter.Add(ResourceName, memoryStream.ToArray());
@@ -650,7 +650,7 @@ namespace GenerateLineMap
 			var CompressedStream = new System.IO.MemoryStream();
 
 			// note, the LeaveOpen parm MUST BE true into order to read the memory stream afterwards!
-			Console.WriteLine("Compressing symbol buffer");
+			Log.LogMessage("Compressing symbol buffer");
 
 			using (var GZip = new System.IO.Compression.GZipStream(CompressedStream, System.IO.Compression.CompressionMode.Compress, true))
 			{
@@ -669,7 +669,7 @@ namespace GenerateLineMap
 		{
 			var Enc = new System.Security.Cryptography.RijndaelManaged();
 
-			Console.WriteLine("Encrypting symbol buffer");
+			Log.LogMessage("Encrypting symbol buffer");
 			// setup our encryption key
 			Enc.KeySize = 256;
 			// KEY is 32 byte array
@@ -766,7 +766,7 @@ namespace GenerateLineMap
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine("ERROR: {0}", ex.ToString());
+					Log.LogError(ex, "Unable to enum lines");
 					// catch everything because we DO NOT
 					// want to throw an exception from here!
 				}

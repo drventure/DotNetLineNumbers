@@ -34,6 +34,9 @@ using System.Threading.Tasks;
 namespace GenerateLineMap.MsBuild.Task
 {
 
+	/// <summary>
+	/// General settings persistance class
+	/// </summary>
     public class GeneralSettings
     {
 
@@ -44,18 +47,9 @@ namespace GenerateLineMap.MsBuild.Task
         public string TargetPlatform { get; set; } = null;
 
         [DataMember(Order = 3)]
-        public string KeyFile { get; set; } = null;
+        public string AlternativeGenerateLineMapPath { get; set; } = null;
 
-        [DataMember(Order = 4)]
-        public string AlternativeILMergePath { get; set; } = null;
-
-        [DataMember(Order = 5)]
-        public List<string> InputAssemblies { get; set; }
-
-        public GeneralSettings()
-        {
-            InputAssemblies = new List<string>();
-        }
-
-    }
+		[DataMember(Order = 4)]
+		public string AlternativeILMergePath { get; set; } = null;
+	}
 }

@@ -32,7 +32,7 @@ namespace GenerateLineMap.MsBuild.Task
     static class StringExtensions
     {
 
-        public static bool HasValue(this string value)
+        public static bool IsNotNull(this string value)
         {
             return !string.IsNullOrWhiteSpace(value);
         }

@@ -420,7 +420,8 @@ string lpName, Int16 wLanguage);
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("ERROR: {0}", ex.ToString());
+				//TODO FIXUP
+				//Console.WriteLine("ERROR: {0}", ex.ToString());
 				// yes, it's bad form to catch all exceptions like this
 				// but this is part of an exception handler
 				// so it really can't be allowed to fail with an exception!
@@ -437,7 +438,8 @@ string lpName, Int16 wLanguage);
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("ERROR: {0}", ex.ToString());
+				//TODO Fixup
+				//Console.WriteLine("ERROR: {0}", ex.ToString());
 			}
 		}
 
@@ -526,7 +528,8 @@ string lpName, Int16 wLanguage);
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("ERROR: {0}", ex.ToString());
+				//TODO Fixup
+				//Console.WriteLine("ERROR: {0}", ex.ToString());
 				// any problems, nothing much to do, so return an empty stream
 				return new MemoryStream();
 			}

@@ -37,7 +37,10 @@ using System.Web.Script.Serialization;
 namespace GenerateLineMap.MsBuild.Task
 {
 
-    public class MergerSettings
+	/// <summary>
+	/// Settings class for serializing/deserializing our app settings to JSON
+	/// </summary>
+    public class Settings
     {
 
         public GeneralSettings General { get; set; } = new GeneralSettings();
@@ -51,7 +54,7 @@ namespace GenerateLineMap.MsBuild.Task
             return json;
         }
 
-        public static MergerSettings FromJson(string jsonString)
+        public static Settings FromJson(string jsonString)
         {
 
             if (string.IsNullOrWhiteSpace(jsonString))
@@ -60,12 +63,9 @@ namespace GenerateLineMap.MsBuild.Task
             }
 
             var srl = new JavaScriptSerializer();
-            var obj = srl.Deserialize<MergerSettings>(jsonString);
+            var obj = srl.Deserialize<Settings>(jsonString);
 
             return obj;
-
         }
-
-
     }
 }
