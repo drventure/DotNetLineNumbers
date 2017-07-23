@@ -244,12 +244,6 @@ namespace GenerateLineMap.MsBuild.Task
 				Log.LogMessage("Applying default value for OutputFile.");
 			}
 
-			if (!settings.General.TargetPlatform.IsNotNull())
-			{
-				settings.General.TargetPlatform = FrameworkInfo.ToILmergeTargetPlatform(this.TargetFrameworkVersion, this.TargetArchitecture);
-				Log.LogMessage($"Applying default value for TargetPlatform: {settings.General.TargetPlatform}");
-			}
-
 			if (settings.Advanced == null)
 			{
 				settings.Advanced = new AdvancedSettings();
