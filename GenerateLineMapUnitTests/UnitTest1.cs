@@ -111,7 +111,7 @@ namespace GenerateLineMapUnitTests
 				TestApp1.Program.Main(new string[] { });
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Program.cs: line 24");
+				consoleOutput.Ouput.Should().Contain("Program.cs: line 46");
 			}
 		}
 
@@ -124,27 +124,17 @@ namespace GenerateLineMapUnitTests
 				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1-1.exe", "TestApp1.exe" });
 
 				//make sure PDB doesn't exist anymore
-				//there's seems to be some timing issues with deleting the file so spin till successful
-				while (true)
+				if (File.Exists("TestApp1.pdb"))
 				{
-					try
-					{
-						if (File.Exists("TestApp1.pdb"))
-						{
-							File.SetAttributes("TestApp1.pdb", FileAttributes.Normal);
-							File.Delete("TestApp1.pdb");
-						}
-						break;
-					}
-					catch
-					{ }
+					File.SetAttributes("TestApp1.pdb", FileAttributes.Normal);
+					File.Delete("TestApp1.pdb");
 				}
 
 				//execute test app, should file and write stack trace to console
 				StartConsoleApplication("TestApp1-1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Program.cs: line 24");
+				consoleOutput.Ouput.Should().Contain("Program.cs: line 46");
 			}
 		}
 
