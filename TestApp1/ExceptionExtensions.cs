@@ -30,33 +30,42 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
+using InternalExtensionMethods;
 
 namespace ExceptionExtensions
 {
 	public static class ExceptionExtensions
 	{
-		private const string ERRCLASSNAME = "ExceptionExtensions";
-		public static bool UsePDB {get; set;}
+		/// <summary>
+		/// Force the use of the PDB if available
+		/// This is primarily used when debugging/Unit testing
+		/// </summary>
+		public static bool AllowUseOfPDB {get; set;}
+
+
+		/// <summary>
+		/// Used to identify stack frames that relate to "this" class so they can be skipped
+		/// </summary>
+		private static string CLASSNAME = "ExceptionExtensions";
+
 
 		/// <summary>
 		/// turns a single stack frame object into an informative string
 		/// </summary>
-		/// <param name="FrameNum"></param>
 		/// <param name="sf"></param>
 		/// <returns></returns>
-		private static string StackFrameToString(int FrameNum, StackFrame sf)
+		private static string StackFrameToString(StackFrame sf)
 		{
-			System.Text.StringBuilder sb = new System.Text.StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			int intParam = 0;
 			MemberInfo mi = sf.GetMethod();
 
-			//-- build method name
+			//build method name
 			sb.Append("   ");
 			string MethodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
 			sb.Append(MethodName);
-			//If FrameNum = 1 Then rCachedErr.Method = MethodName
 
-			//-- build method params
+			//build method params
 			ParameterInfo[] objParameters = sf.GetMethod().GetParameters();
 			sb.Append("(");
 			intParam = 0;
@@ -69,12 +78,11 @@ namespace ExceptionExtensions
 				sb.Append(" As ");
 				sb.Append(objParameter.ParameterType.Name);
 			}
-			sb.Append(")");
-			sb.Append(Environment.NewLine);
+			sb.AppendLine(")");
 
-			//-- if source code is available, append location info
+			// if source code is available, append location info
 			sb.Append("       ");
-			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && ExceptionExtensions.UsePDB)
+			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && ExceptionExtensions.AllowUseOfPDB)
 			{
 				// the PDB appears to be available, since the above elements are 
 				// not blank, so just use it's information
@@ -92,7 +100,7 @@ namespace ExceptionExtensions
 					sb.Append(", col ");
 					sb.Append(string.Format("{0:#00}", sf.GetFileColumnNumber()));
 				}
-				//-- if IL is available, append IL location info
+				// if IL is available, append IL location info
 				if (sf.GetILOffset() != StackFrame.OFFSET_UNKNOWN)
 				{
 					sb.Append(", IL ");
@@ -112,7 +120,7 @@ namespace ExceptionExtensions
 				{
 					Filename = "Unable to determine Assembly Filename";
 				}
-				//If FrameNum = 1 Then rCachedErr.FileName = FileName
+
 				sb.Append(Filename);
 				// Get the native code offset and convert to a line number
 				// first, make sure our linemap is loaded
@@ -120,26 +128,24 @@ namespace ExceptionExtensions
 				{
 					LineMap.AssemblyLineMaps.Add(sf.GetMethod().DeclaringType.Assembly);
 
-					int Line = 0;
-					string SourceFile = string.Empty;
-					MapStackFrameToSourceLine(sf, ref Line, ref SourceFile);
-					if (Line != 0)
+					var sl = MapStackFrameToSourceLine(sf);
+					if (sl.Line != 0)
 					{
 						sb.Append(": Source File - ");
-						sb.Append(SourceFile);
+						sb.Append(sl.SourceFile);
 						sb.Append(": line ");
-						sb.Append(string.Format("{0}", Line));
+						sb.Append(string.Format("{0}", sl.Line));
 					}
 
 				}
 				catch (Exception ex)
 				{
-					//any problems in loading the Linemap, just write to debugger and call it a day
-					System.Diagnostics.Debug.WriteLine(string.Format("Unable to load line map information. Error: {0}", ex.ToString()));
+					// any problems in loading the Linemap, just write to debugger and call it a day
+					Debug.WriteLine(string.Format("Unable to load line map information. Error: {0}", ex.ToString()));
 				}
 				finally
 				{
-					//-- native code offset is always available
+					// native code offset is always available
 					var IL = sf.GetILOffset();
 					if (IL != StackFrame.OFFSET_UNKNOWN)
 					{
@@ -148,7 +154,7 @@ namespace ExceptionExtensions
 					}
 				}
 			}
-			sb.Append(Environment.NewLine);
+			sb.AppendLine();
 			return sb.ToString();
 		}
 
@@ -192,20 +198,19 @@ namespace ExceptionExtensions
 		/// <param name="Line"></param>
 		/// <param name="SourceFile"></param>
 		/// <remarks></remarks>
-		private static void MapStackFrameToSourceLine(StackFrame sf, ref int Line, ref string SourceFile)
+		private static SourceLine MapStackFrameToSourceLine(StackFrame sf)
 		{
 			// first, get the base addr of the method
 			// if possible
-			Line = 0;
-			SourceFile = string.Empty;
+			var sl = new SourceLine();
 
 			// you have to have symbols to do this
 			if (LineMap.AssemblyLineMaps.Count == 0)
-				return;
+				return sl;
 
 			// first, check if for symbols for the assembly for this stack frame
 			if (!LineMap.AssemblyLineMaps.Keys.Contains(sf.GetMethod().DeclaringType.Assembly.CodeBase))
-				return;
+				return sl;
 
 			// retrieve the cache
 			var alm = LineMap.AssemblyLineMaps[sf.GetMethod().DeclaringType.Assembly.CodeBase];
@@ -215,7 +220,7 @@ namespace ExceptionExtensions
 			// Don't call this mdtoken or PostSharp will barf on it! Jeez
 			long mdtokn = mi.MetadataToken;
 			if (!alm.Symbols.ContainsKey(mdtokn))
-				return;
+				return sl;
 
 			// all is good so get the line offset (as close as possible, considering any optimizations that
 			// might be in effect)
@@ -239,13 +244,11 @@ namespace ExceptionExtensions
 				// since the address may end up between line numbers,
 				// always return the line num found
 				// even if it's not an exact match
-				Line = alm.AddressToLineMap[i].Line;
-				SourceFile = alm.Names[alm.AddressToLineMap[i].SourceFileIndex];
+				sl.Line = alm.AddressToLineMap[i].Line;
+				sl.SourceFile = alm.Names[alm.AddressToLineMap[i].SourceFileIndex];
 			}
-			else
-			{
-				return;
-			}
+
+			return sl;
 		}
 
 
@@ -255,82 +258,30 @@ namespace ExceptionExtensions
 		/// </summary>
 		/// <param name="Ex"></param>
 		/// <returns></returns>
-		public static string ToStringExtended(this Exception Ex)
+		public static string ToStringExtended(this Exception ex)
 		{
 			try
 			{
 				StringBuilder sb = new StringBuilder();
 
-				if ((Ex.InnerException != null))
+				if ((ex.InnerException != null))
 				{
-					//-- sometimes the original exception is wrapped in a more relevant outer exception
-					//-- the detail exception is the "inner" exception
-					//-- see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
-					sb.Append("(Inner Exception)");
-					sb.Append(Environment.NewLine);
-					sb.Append(Ex.InnerException.ToString());
-					sb.Append(Environment.NewLine);
-					sb.Append("(Outer Exception)");
-					sb.Append(Environment.NewLine);
+					// sometimes the original exception is wrapped in a more relevant outer exception
+					// the detail exception is the "inner" exception
+					// see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
+					sb.AppendLine("(Inner Exception)");
+					sb.AppendLine(ex.InnerException.ToString());
+					sb.AppendLine("(Outer Exception)");
 				}
-				//-- get general system and app information
+				// get general system and app information
 				sb.Append(SysInfoToString());
 
-				//-- get exception-specific information
-				sb.Append("Exception Source:      ");
-				try
-				{
-					sb.Append(Ex.Source);
-				}
-				catch (Exception e)
-				{
-					sb.Append(e.Message);
-				}
-				sb.Append(Environment.NewLine);
-
-				sb.Append("Exception Type:        ");
-				try
-				{
-					sb.Append(Ex.GetType().FullName);
-				}
-				catch (Exception e)
-				{
-					sb.Append(e.Message);
-				}
-				sb.Append(Environment.NewLine);
-
-				sb.Append("Exception Message:     ");
-				try
-				{
-					sb.Append(Ex.Message);
-				}
-				catch (Exception e)
-				{
-					sb.Append(e.Message);
-				}
-				sb.Append(Environment.NewLine);
-
-				sb.Append("Exception Target Site: ");
-				try
-				{
-					sb.Append(Ex.TargetSite.Name);
-				}
-				catch (Exception e)
-				{
-					sb.Append(e.Message);
-				}
-				sb.Append(Environment.NewLine);
-
-				try
-				{
-					string x = EnhancedStackTrace(Ex);
-					sb.Append(x);
-				}
-				catch (Exception e)
-				{
-					sb.Append(e.Message);
-				}
-				sb.Append(Environment.NewLine);
+				// get exception-specific information
+				sb.AppendLine("Exception Source:      ", () => { return ex.Source; });
+				sb.AppendLine("Exception Type:        ", () => { return ex.GetType().FullName; });
+				sb.AppendLine("Exception Message:     ", () => { return ex.Message; });
+				sb.AppendLine("Exception Target Site: ", () => { return ex.TargetSite.Name; });
+				sb.AppendLine(() => { return EnhancedStackTrace(ex); });
 
 				return sb.ToString();
 
@@ -349,7 +300,7 @@ namespace ExceptionExtensions
 		/// </summary>
 		/// <param name="Ex"></param>
 		/// <returns></returns>
-		private static string SysInfoToString(Exception Ex = null)
+		private static string SysInfoToString(Exception ex = null)
 		{
 			StringBuilder sb = new StringBuilder();
 
@@ -397,91 +348,18 @@ namespace ExceptionExtensions
 			//   .Append(Environment.NewLine)
 			//End If
 
-			sb.Append("Date and Time:         ");
-			sb.Append(DateTime.Now);
-			sb.Append(Environment.NewLine);
-
-			sb.Append("Machine Name:          ");
-			try
-			{
-				sb.Append(Environment.MachineName);
-			}
-			catch (Exception e)
-			{
-				sb.Append(e.Message);
-			}
-			sb.Append(Environment.NewLine);
-
-			sb.Append("IP Address:            ");
-			sb.Append(GetCurrentIP());
-			sb.Append(Environment.NewLine);
-
-			sb.Append("Current User:          ");
-			sb.Append(UserIdentity());
-			sb.Append(Environment.NewLine);
-			sb.Append(Environment.NewLine);
-
-			sb.Append("Application Domain:    ");
-			try
-			{
-				sb.Append(System.AppDomain.CurrentDomain.FriendlyName);
-			}
-			catch (Exception e)
-			{
-				sb.Append(e.Message);
-			}
-
-
-			sb.Append(Environment.NewLine);
-			sb.Append("Assembly Codebase:     ");
-			try
-			{
-				sb.Append(ParentAssembly.CodeBase);
-			}
-			catch (Exception e)
-			{
-				sb.Append(e.Message);
-			}
-			sb.Append(Environment.NewLine);
-
-			sb.Append("Assembly Full Name:    ");
-			try
-			{
-				sb.Append(ParentAssembly.FullName);
-			}
-			catch (Exception e)
-			{
-				sb.Append(e.Message);
-			}
-			sb.Append(Environment.NewLine);
-
-			sb.Append("Assembly Version:      ");
-			try
-			{
-				sb.Append(ParentAssembly.GetName().Version.ToString());
-			}
-			catch (Exception e)
-			{
-				sb.Append(e.Message);
-			}
-			sb.Append(Environment.NewLine);
-
-			sb.Append("Assembly Build Date:   ");
-			try
-			{
-				sb.Append(AssemblyBuildDate(ParentAssembly).ToString());
-			}
-			catch (Exception e)
-			{
-				sb.Append(e.Message);
-			}
-			sb.Append(Environment.NewLine);
-			sb.Append(Environment.NewLine);
-
-			if (Ex != null)
-			{
-				sb.Append(EnhancedStackTrace(Ex));
-			}
+			sb.AppendLine("Date and Time:         ", () => { return DateTime.Now.ToString(); });
+			sb.AppendLine("Machine Name:          ", () => { return Environment.MachineName; });
+			sb.AppendLine("IP Address:            ", () => { return GetCurrentIP(); });
+			sb.AppendLine("Current User:          ", () => { return UserIdentity(); });
+			sb.AppendLine();
+			sb.AppendLine("Application Domain:    ", () => { return System.AppDomain.CurrentDomain.FriendlyName; });
+			sb.AppendLine("Assembly Codebase:     ", () => { return ParentAssembly.CodeBase; });
+			sb.AppendLine("Assembly Full Name:    ", () => { return ParentAssembly.FullName; });
+			sb.AppendLine("Assembly Version:      ", () => { return ParentAssembly.GetName().Version.ToString(); });
+			sb.AppendLine("Assembly Build Date:   ", () => { return AssemblyBuildDate(ParentAssembly).ToString(); });
+			sb.AppendLine();
+			if (ex != null) sb.AppendLine(EnhancedStackTrace(ex));
 
 			return sb.ToString();
 		}
@@ -502,7 +380,7 @@ namespace ExceptionExtensions
 			}
 			catch 
 			{
-				//just provide a default value
+				// just provide a default value
 				return "127.0.0.1";
 			}
 		}
@@ -539,7 +417,7 @@ namespace ExceptionExtensions
 			catch
 			{
 				//just provide a default value
-				return "";
+				return string.Empty;
 			}
 		}
 
@@ -557,7 +435,7 @@ namespace ExceptionExtensions
 			catch 
 			{
 				//just provide a default value
-				return "";
+				return string.Empty;
 			}
 		}
 
@@ -619,13 +497,13 @@ namespace ExceptionExtensions
 
 
 		//--
-		//-- enhanced stack trace generator (exception)
+		//enhanced stack trace generator (exception)
 		//--
 		private static string InternalEnhancedStackTrace(Exception objException)
 		{
 			if (objException == null)
 			{
-				return EnhancedStackTrace(new StackTrace(true), ERRCLASSNAME);
+				return EnhancedStackTrace(new StackTrace(true), true);
 			}
 			else
 			{
@@ -641,7 +519,7 @@ namespace ExceptionExtensions
 		/// <returns></returns>
 		private static string EnhancedStackTrace()
 		{
-			return EnhancedStackTrace(new StackTrace(true), ERRCLASSNAME);
+			return EnhancedStackTrace(new StackTrace(true), true);
 		}
 
 
@@ -660,40 +538,70 @@ namespace ExceptionExtensions
 		/// <summary>
 		/// enhanced stack trace generator
 		/// </summary>
-		/// <param name="objStackTrace"></param>
-		/// <param name="SkipClassNameToSkip"></param>
+		/// <param name="stackTrace"></param>
+		/// <param name="skipLocalFrames"></param>
 		/// <returns></returns>
-		private static string EnhancedStackTrace(StackTrace objStackTrace, string SkipClassNameToSkip = "")
+		private static string EnhancedStackTrace(StackTrace stackTrace, bool skipLocalFrames = false)
 		{
+			StringBuilder sb = new StringBuilder();
 
-			int intFrame = 0;
-
-			System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-			sb.Append(Environment.NewLine);
+			sb.AppendLine();
 			sb.Append("---- Stack Trace ----");
-			sb.Append(Environment.NewLine);
+			sb.AppendLine();
 
-			int FrameNum = 0;
-			for (intFrame = 0; intFrame <= objStackTrace.FrameCount - 1; intFrame++)
+			for (int intFrame = 0; intFrame <= stackTrace.FrameCount - 1; intFrame++)
 			{
-				StackFrame sf = objStackTrace.GetFrame(intFrame);
+				StackFrame sf = stackTrace.GetFrame(intFrame);
 
-				if (SkipClassNameToSkip.Length > 0 && sf.GetMethod().DeclaringType.Name.IndexOf(SkipClassNameToSkip) > -1)
+				if (skipLocalFrames && sf.GetMethod().DeclaringType.Name.IndexOf(CLASSNAME) > -1)
 				{
-					// don't include frames with this name
-					// this lets of keep any ERR class frames out of
-					// the strack trace, they'd just be clutter
+					// don't include frames related to this class
+					// this lets of keep any class frames related to this class out of
+					// the strack trace, they'd just be clutter anyway
 				}
 				else
 				{
-					FrameNum += 1;
-					sb.Append(StackFrameToString(FrameNum, sf));
+					sb.Append(StackFrameToString(sf));
 				}
 			}
-			sb.Append(Environment.NewLine);
+			sb.AppendLine();
 
 			return sb.ToString();
+		}
+
+
+		/// <summary>
+		/// Used to pass linemap information to the stackframe renderer
+		/// </summary>
+		private class SourceLine
+		{
+			public string SourceFile = string.Empty;
+			public int Line = 0;
+		}
+	}
+}
+
+namespace InternalExtensionMethods
+{
+	public static class StringBuilderExtensions
+	{
+		public static void AppendLine(this StringBuilder sb, string caption, Func<string> getValue)
+		{
+			sb.Append(caption);
+			try
+			{
+				string text = getValue();
+				sb.AppendLine(text);
+			}
+			catch (Exception ex)
+			{
+				sb.AppendLine(ex.Message);
+			}
+		}
+
+		public static void AppendLine(this StringBuilder sb, Func<string> getValue)
+		{
+			sb.AppendLine(getValue);
 		}
 
 	}

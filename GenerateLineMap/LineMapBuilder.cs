@@ -545,11 +545,11 @@ namespace GenerateLineMap
 			}
 			finally
 			{
-				Log.LogMessage("Retrieved {0} symbols", _alm.Symbols.Count);
+				Log.LogMessage("Retrieved {0} symbol{1}", _alm.Symbols.Count, _alm.Symbols.Count == 1 ? string.Empty : "s");
 
-				Log.LogMessage("Retrieved {0} lines", _alm.AddressToLineMap.Count) ;
+				Log.LogMessage("Retrieved {0} line{1}", _alm.AddressToLineMap.Count, _alm.AddressToLineMap.Count == 1 ? string.Empty : "s") ;
 
-				Log.LogMessage("Retrieved {0} strings", _alm.Names.Count);
+				Log.LogMessage("Retrieved {0} string{1}", _alm.Names.Count, _alm.Names.Count == 1 ? string.Empty : "s");
 	
 				// release the module
 				if (dwModuleBase != 0) SymUnloadModule64(hProcess, dwModuleBase);

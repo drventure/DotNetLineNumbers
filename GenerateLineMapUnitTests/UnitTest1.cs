@@ -78,7 +78,7 @@ namespace GenerateLineMapUnitTests
 				StartConsoleApplication("GenerateLineMap.exe", "/report TestApp1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Retrieved 12 strings");
+				consoleOutput.Ouput.Should().Contain("Retrieved 1 string");
 			}
 		}
 

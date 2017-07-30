@@ -47,7 +47,7 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
-				ExceptionExtensions.ExceptionExtensions.UsePDB = false;
+				ExceptionExtensions.ExceptionExtensions.AllowUseOfPDB = false;
 				var buf = "ERROR: " + ex.ToStringExtended();
 				Console.WriteLine(buf);
 				buf = "ERROR: " + ex.ToString();
