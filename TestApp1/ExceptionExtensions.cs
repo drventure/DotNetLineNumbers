@@ -298,7 +298,7 @@ namespace ExceptionExtensions
 		/// gather some system information that is helpful to diagnosing
 		/// exception
 		/// </summary>
-		/// <param name="Ex"></param>
+		/// <param name="ex"></param>
 		/// <returns></returns>
 		private static string SysInfoToString(Exception ex = null)
 		{
@@ -402,7 +402,6 @@ namespace ExceptionExtensions
 		}
 
 
-
 		/// <summary>
 		/// exception-safe WindowsIdentity.GetCurrent retrieval returns "domain\username"
 		/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
@@ -416,7 +415,7 @@ namespace ExceptionExtensions
 			}
 			catch
 			{
-				//just provide a default value
+				// just provide a default value
 				return string.Empty;
 			}
 		}
@@ -434,7 +433,7 @@ namespace ExceptionExtensions
 			}
 			catch 
 			{
-				//just provide a default value
+				// just provide a default value
 				return string.Empty;
 			}
 		}
@@ -490,7 +489,7 @@ namespace ExceptionExtensions
 			}
 			catch
 			{
-				//just provide a default value
+				// just provide a default value
 				return DateTime.MinValue;
 			}
 		}
@@ -581,6 +580,10 @@ namespace ExceptionExtensions
 	}
 }
 
+
+/// <summary>
+/// Seperate namespace to allow extension of the stringBuilder without polluting it elsewhere in the host app
+/// </summary>
 namespace InternalExtensionMethods
 {
 	public static class StringBuilderExtensions
@@ -601,7 +604,7 @@ namespace InternalExtensionMethods
 
 		public static void AppendLine(this StringBuilder sb, Func<string> getValue)
 		{
-			sb.AppendLine(getValue);
+			sb.AppendLine(string.Empty, getValue);
 		}
 
 	}
