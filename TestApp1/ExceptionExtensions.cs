@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -34,6 +35,7 @@ using System.Text;
 using InternalGenerateLineMapExceptionExtensions;
 using static GenerateLineMapExceptionExtensions.GenerateLineMapExceptionExtensions;
 using GenerateLineMapExceptionExtensions;
+using System.Globalization;
 
 namespace GenerateLineMapExceptionExtensions
 {
@@ -54,7 +56,7 @@ namespace GenerateLineMapExceptionExtensions
 		/// <summary>
 		/// translate exception object to string, with additional system info
 		/// </summary>
-		/// <param name="Ex"></param>
+		/// <param name="ex"></param>
 		/// <returns></returns>
 		public static string ToString(this Exception ex, bool extended)
 		{
@@ -62,11 +64,10 @@ namespace GenerateLineMapExceptionExtensions
 		}
 
 
-
 		/// <summary>
 		/// translate exception object to string, with additional system info
 		/// </summary>
-		/// <param name="Ex"></param>
+		/// <param name="ex"></param>
 		/// <returns></returns>
 		public static string ToString(this Exception ex, ExceptionOptions options)
 		{
@@ -74,25 +75,48 @@ namespace GenerateLineMapExceptionExtensions
 			{
 				StringBuilder sb = new StringBuilder();
 
-				sb.AppendValue("Type", ex.GetType().FullName, options);
+				// grab some extended information for the exception
+				var extendedProps = new List<KeyValuePair<string, object>>();
+				// only need the extended properties once
+				if (options.CurrentIndentLevel == 0)
+				{
+					extendedProps.Add(new KeyValuePair<string, object>("Type", ex.GetType().FullName));
+					extendedProps.Add(new KeyValuePair<string, object>("Date and Time", DateTime.Now.ToString()));
+					extendedProps.Add(new KeyValuePair<string, object>("Machine Name", Environment.MachineName));
+					extendedProps.Add(new KeyValuePair<string, object>("Current IP", GetCurrentIP()));
+					extendedProps.Add(new KeyValuePair<string, object>("Current User", GetUserIdentity()));
+					extendedProps.Add(new KeyValuePair<string, object>("Application Domain", System.AppDomain.CurrentDomain.FriendlyName));
+					extendedProps.Add(new KeyValuePair<string, object>("Assembly Codebase", Utilities.ParentAssembly.CodeBase));
+					extendedProps.Add(new KeyValuePair<string, object>("Assembly Fullname", Utilities.ParentAssembly.FullName));
+					extendedProps.Add(new KeyValuePair<string, object>("Assembly Version", Utilities.ParentAssembly.GetName().Version.ToString()));
+					extendedProps.Add(new KeyValuePair<string, object>("Assembly Build Date", GetAssemblyBuildDate(Utilities.ParentAssembly).ToString()));
+				}
 
-				foreach (PropertyInfo property in ex
+				// gather up all the properties of the Exception, plus the extended info above
+				// sort it, and render to a stringbuilder
+				foreach (KeyValuePair<string, object> item in ex
 					.GetType()
 					.GetProperties()
-					.OrderByDescending(x => string.Equals(x.Name, nameof(ex.Message), StringComparison.Ordinal))
-					.ThenByDescending(x => string.Equals(x.Name, nameof(ex.Source), StringComparison.Ordinal))
-					.ThenBy(x => string.Equals(x.Name, nameof(ex.InnerException), StringComparison.Ordinal))
-					.ThenBy(x => string.Equals(x.Name, nameof(AggregateException.InnerExceptions), StringComparison.Ordinal)))
+					.Select(x => new KeyValuePair<string, object>(x.Name, x))
+					.Concat(extendedProps)
+					.OrderByDescending(x => string.Equals(x.Key, "Type", StringComparison.Ordinal))
+					.ThenByDescending(x => string.Equals(x.Key, nameof(ex.Message), StringComparison.Ordinal))
+					.ThenByDescending(x => string.Equals(x.Key, nameof(ex.Source), StringComparison.Ordinal))
+					.ThenBy(x => string.Equals(x.Key, nameof(ex.InnerException), StringComparison.Ordinal))
+					.ThenBy(x => string.Equals(x.Key, nameof(AggregateException.InnerExceptions), StringComparison.Ordinal))
+					.ThenBy(x => x.Key))
 				{
-					object value = null;
-					if (property.Name == "StackTrace")
+					object value = item.Value;
+					if (item.Key == "StackTrace")
 					{
 						//handle the stacktrace special
-						value = new StackTrace(ex).ToString(true).TrimEnd('\r', '\n').Replace("\r\n", string.Format("\r\n{0, -23}", ""));
+						var buf = new StackTrace(ex).ToString(true).TrimEnd('\r', '\n').Replace("\r\n", string.Format("\r\n{0, -23}", "")).TrimEnd();
+						if (string.IsNullOrEmpty(buf) && options.OmitNullProperties) continue;
+						value = buf;
 					}
-					else
+					else if (item.Value is PropertyInfo)
 					{
-						value = property.GetValue(ex, null);
+						value = (item.Value as PropertyInfo).GetValue(ex, null);
 						if (value == null || (value is string && string.IsNullOrEmpty((string)value)))
 						{
 							if (options.OmitNullProperties)
@@ -106,11 +130,8 @@ namespace GenerateLineMapExceptionExtensions
 						}
 					}
 
-					sb.AppendValue(property.Name, value, options);
+					sb.AppendValue(item.Key, value, options);
 				}
-
-				// get general system and app information
-				sb.Append(SysInfoToString());
 
 				return sb.ToString().TrimEnd('\r', '\n');
 			}
@@ -125,78 +146,7 @@ namespace GenerateLineMapExceptionExtensions
 		{
 			return value.Replace(Environment.NewLine, Environment.NewLine + options.Indent);
 		}
-
-
-		/// <summary>
-		/// gather some system information that is helpful to diagnosing
-		/// exception
-		/// </summary>
-		/// <param name="ex"></param>
-		/// <returns></returns>
-		private static string SysInfoToString(Exception ex = null)
-		{
-			StringBuilder sb = new StringBuilder();
-
-			//If Err.Number <> 0 Then
-			//   .Append("Error code:            ")
-			//   .Append(Err.Number)
-			//   .Append(Environment.NewLine)
-			//End If
-
-			//If Len(Err.Description) <> 0 Then
-			//   .Append("Error Description:     ")
-			//   .Append(Err.Description)
-			//   .Append(Environment.NewLine)
-			//End If
-
-			//'---- report the line or ERL location as available
-			//If Err.Line <> 0 Then
-			//   .Append("Error Line:            ")
-			//   .Append(Err.Line)
-			//   If Err.Erl <> 0 AndAlso Err.Erl <> Err.Line Then
-			//   .Append("  (Location " & Err.Erl.ToString & ")")
-			//   End If
-			//   .Append(Environment.NewLine)
-			//ElseIf Err.Erl <> 0 Then
-			//   .Append("Error Location:        ")
-			//   .Append(Err.Erl)
-			//   .Append(Environment.NewLine)
-			//End If
-
-			//If Err.Column <> 0 Then
-			//   .Append("Error Column:          ")
-			//   .Append(Err.Column)
-			//   .Append(Environment.NewLine)
-			//End If
-
-			//If Len(Err.FileName) <> 0 Then
-			//   .Append("Error Module:          ")
-			//   .Append(Err.FileName)
-			//   .Append(Environment.NewLine)
-			//End If
-
-			//If Len(Err.Method) <> 0 Then
-			//   .Append("Error Method:          ")
-			//   .Append(Err.Method)
-			//   .Append(Environment.NewLine)
-			//End If
-
-			sb.AppendLine("Date and Time:         ", () => { return DateTime.Now.ToString(); });
-			sb.AppendLine("Machine Name:          ", () => { return Environment.MachineName; });
-			sb.AppendLine("IP Address:            ", () => { return GetCurrentIP(); });
-			sb.AppendLine("Current User:          ", () => { return UserIdentity(); });
-			sb.AppendLine("Application Domain:    ", () => { return System.AppDomain.CurrentDomain.FriendlyName; });
-			sb.AppendLine("Assembly Codebase:     ", () => { return Utilities.ParentAssembly.CodeBase; });
-			sb.AppendLine("Assembly Full Name:    ", () => { return Utilities.ParentAssembly.FullName; });
-			sb.AppendLine("Assembly Version:      ", () => { return Utilities.ParentAssembly.GetName().Version.ToString(); });
-			sb.AppendLine("Assembly Build Date:   ", () => { return AssemblyBuildDate(Utilities.ParentAssembly).ToString(); });
-			sb.AppendLine();
-			if (ex != null) sb.AppendLine(EnhancedStackTrace(ex));
-
-			return sb.ToString();
-		}
-
-
+				
 
 		/// <summary>
 		/// get IP address of this machine
@@ -223,12 +173,12 @@ namespace GenerateLineMapExceptionExtensions
 		/// retrieve user identity with fallback on error to safer method
 		/// </summary>
 		/// <returns></returns>
-		private static string UserIdentity()
+		private static string GetUserIdentity()
 		{
-			string strTemp = CurrentWindowsIdentity();
+			string strTemp = GetCurrentWindowsIdentity();
 			if (string.IsNullOrEmpty(strTemp))
 			{
-				strTemp = CurrentEnvironmentIdentity();
+				strTemp = GetCurrentEnvironmentIdentity();
 			}
 			return strTemp;
 		}
@@ -239,7 +189,7 @@ namespace GenerateLineMapExceptionExtensions
 		/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
 		/// </summary>
 		/// <returns></returns>
-		private static string CurrentWindowsIdentity()
+		private static string GetCurrentWindowsIdentity()
 		{
 			try
 			{
@@ -257,7 +207,7 @@ namespace GenerateLineMapExceptionExtensions
 		/// exception-safe "domain\username" retrieval from Environment
 		/// </summary>
 		/// <returns></returns>
-		private static string CurrentEnvironmentIdentity()
+		private static string GetCurrentEnvironmentIdentity()
 		{
 			try
 			{
@@ -282,14 +232,14 @@ namespace GenerateLineMapExceptionExtensions
 		/// <param name="objAssembly"></param>
 		/// <param name="bForceFileDate"></param>
 		/// <returns></returns>
-		private static DateTime AssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
+		private static DateTime GetAssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
 		{
 			System.Version objVersion = objAssembly.GetName().Version;
 			DateTime dtBuild = default(DateTime);
 
 			if (bForceFileDate)
 			{
-				dtBuild = AssemblyFileTime(objAssembly);
+				dtBuild = GetAssemblyFileTime(objAssembly);
 			}
 			else
 			{
@@ -300,7 +250,7 @@ namespace GenerateLineMapExceptionExtensions
 				}
 				if (dtBuild > DateTime.Now | objVersion.Build < 730 | objVersion.Revision == 0)
 				{
-					dtBuild = AssemblyFileTime(objAssembly);
+					dtBuild = GetAssemblyFileTime(objAssembly);
 				}
 			}
 
@@ -313,7 +263,7 @@ namespace GenerateLineMapExceptionExtensions
 		/// </summary>
 		/// <param name="objAssembly"></param>
 		/// <returns></returns>
-		private static DateTime AssemblyFileTime(System.Reflection.Assembly objAssembly)
+		private static DateTime GetAssemblyFileTime(System.Reflection.Assembly objAssembly)
 		{
 			try
 			{
