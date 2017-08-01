@@ -32,225 +32,33 @@ using System.Reflection;
 using System.Text;
 
 using InternalGenerateLineMapExceptionExtensions;
-
+using static GenerateLineMapExceptionExtensions.GenerateLineMapExceptionExtensions;
+using GenerateLineMapExceptionExtensions;
 
 namespace GenerateLineMapExceptionExtensions
 {
+	/// <summary>
+	/// Exception Extension methods.
+	/// Portions are from a post on StackOverflow here:
+	/// https://stackoverflow.com/questions/2176707/exception-message-vs-exception-tostring
+	/// </summary>
 	public static class GenerateLineMapExceptionExtensions
 	{
 		/// <summary>
 		/// Force the use of the PDB if available
 		/// This is primarily used when debugging/Unit testing
 		/// </summary>
-		public static bool AllowUseOfPDB {get; set;}
+		public static bool AllowUseOfPDB { get; set; }
 
 
 		/// <summary>
-		/// Used to identify stack frames that relate to "this" class so they can be skipped
+		/// translate exception object to string, with additional system info
 		/// </summary>
-		private static string CLASSNAME = "GenerateLineMapExceptionExtensions";
-
-
-		/// <summary>
-		/// turns a single stack frame object into an informative string
-		/// </summary>
-		/// <param name="sf"></param>
+		/// <param name="Ex"></param>
 		/// <returns></returns>
-		private static string StackFrameToString(StackFrame sf)
+		public static string ToString(this Exception ex, bool extended)
 		{
-			StringBuilder sb = new StringBuilder();
-			int intParam = 0;
-			MemberInfo mi = sf.GetMethod();
-
-			//build method name
-			sb.Append("   ");
-			string MethodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
-			sb.Append(MethodName);
-
-			//build method params
-			ParameterInfo[] objParameters = sf.GetMethod().GetParameters();
-			sb.Append("(");
-			intParam = 0;
-			foreach (ParameterInfo objParameter in objParameters)
-			{
-				intParam += 1;
-				if (intParam > 1)
-					sb.Append(", ");
-				sb.Append(objParameter.Name);
-				sb.Append(" As ");
-				sb.Append(objParameter.ParameterType.Name);
-			}
-			sb.AppendLine(")");
-
-			// if source code is available, append location info
-			sb.Append("       ");
-			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && GenerateLineMapExceptionExtensions.AllowUseOfPDB)
-			{
-				// the PDB appears to be available, since the above elements are 
-				// not blank, so just use it's information
-
-				sb.Append(System.IO.Path.GetFileName(sf.GetFileName()));
-				var Line = sf.GetFileLineNumber();
-				if (Line != 0)
-				{
-					sb.Append(": line ");
-					sb.Append(string.Format("{0}", Line));
-				}
-				var col = sf.GetFileColumnNumber();
-				if (col != 0)
-				{
-					sb.Append(", col ");
-					sb.Append(string.Format("{0:#00}", sf.GetFileColumnNumber()));
-				}
-				// if IL is available, append IL location info
-				if (sf.GetILOffset() != StackFrame.OFFSET_UNKNOWN)
-				{
-					sb.Append(", IL ");
-					sb.Append(string.Format("{0:#0000}", sf.GetILOffset()));
-				}
-			}
-			else
-			{
-				// the PDB is not available, so attempt to retrieve 
-				// any embedded linemap information
-				string Filename;
-				if (ParentAssembly != null)
-				{
-					Filename = System.IO.Path.GetFileName(ParentAssembly.CodeBase);
-				}
-				else
-				{
-					Filename = "Unable to determine Assembly Filename";
-				}
-
-				sb.Append(Filename);
-				// Get the native code offset and convert to a line number
-				// first, make sure our linemap is loaded
-				try
-				{
-					LineMap.AssemblyLineMaps.Add(sf.GetMethod().DeclaringType.Assembly);
-
-					var sl = MapStackFrameToSourceLine(sf);
-					if (sl.Line != 0)
-					{
-						sb.Append(": Source File - ");
-						sb.Append(sl.SourceFile);
-						sb.Append(": line ");
-						sb.Append(string.Format("{0}", sl.Line));
-					}
-
-				}
-				catch (Exception ex)
-				{
-					// any problems in loading the Linemap, just write to debugger and call it a day
-					Debug.WriteLine(string.Format("Unable to load line map information. Error: {0}", ex.ToString()));
-				}
-				finally
-				{
-					// native code offset is always available
-					var IL = sf.GetILOffset();
-					if (IL != StackFrame.OFFSET_UNKNOWN)
-					{
-						sb.Append(": IL ");
-						sb.Append(string.Format("{0:#00000}", IL));
-					}
-				}
-			}
-			sb.AppendLine();
-			return sb.ToString();
-		}
-
-
-		private static Assembly _parentAssembly = null;
-		/// <summary>
-		/// Retrieve the root assembly of the executing assembly
-		/// </summary>
-		/// <returns></returns>
-		private static Assembly ParentAssembly
-		{
-			get
-			{
-				if (_parentAssembly == null)
-				{
-					if (Assembly.GetEntryAssembly() != null)
-					{
-						_parentAssembly = Assembly.GetEntryAssembly();
-					}
-					else if (Assembly.GetCallingAssembly() != null)
-					{
-						_parentAssembly = Assembly.GetCallingAssembly();
-					}
-					else
-					{
-						//TODO questionable
-						_parentAssembly = Assembly.GetExecutingAssembly();
-					}
-				}
-				return _parentAssembly;
-			}
-		}
-
-
-		/// <summary>
-		/// Map an address offset from a stack frame entry to a linenumber
-		/// using the Method name, the base address of the method and the
-		/// IL offset from the base address
-		/// </summary>
-		/// <param name="sf"></param>
-		/// <param name="Line"></param>
-		/// <param name="SourceFile"></param>
-		/// <remarks></remarks>
-		private static SourceLine MapStackFrameToSourceLine(StackFrame sf)
-		{
-			// first, get the base addr of the method
-			// if possible
-			var sl = new SourceLine();
-
-			// you have to have symbols to do this
-			if (LineMap.AssemblyLineMaps.Count == 0)
-				return sl;
-
-			// first, check if for symbols for the assembly for this stack frame
-			if (!LineMap.AssemblyLineMaps.Keys.Contains(sf.GetMethod().DeclaringType.Assembly.CodeBase))
-				return sl;
-
-			// retrieve the cache
-			var alm = LineMap.AssemblyLineMaps[sf.GetMethod().DeclaringType.Assembly.CodeBase];
-
-			// does the symbols list contain the metadata token for this method?
-			MemberInfo mi = sf.GetMethod();
-			// Don't call this mdtoken or PostSharp will barf on it! Jeez
-			long mdtokn = mi.MetadataToken;
-			if (!alm.Symbols.ContainsKey(mdtokn))
-				return sl;
-
-			// all is good so get the line offset (as close as possible, considering any optimizations that
-			// might be in effect)
-			var ILOffset = sf.GetILOffset();
-			if (ILOffset != StackFrame.OFFSET_UNKNOWN)
-			{
-				Int64 Addr = alm.Symbols[mdtokn].Address + ILOffset;
-
-				// now start hunting down the line number entry
-				// use a simple search. LINQ might make this easier
-				// but I'm not sure how. Also, a binary search would be faster
-				// but this isn't something that's really performance dependent
-				int i = 1;
-				for (i = alm.AddressToLineMap.Count - 1; i >= 0; i += -1)
-				{
-					if (alm.AddressToLineMap[i].Address <= Addr)
-					{
-						break;
-					}
-				}
-				// since the address may end up between line numbers,
-				// always return the line num found
-				// even if it's not an exact match
-				sl.Line = alm.AddressToLineMap[i].Line;
-				sl.SourceFile = alm.Names[alm.AddressToLineMap[i].SourceFileIndex];
-			}
-
-			return sl;
+			return ex.ToString(ExceptionOptions.Default);
 		}
 
 
@@ -260,33 +68,51 @@ namespace GenerateLineMapExceptionExtensions
 		/// </summary>
 		/// <param name="Ex"></param>
 		/// <returns></returns>
-		public static string ToString(this Exception ex)
+		public static string ToString(this Exception ex, ExceptionOptions options)
 		{
 			try
 			{
 				StringBuilder sb = new StringBuilder();
 
-				if ((ex.InnerException != null))
+				sb.AppendValue("Type", ex.GetType().FullName, options);
+
+				foreach (PropertyInfo property in ex
+					.GetType()
+					.GetProperties()
+					.OrderByDescending(x => string.Equals(x.Name, nameof(ex.Message), StringComparison.Ordinal))
+					.ThenByDescending(x => string.Equals(x.Name, nameof(ex.Source), StringComparison.Ordinal))
+					.ThenBy(x => string.Equals(x.Name, nameof(ex.InnerException), StringComparison.Ordinal))
+					.ThenBy(x => string.Equals(x.Name, nameof(AggregateException.InnerExceptions), StringComparison.Ordinal)))
 				{
-					// sometimes the original exception is wrapped in a more relevant outer exception
-					// the detail exception is the "inner" exception
-					// see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
-					sb.AppendLine("(Inner Exception)");
-					sb.AppendLine(ex.InnerException.ToString());
-					sb.AppendLine("(Outer Exception)");
+					object value = null;
+					if (property.Name == "StackTrace")
+					{
+						//handle the stacktrace special
+						value = new StackTrace(ex).ToString(true).TrimEnd('\r', '\n').Replace("\r\n", string.Format("\r\n{0, -23}", ""));
+					}
+					else
+					{
+						value = property.GetValue(ex, null);
+						if (value == null || (value is string && string.IsNullOrEmpty((string)value)))
+						{
+							if (options.OmitNullProperties)
+							{
+								continue;
+							}
+							else
+							{
+								value = string.Empty;
+							}
+						}
+					}
+
+					sb.AppendValue(property.Name, value, options);
 				}
+
 				// get general system and app information
 				sb.Append(SysInfoToString());
 
-				// get exception-specific information
-				sb.AppendLine("Exception Source:      ", () => { return ex.Source; });
-				sb.AppendLine("Exception Type:        ", () => { return ex.GetType().FullName; });
-				sb.AppendLine("Exception Message:     ", () => { return ex.Message; });
-				sb.AppendLine("Exception Target Site: ", () => { return ex.TargetSite.Name; });
-				sb.AppendLine(() => { return EnhancedStackTrace(ex); });
-
-				return sb.ToString();
-
+				return sb.ToString().TrimEnd('\r', '\n');
 			}
 			catch (Exception ex2)
 			{
@@ -294,6 +120,11 @@ namespace GenerateLineMapExceptionExtensions
 			}
 		}
 
+
+		private static string IndentString(string value, ExceptionOptions options)
+		{
+			return value.Replace(Environment.NewLine, Environment.NewLine + options.Indent);
+		}
 
 
 		/// <summary>
@@ -354,12 +185,11 @@ namespace GenerateLineMapExceptionExtensions
 			sb.AppendLine("Machine Name:          ", () => { return Environment.MachineName; });
 			sb.AppendLine("IP Address:            ", () => { return GetCurrentIP(); });
 			sb.AppendLine("Current User:          ", () => { return UserIdentity(); });
-			sb.AppendLine();
 			sb.AppendLine("Application Domain:    ", () => { return System.AppDomain.CurrentDomain.FriendlyName; });
-			sb.AppendLine("Assembly Codebase:     ", () => { return ParentAssembly.CodeBase; });
-			sb.AppendLine("Assembly Full Name:    ", () => { return ParentAssembly.FullName; });
-			sb.AppendLine("Assembly Version:      ", () => { return ParentAssembly.GetName().Version.ToString(); });
-			sb.AppendLine("Assembly Build Date:   ", () => { return AssemblyBuildDate(ParentAssembly).ToString(); });
+			sb.AppendLine("Assembly Codebase:     ", () => { return Utilities.ParentAssembly.CodeBase; });
+			sb.AppendLine("Assembly Full Name:    ", () => { return Utilities.ParentAssembly.FullName; });
+			sb.AppendLine("Assembly Version:      ", () => { return Utilities.ParentAssembly.GetName().Version.ToString(); });
+			sb.AppendLine("Assembly Build Date:   ", () => { return AssemblyBuildDate(Utilities.ParentAssembly).ToString(); });
 			sb.AppendLine();
 			if (ex != null) sb.AppendLine(EnhancedStackTrace(ex));
 
@@ -380,7 +210,7 @@ namespace GenerateLineMapExceptionExtensions
 			{
 				return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
 			}
-			catch 
+			catch
 			{
 				// just provide a default value
 				return "127.0.0.1";
@@ -433,7 +263,7 @@ namespace GenerateLineMapExceptionExtensions
 			{
 				return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
 			}
-			catch 
+			catch
 			{
 				// just provide a default value
 				return string.Empty;
@@ -504,11 +334,11 @@ namespace GenerateLineMapExceptionExtensions
 		{
 			if (objException == null)
 			{
-				return EnhancedStackTrace(new StackTrace(true), true);
+				return new StackTrace(true).ToString(true);
 			}
 			else
 			{
-				return EnhancedStackTrace(new StackTrace(objException, true));
+				return new StackTrace(objException).ToString(true);
 			}
 		}
 
@@ -520,7 +350,7 @@ namespace GenerateLineMapExceptionExtensions
 		/// <returns></returns>
 		private static string EnhancedStackTrace()
 		{
-			return EnhancedStackTrace(new StackTrace(true), true);
+			return new StackTrace(true).ToString(true);
 		}
 
 
@@ -536,223 +366,48 @@ namespace GenerateLineMapExceptionExtensions
 			return InternalEnhancedStackTrace(thisException);
 		}
 
-		/// <summary>
-		/// enhanced stack trace generator
-		/// </summary>
-		/// <param name="stackTrace"></param>
-		/// <param name="skipLocalFrames"></param>
-		/// <returns></returns>
-		private static string EnhancedStackTrace(StackTrace stackTrace, bool skipLocalFrames = false)
+
+		public struct ExceptionOptions
 		{
-			StringBuilder sb = new StringBuilder();
-
-			sb.AppendLine();
-			sb.Append("---- Stack Trace ----");
-			sb.AppendLine();
-
-			for (int intFrame = 0; intFrame <= stackTrace.FrameCount - 1; intFrame++)
+			public ExceptionOptions(int indentSpaces = 4, bool omitNullProperties = true)
 			{
-				StackFrame sf = stackTrace.GetFrame(intFrame);
-
-				if (skipLocalFrames && sf.GetMethod().DeclaringType.Name.IndexOf(CLASSNAME) > -1)
-				{
-					// don't include frames related to this class
-					// this lets of keep any class frames related to this class out of
-					// the strack trace, they'd just be clutter anyway
-				}
-				else
-				{
-					sb.Append(StackFrameToString(sf));
-				}
+				this.CurrentIndentLevel = 0;
+				this.IndentSpaces = indentSpaces;
+				this.OmitNullProperties = omitNullProperties;
 			}
-			sb.AppendLine();
 
-			return sb.ToString();
-		}
+			public static readonly ExceptionOptions Default = new ExceptionOptions()
+			{
+				CurrentIndentLevel = 0,
+				IndentSpaces = 4,
+				OmitNullProperties = true
+			};
 
 
-		/// <summary>
-		/// Used to pass linemap information to the stackframe renderer
-		/// </summary>
-		private class SourceLine
-		{
-			public string SourceFile = string.Empty;
-			public int Line = 0;
+			internal ExceptionOptions(ExceptionOptions options, int currentIndent)
+			{
+				this.CurrentIndentLevel = currentIndent;
+				this.IndentSpaces = options.IndentSpaces;
+				this.OmitNullProperties = options.OmitNullProperties;
+			}
+
+			internal string Indent { get { return new string(' ', this.IndentSpaces * this.CurrentIndentLevel); } }
+
+			internal int CurrentIndentLevel { get; set; }
+
+			public int IndentSpaces { get; set; }
+
+			public bool OmitNullProperties { get; set; }
 		}
 	}
 
 
 	/// <summary>
 	/// From Stackoverflow
-	/// https://stackoverflow.com/questions/2176707/exception-message-vs-exception-tostring
 	/// </summary>
 	public static class ExceptionExtensions
 	{
-		public static string ToDetailedString(this Exception exception)
-		{
-			if (exception == null)
-			{
-				throw new ArgumentNullException(nameof(exception));
-			}
 
-			return ToDetailedString(exception, ExceptionOptions.Default);
-		}
-
-		public static string ToDetailedString(this Exception exception, ExceptionOptions options)
-		{
-			var stringBuilder = new StringBuilder();
-
-			AppendValue(stringBuilder, "Type", exception.GetType().FullName, options);
-
-			foreach (PropertyInfo property in exception
-				.GetType()
-				.GetProperties()
-				.OrderByDescending(x => string.Equals(x.Name, nameof(exception.Message), StringComparison.Ordinal))
-				.ThenByDescending(x => string.Equals(x.Name, nameof(exception.Source), StringComparison.Ordinal))
-				.ThenBy(x => string.Equals(x.Name, nameof(exception.InnerException), StringComparison.Ordinal))
-				.ThenBy(x => string.Equals(x.Name, nameof(AggregateException.InnerExceptions), StringComparison.Ordinal)))
-			{
-				var value = property.GetValue(exception, null);
-				if (value == null && options.OmitNullProperties)
-				{
-					if (options.OmitNullProperties)
-					{
-						continue;
-					}
-					else
-					{
-						value = string.Empty;
-					}
-				}
-
-				AppendValue(stringBuilder, property.Name, value, options);
-			}
-
-			return stringBuilder.ToString().TrimEnd('\r', '\n');
-		}
-
-
-		private static void AppendCollection(
-			StringBuilder stringBuilder,
-			string propertyName,
-			IEnumerable collection,
-			ExceptionOptions options)
-		{
-			stringBuilder.AppendLine($"{options.Indent}{propertyName} =");
-
-			var innerOptions = new ExceptionOptions(options, options.CurrentIndentLevel + 1);
-
-			var i = 0;
-			foreach (var item in collection)
-			{
-				var innerPropertyName = $"[{i}]";
-
-				if (item is Exception)
-				{
-					var innerException = (Exception)item;
-					AppendException(
-						stringBuilder,
-						innerPropertyName,
-						innerException,
-						innerOptions);
-				}
-				else
-				{
-					AppendValue(
-						stringBuilder,
-						innerPropertyName,
-						item,
-						innerOptions);
-				}
-
-				++i;
-			}
-		}
-
-		private static void AppendException(
-			StringBuilder stringBuilder,
-			string propertyName,
-			Exception exception,
-			ExceptionOptions options)
-		{
-			var innerExceptionString = ToDetailedString(
-				exception,
-				new ExceptionOptions(options, options.CurrentIndentLevel + 1));
-
-			stringBuilder.AppendLine($"{options.Indent}{propertyName} =");
-			stringBuilder.AppendLine(innerExceptionString);
-		}
-
-
-		private static string IndentString(string value, ExceptionOptions options)
-		{
-			return value.Replace(Environment.NewLine, Environment.NewLine + options.Indent);
-		}
-
-
-		private static void AppendValue(
-			StringBuilder stringBuilder,
-			string propertyName,
-			object value,
-			ExceptionOptions options)
-		{
-			if (value is DictionaryEntry)
-			{
-				DictionaryEntry dictionaryEntry = (DictionaryEntry)value;
-				stringBuilder.AppendLine($"{options.Indent}{propertyName} = {dictionaryEntry.Key} : {dictionaryEntry.Value}");
-			}
-			else if (value is Exception)
-			{
-				var innerException = (Exception)value;
-				AppendException(
-					stringBuilder,
-					propertyName,
-					innerException,
-					options);
-			}
-			else if (value is IEnumerable && !(value is string))
-			{
-				var collection = (IEnumerable)value;
-				if (collection.GetEnumerator().MoveNext())
-				{
-					AppendCollection(
-						stringBuilder,
-						propertyName,
-						collection,
-						options);
-				}
-			}
-			else
-			{
-				stringBuilder.AppendLine($"{options.Indent}{propertyName} = {value}");
-			}
-		}
-	}
-
-
-	public struct ExceptionOptions
-	{
-		public static readonly ExceptionOptions Default = new ExceptionOptions()
-		{
-			CurrentIndentLevel = 0,
-			IndentSpaces = 4,
-			OmitNullProperties = true
-		};
-
-		internal ExceptionOptions(ExceptionOptions options, int currentIndent)
-		{
-			this.CurrentIndentLevel = currentIndent;
-			this.IndentSpaces = options.IndentSpaces;
-			this.OmitNullProperties = options.OmitNullProperties;
-		}
-
-		internal string Indent { get { return new string(' ', this.IndentSpaces * this.CurrentIndentLevel); } }
-
-		internal int CurrentIndentLevel { get; set; }
-
-		public int IndentSpaces { get; set; }
-
-		public bool OmitNullProperties { get; set; }
 	}
 }
 
@@ -778,10 +433,319 @@ namespace InternalGenerateLineMapExceptionExtensions
 			}
 		}
 
+
 		public static void AppendLine(this StringBuilder sb, Func<string> getValue)
 		{
 			sb.AppendLine(string.Empty, getValue);
 		}
 
+
+		public static void AppendCollection(this StringBuilder sb, string propertyName, IEnumerable collection, ExceptionOptions options)
+		{
+			sb.AppendLine(string.Format("{0, -23}", string.Format("{0}{1}:", options.Indent, propertyName)));
+
+			var innerOptions = new ExceptionOptions(options, options.CurrentIndentLevel + 1);
+
+			var i = 0;
+			foreach (var item in collection)
+			{
+				var innerPropertyName = string.Format("[{0}]", i);
+
+				if (item is Exception)
+				{
+					var innerException = (Exception)item;
+					sb.AppendException(innerPropertyName, innerException, innerOptions);
+				}
+				else
+				{
+					sb.AppendValue(innerPropertyName, item, innerOptions);
+				}
+
+				++i;
+			}
+		}
+
+
+		public static void AppendValue(this StringBuilder sb, string propertyName, object value, ExceptionOptions options)
+		{
+			if (value is DictionaryEntry)
+			{
+				DictionaryEntry dictionaryEntry = (DictionaryEntry)value;
+				sb.AppendLine(string.Format("{0, -23}{1} : {2}", string.Format("{0}{1}:", options.Indent, propertyName), dictionaryEntry.Key, dictionaryEntry.Value));
+			}
+			else if (value is Exception)
+			{
+				var innerException = (Exception)value;
+				sb.AppendException(propertyName, innerException, options);
+			}
+			else if (value is IEnumerable && !(value is string))
+			{
+				var collection = (IEnumerable)value;
+				if (collection.GetEnumerator().MoveNext())
+				{
+					sb.AppendCollection(propertyName, collection, options);
+				}
+			}
+			else
+			{
+				sb.AppendLine(string.Format("{0, -23}{1}", string.Format("{0}{1}:", options.Indent, propertyName), value));
+			}
+		}
+
+
+		public static void AppendException(this StringBuilder sb, string propertyName, Exception ex, ExceptionOptions options)
+		{
+			var innerExceptionString = ex.ToString(new ExceptionOptions(options, options.CurrentIndentLevel + 1));
+
+			sb.AppendLine(string.Format("{0, -23}", string.Format("{0}{1}: ", options.Indent, propertyName)));
+			sb.AppendLine(innerExceptionString);
+		}
+	}
+
+	public static class StackTraceExtensions
+	{
+		public static string ToString(this StackTrace stackTrace, bool skipLocalFrames = false)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			for (int intFrame = 0; intFrame <= stackTrace.FrameCount - 1; intFrame++)
+			{
+				StackFrame sf = stackTrace.GetFrame(intFrame);
+
+				if (skipLocalFrames && sf.GetMethod().DeclaringType.Name.IndexOf(Utilities.CLASSNAME) > -1)
+				{
+					// don't include frames related to this class
+					// this lets of keep any class frames related to this class out of
+					// the strack trace, they'd just be clutter anyway
+				}
+				else
+				{
+					sb.Append(StackFrameToString(sf));
+				}
+			}
+
+			return sb.ToString();
+		}
+
+
+		/// <summary>
+		/// Map an address offset from a stack frame entry to a linenumber
+		/// using the Method name, the base address of the method and the
+		/// IL offset from the base address
+		/// </summary>
+		/// <param name="sf"></param>
+		/// <param name="Line"></param>
+		/// <param name="SourceFile"></param>
+		/// <remarks></remarks>
+		private static SourceLine MapStackFrameToSourceLine(StackFrame sf)
+		{
+			// first, get the base addr of the method
+			// if possible
+			var sl = new SourceLine();
+
+			// you have to have symbols to do this
+			if (LineMap.AssemblyLineMaps.Count == 0)
+				return sl;
+
+			// first, check if for symbols for the assembly for this stack frame
+			if (!LineMap.AssemblyLineMaps.Keys.Contains(sf.GetMethod().DeclaringType.Assembly.CodeBase))
+				return sl;
+
+			// retrieve the cache
+			var alm = LineMap.AssemblyLineMaps[sf.GetMethod().DeclaringType.Assembly.CodeBase];
+
+			// does the symbols list contain the metadata token for this method?
+			MemberInfo mi = sf.GetMethod();
+			// Don't call this mdtoken or PostSharp will barf on it! Jeez
+			long mdtokn = mi.MetadataToken;
+			if (!alm.Symbols.ContainsKey(mdtokn))
+				return sl;
+
+			// all is good so get the line offset (as close as possible, considering any optimizations that
+			// might be in effect)
+			var ILOffset = sf.GetILOffset();
+			if (ILOffset != StackFrame.OFFSET_UNKNOWN)
+			{
+				Int64 Addr = alm.Symbols[mdtokn].Address + ILOffset;
+
+				// now start hunting down the line number entry
+				// use a simple search. LINQ might make this easier
+				// but I'm not sure how. Also, a binary search would be faster
+				// but this isn't something that's really performance dependent
+				int i = 1;
+				for (i = alm.AddressToLineMap.Count - 1; i >= 0; i += -1)
+				{
+					if (alm.AddressToLineMap[i].Address <= Addr)
+					{
+						break;
+					}
+				}
+				// since the address may end up between line numbers,
+				// always return the line num found
+				// even if it's not an exact match
+				sl.Line = alm.AddressToLineMap[i].Line;
+				sl.SourceFile = alm.Names[alm.AddressToLineMap[i].SourceFileIndex];
+			}
+
+			return sl;
+		}
+
+
+		/// <summary>
+		/// turns a single stack frame object into an informative string
+		/// </summary>
+		/// <param name="sf"></param>
+		/// <returns></returns>
+		private static string StackFrameToString(StackFrame sf)
+		{
+			StringBuilder sb = new StringBuilder();
+			int intParam = 0;
+			MemberInfo mi = sf.GetMethod();
+
+			//build method name
+			string MethodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
+			sb.Append(MethodName);
+
+			//build method params
+			ParameterInfo[] objParameters = sf.GetMethod().GetParameters();
+			sb.Append("(");
+			intParam = 0;
+			foreach (ParameterInfo objParameter in objParameters)
+			{
+				intParam += 1;
+				if (intParam > 1)
+					sb.Append(", ");
+				sb.Append(objParameter.Name);
+				sb.Append(" As ");
+				sb.Append(objParameter.ParameterType.Name);
+			}
+			sb.AppendLine(")");
+
+			// if source code is available, append location info
+			sb.Append("   ");
+			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && GenerateLineMapExceptionExtensions.GenerateLineMapExceptionExtensions.AllowUseOfPDB)
+			{
+				// the PDB appears to be available, since the above elements are 
+				// not blank, so just use it's information
+
+				sb.Append(System.IO.Path.GetFileName(sf.GetFileName()));
+				var Line = sf.GetFileLineNumber();
+				if (Line != 0)
+				{
+					sb.Append(": line ");
+					sb.Append(string.Format("{0}", Line));
+				}
+				var col = sf.GetFileColumnNumber();
+				if (col != 0)
+				{
+					sb.Append(", col ");
+					sb.Append(string.Format("{0:#00}", sf.GetFileColumnNumber()));
+				}
+				// if IL is available, append IL location info
+				if (sf.GetILOffset() != StackFrame.OFFSET_UNKNOWN)
+				{
+					sb.Append(", IL ");
+					sb.Append(string.Format("{0:#0000}", sf.GetILOffset()));
+				}
+			}
+			else
+			{
+				// the PDB is not available, so attempt to retrieve 
+				// any embedded linemap information
+				string Filename;
+				if (Utilities.ParentAssembly != null)
+				{
+					Filename = System.IO.Path.GetFileName(Utilities.ParentAssembly.CodeBase);
+				}
+				else
+				{
+					Filename = "Unable to determine Assembly Filename";
+				}
+
+				sb.Append(Filename);
+				// Get the native code offset and convert to a line number
+				// first, make sure our linemap is loaded
+				try
+				{
+					LineMap.AssemblyLineMaps.Add(sf.GetMethod().DeclaringType.Assembly);
+
+					var sl = MapStackFrameToSourceLine(sf);
+					if (sl.Line != 0)
+					{
+						sb.Append(": Source File - ");
+						sb.Append(sl.SourceFile);
+						sb.Append(": line ");
+						sb.Append(string.Format("{0}", sl.Line));
+					}
+
+				}
+				catch (Exception ex)
+				{
+					// any problems in loading the Linemap, just write to debugger and call it a day
+					Debug.WriteLine(string.Format("Unable to load line map information. Error: {0}", ex.ToString()));
+				}
+				finally
+				{
+					// native code offset is always available
+					var IL = sf.GetILOffset();
+					if (IL != StackFrame.OFFSET_UNKNOWN)
+					{
+						sb.Append(": IL ");
+						sb.Append(string.Format("{0:#00000}", IL));
+					}
+				}
+			}
+			sb.AppendLine();
+			return sb.ToString();
+		}
+
+
+		/// <summary>
+		/// Used to pass linemap information to the stackframe renderer
+		/// </summary>
+		private class SourceLine
+		{
+			public string SourceFile = string.Empty;
+			public int Line = 0;
+		}
+	}
+
+
+	public static class Utilities
+	{
+		/// <summary>
+		/// Used to identify stack frames that relate to "this" class so they can be skipped
+		/// </summary>
+		public static string CLASSNAME = "GenerateLineMapExceptionExtensions";
+
+
+		private static Assembly _parentAssembly = null;
+		/// <summary>
+		/// Retrieve the root assembly of the executing assembly
+		/// </summary>
+		/// <returns></returns>
+		public static Assembly ParentAssembly
+		{
+			get
+			{
+				if (_parentAssembly == null)
+				{
+					if (Assembly.GetEntryAssembly() != null)
+					{
+						_parentAssembly = Assembly.GetEntryAssembly();
+					}
+					else if (Assembly.GetCallingAssembly() != null)
+					{
+						_parentAssembly = Assembly.GetCallingAssembly();
+					}
+					else
+					{
+						//TODO questionable
+						_parentAssembly = Assembly.GetExecutingAssembly();
+					}
+				}
+				return _parentAssembly;
+			}
+		}
 	}
 }

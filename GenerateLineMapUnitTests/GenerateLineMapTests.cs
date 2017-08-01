@@ -35,7 +35,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace GenerateLineMapUnitTests
 {
 	[TestClass]
-	public class GenerateLineMapUnitTests
+	public class GenerateLineMapTests
 	{
 		[TestInitialize]
 		public void TestInitialize()
