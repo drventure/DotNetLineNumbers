@@ -26,7 +26,7 @@
 
 using System;
 
-using GenerateLineMapExceptionExtensions;
+using ExceptionExtensions;
 
 
 namespace TestApp1
@@ -48,11 +48,10 @@ namespace TestApp1
 			catch (Exception ex)
 			{
 				//Yes, this is nasty, but there would be no reason for a typical app to make use of it like this
-				GenerateLineMapExceptionExtensions.GenerateLineMapExceptionExtensions.AllowUseOfPDB = false;
+				ExceptionExtensions.ExceptionExtensions.AllowUseOfPDB = false;
 
-				var buf = "ERROR: " + ex.ToString();
-				Console.WriteLine(buf);
-				buf = "ERROR: " + ex.ToString();
+				// use extended version
+				var buf = "ERROR: " + ex.ToString(true);
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine(buf);
 			}

@@ -30,7 +30,7 @@ using System.IO;
 
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static GenerateLineMapExceptionExtensions.GenerateLineMapExceptionExtensions;
+using ExceptionExtensions;
 
 namespace GenerateLineMapUnitTests
 {

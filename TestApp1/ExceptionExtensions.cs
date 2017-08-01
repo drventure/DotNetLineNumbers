@@ -32,19 +32,18 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-using InternalGenerateLineMapExceptionExtensions;
-using static GenerateLineMapExceptionExtensions.GenerateLineMapExceptionExtensions;
-using GenerateLineMapExceptionExtensions;
-using System.Globalization;
+using ExceptionExtensions.Internal;
+using ExceptionExtensions;
 
-namespace GenerateLineMapExceptionExtensions
+
+namespace ExceptionExtensions
 {
 	/// <summary>
 	/// Exception Extension methods.
 	/// Portions are from a post on StackOverflow here:
 	/// https://stackoverflow.com/questions/2176707/exception-message-vs-exception-tostring
 	/// </summary>
-	public static class GenerateLineMapExceptionExtensions
+	public static class ExceptionExtensions
 	{
 		/// <summary>
 		/// Force the use of the PDB if available
@@ -80,6 +79,7 @@ namespace GenerateLineMapExceptionExtensions
 				// only need the extended properties once
 				if (options.CurrentIndentLevel == 0)
 				{
+					sb.AppendLine("Exception:");
 					extendedProps.Add(new KeyValuePair<string, object>("Type", ex.GetType().FullName));
 					extendedProps.Add(new KeyValuePair<string, object>("Date and Time", DateTime.Now.ToString()));
 					extendedProps.Add(new KeyValuePair<string, object>("Machine Name", Environment.MachineName));
@@ -234,7 +234,7 @@ namespace GenerateLineMapExceptionExtensions
 		/// <returns></returns>
 		private static DateTime GetAssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
 		{
-			System.Version objVersion = objAssembly.GetName().Version;
+			var objVersion = objAssembly.GetName().Version;
 			DateTime dtBuild = default(DateTime);
 
 			if (bForceFileDate)
@@ -280,15 +280,15 @@ namespace GenerateLineMapExceptionExtensions
 		//--
 		//enhanced stack trace generator (exception)
 		//--
-		private static string InternalEnhancedStackTrace(Exception objException)
+		private static string InternalEnhancedStackTrace(Exception ex)
 		{
-			if (objException == null)
+			if (ex == null)
 			{
 				return new StackTrace(true).ToString(true);
 			}
 			else
 			{
-				return new StackTrace(objException).ToString(true);
+				return new StackTrace(ex).ToString(true);
 			}
 		}
 
@@ -315,49 +315,40 @@ namespace GenerateLineMapExceptionExtensions
 		{
 			return InternalEnhancedStackTrace(thisException);
 		}
-
-
-		public struct ExceptionOptions
-		{
-			public ExceptionOptions(int indentSpaces = 4, bool omitNullProperties = true)
-			{
-				this.CurrentIndentLevel = 0;
-				this.IndentSpaces = indentSpaces;
-				this.OmitNullProperties = omitNullProperties;
-			}
-
-			public static readonly ExceptionOptions Default = new ExceptionOptions()
-			{
-				CurrentIndentLevel = 0,
-				IndentSpaces = 4,
-				OmitNullProperties = true
-			};
-
-
-			internal ExceptionOptions(ExceptionOptions options, int currentIndent)
-			{
-				this.CurrentIndentLevel = currentIndent;
-				this.IndentSpaces = options.IndentSpaces;
-				this.OmitNullProperties = options.OmitNullProperties;
-			}
-
-			internal string Indent { get { return new string(' ', this.IndentSpaces * this.CurrentIndentLevel); } }
-
-			internal int CurrentIndentLevel { get; set; }
-
-			public int IndentSpaces { get; set; }
-
-			public bool OmitNullProperties { get; set; }
-		}
 	}
 
 
-	/// <summary>
-	/// From Stackoverflow
-	/// </summary>
-	public static class ExceptionExtensions
+	public struct ExceptionOptions
 	{
+		public ExceptionOptions(int indentSpaces = 4, bool omitNullProperties = true)
+		{
+			this.CurrentIndentLevel = 0;
+			this.IndentSpaces = indentSpaces;
+			this.OmitNullProperties = omitNullProperties;
+		}
 
+		public static readonly ExceptionOptions Default = new ExceptionOptions()
+		{
+			CurrentIndentLevel = 0,
+			IndentSpaces = 4,
+			OmitNullProperties = true
+		};
+
+
+		internal ExceptionOptions(ExceptionOptions options, int currentIndent)
+		{
+			this.CurrentIndentLevel = currentIndent;
+			this.IndentSpaces = options.IndentSpaces;
+			this.OmitNullProperties = options.OmitNullProperties;
+		}
+
+		internal string Indent { get { return new string(' ', this.IndentSpaces * this.CurrentIndentLevel); } }
+
+		internal int CurrentIndentLevel { get; set; }
+
+		public int IndentSpaces { get; set; }
+
+		public bool OmitNullProperties { get; set; }
 	}
 }
 
@@ -365,7 +356,7 @@ namespace GenerateLineMapExceptionExtensions
 /// <summary>
 /// Seperate namespace to allow extension of the stringBuilder without polluting it elsewhere in the host app
 /// </summary>
-namespace InternalGenerateLineMapExceptionExtensions
+namespace ExceptionExtensions.Internal
 {
 	public static class StringBuilderExtensions
 	{
@@ -418,12 +409,7 @@ namespace InternalGenerateLineMapExceptionExtensions
 
 		public static void AppendValue(this StringBuilder sb, string propertyName, object value, ExceptionOptions options)
 		{
-			if (value is DictionaryEntry)
-			{
-				DictionaryEntry dictionaryEntry = (DictionaryEntry)value;
-				sb.AppendLine(string.Format("{0, -23}{1} : {2}", string.Format("{0}{1}:", options.Indent, propertyName), dictionaryEntry.Key, dictionaryEntry.Value));
-			}
-			else if (value is Exception)
+			if (value is Exception)
 			{
 				var innerException = (Exception)value;
 				sb.AppendException(propertyName, innerException, options);
@@ -438,7 +424,20 @@ namespace InternalGenerateLineMapExceptionExtensions
 			}
 			else
 			{
-				sb.AppendLine(string.Format("{0, -23}{1}", string.Format("{0}{1}:", options.Indent, propertyName), value));
+				sb.Append(string.Format("{0, -23}", string.Format("{0}{1}:", options.Indent, propertyName)));
+				if (value is DictionaryEntry)
+				{
+					DictionaryEntry dictionaryEntry = (DictionaryEntry)value;
+					sb.AppendLine(string.Format("{0} : {1}", dictionaryEntry.Key, dictionaryEntry.Value));
+				}
+				else if (propertyName == "HResult")
+				{
+					sb.AppendLine(string.Format("0x{0:X}", (int)value));
+				}
+				else
+				{
+					sb.AppendLine(value.ToString());
+				}
 			}
 		}
 
@@ -573,7 +572,7 @@ namespace InternalGenerateLineMapExceptionExtensions
 
 			// if source code is available, append location info
 			sb.Append("   ");
-			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && GenerateLineMapExceptionExtensions.GenerateLineMapExceptionExtensions.AllowUseOfPDB)
+			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && ExceptionExtensions.AllowUseOfPDB)
 			{
 				// the PDB appears to be available, since the above elements are 
 				// not blank, so just use it's information
