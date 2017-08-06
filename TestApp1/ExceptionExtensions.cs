@@ -26,15 +26,17 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Xml.Serialization;
 
 using ExceptionExtensions.Internal;
 using ExceptionExtensions;
-
 
 namespace ExceptionExtensions
 {
@@ -45,6 +47,9 @@ namespace ExceptionExtensions
 	/// </summary>
 	public static class ExceptionExtensions
 	{
+		private static readonly ConcurrentDictionary<Type, XmlSerializer> XmlSerializers =
+			new ConcurrentDictionary<Type, XmlSerializer>();		
+		
 		/// <summary>
 		/// Force the use of the PDB if available
 		/// This is primarily used when debugging/Unit testing
@@ -142,11 +147,78 @@ namespace ExceptionExtensions
 		}
 
 
+		/// <summary>
+		/// translate exception object to string, with additional system info
+		/// </summary>
+		/// <param name="ex"></param>
+		/// <returns></returns>
+		public static SerializableException ToSerializeableException(this Exception ex)
+		{
+			return toSerializeableException(ex);
+		}
+
+
+		private static SerializableException toSerializeableException(this Exception ex, int level = 0)
+		{
+			var sx = new SerializableException();
+			try
+			{
+				if (level == 0)
+				{
+					// grab some extended information for the exception
+					sx.Properties["Type"] = ex.GetType().FullName;
+					sx.Properties["Date and Time"] = DateTime.Now.ToString();
+					sx.Properties["Machine Name"] = Environment.MachineName;
+					sx.Properties["Current IP"] = GetCurrentIP();
+					sx.Properties["Current User"] = GetUserIdentity();
+					sx.Properties["Application Domain"] = System.AppDomain.CurrentDomain.FriendlyName;
+					sx.Properties["Assembly Codebase"] = Utilities.ParentAssembly.CodeBase;
+					sx.Properties["Assembly Fullname"] = Utilities.ParentAssembly.FullName;
+					sx.Properties["Assembly Version"] = Utilities.ParentAssembly.GetName().Version.ToString();
+					sx.Properties["Assembly Build Date"] = GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
+					//handle the stacktrace special
+					sx.Properties["StackTrace"] = new SerializableStackTrace(new StackTrace(ex));
+				}
+
+				// gather up all the properties of the Exception, plus the extended info above
+				// sort it, and render to a stringbuilder
+				foreach (var item in ex
+					.GetType()
+					.GetProperties())
+				{
+					var name = item.Name;
+					if (name == "StackTrace")
+					{
+						// already dealt with stacktraces above
+					}
+					else
+					{
+						var value = item.GetValue(ex, null);
+						if (value is Exception)
+						{
+							sx.InnerException = (value as Exception).toSerializeableException(++level);
+						}
+						else
+						{
+							sx.Properties[name] = string.Format("{0}", value);
+						}
+					}
+				}
+			}
+			catch (Exception ex2)
+			{
+				sx.Properties.Clear();
+				sx.Properties["Message"] = string.Format("Error '{0}' while generating exception description", ex2.Message);
+			}
+			return sx;
+		}
+
+
 		private static string IndentString(string value, ExceptionOptions options)
 		{
 			return value.Replace(Environment.NewLine, Environment.NewLine + options.Indent);
 		}
-				
+
 
 		/// <summary>
 		/// get IP address of this machine
@@ -315,6 +387,36 @@ namespace ExceptionExtensions
 		{
 			return InternalEnhancedStackTrace(thisException);
 		}
+
+
+		/// <summary>
+
+		/// Serializes the object using XML format.
+
+		/// </summary>
+
+		public static string SerializeAsXml(this object obj)
+		{
+			var type = obj.GetType();
+			var xmlSerializer = GetXmlSerializer(type);
+
+			using (var memStream = new MemoryStream())
+			{
+				xmlSerializer.Serialize(memStream, obj);
+				return Encoding.Default.GetString(memStream.ToArray());
+			}
+		}
+
+		private static XmlSerializer GetXmlSerializer(Type type)
+		{
+			// gets the xml serializer from the concurrent dictionary, if it doesn't exist
+			// then add one for the specified type
+			return XmlSerializers.GetOrAdd(type, t => new XmlSerializer(t, new Type[] 
+				{
+					typeof(SerializableStackTrace),
+					typeof(SerializableStackFrame)
+				}));
+		}
 	}
 
 
@@ -354,7 +456,7 @@ namespace ExceptionExtensions
 
 
 /// <summary>
-/// Seperate namespace to allow extension of the stringBuilder without polluting it elsewhere in the host app
+/// Seperate namespace to allow extension of the StringBuilder and Stacktrace without polluting it elsewhere in the host app
 /// </summary>
 namespace ExceptionExtensions.Internal
 {
@@ -450,6 +552,7 @@ namespace ExceptionExtensions.Internal
 			sb.AppendLine(innerExceptionString);
 		}
 	}
+
 
 	public static class StackTraceExtensions
 	{
@@ -551,24 +654,31 @@ namespace ExceptionExtensions.Internal
 			int intParam = 0;
 			MemberInfo mi = sf.GetMethod();
 
-			//build method name
-			string MethodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
-			sb.Append(MethodName);
-
-			//build method params
-			ParameterInfo[] objParameters = sf.GetMethod().GetParameters();
-			sb.Append("(");
-			intParam = 0;
-			foreach (ParameterInfo objParameter in objParameters)
+			if (mi != null)
 			{
-				intParam += 1;
-				if (intParam > 1)
-					sb.Append(", ");
-				sb.Append(objParameter.Name);
-				sb.Append(" As ");
-				sb.Append(objParameter.ParameterType.Name);
+				//build method name
+				string MethodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
+				sb.Append(MethodName);
+
+				if (mi is MethodBase)
+				{
+					//build method params
+					ParameterInfo[] objParameters = (mi as MethodBase).GetParameters();
+					sb.Append("(");
+					intParam = 0;
+					foreach (ParameterInfo objParameter in objParameters)
+					{
+						intParam += 1;
+						if (intParam > 1)
+							sb.Append(", ");
+						sb.Append(objParameter.Name);
+						sb.Append(" As ");
+						sb.Append(objParameter.ParameterType.Name);
+					}
+					sb.AppendLine(")");
+				}
 			}
-			sb.AppendLine(")");
+
 
 			// if source code is available, append location info
 			sb.Append("   ");
@@ -610,23 +720,25 @@ namespace ExceptionExtensions.Internal
 				{
 					Filename = "Unable to determine Assembly Filename";
 				}
-
 				sb.Append(Filename);
+
 				// Get the native code offset and convert to a line number
 				// first, make sure our linemap is loaded
 				try
 				{
-					LineMap.AssemblyLineMaps.Add(sf.GetMethod().DeclaringType.Assembly);
-
-					var sl = MapStackFrameToSourceLine(sf);
-					if (sl.Line != 0)
+					if (mi != null)
 					{
-						sb.Append(": Source File - ");
-						sb.Append(sl.SourceFile);
-						sb.Append(": line ");
-						sb.Append(string.Format("{0}", sl.Line));
-					}
+						LineMap.AssemblyLineMaps.Add(mi.DeclaringType.Assembly);
 
+						var sl = MapStackFrameToSourceLine(sf);
+						if (sl.Line != 0)
+						{
+							sb.Append(": Source File - ");
+							sb.Append(sl.SourceFile);
+							sb.Append(": line ");
+							sb.Append(string.Format("{0}", sl.Line));
+						}
+					}
 				}
 				catch (Exception ex)
 				{
@@ -697,4 +809,140 @@ namespace ExceptionExtensions.Internal
 			}
 		}
 	}
+
+
+	/// <summary>
+	/// This serves as a standin for an exception that can contain any arbitary
+	/// information for that exception and can be either directly serialized
+	/// or have custom serialization applied
+	/// </summary>
+	public class SerializableException
+	{
+		public PropertyList Properties = new PropertyList();
+		public SerializableException InnerException = null;
+
+		public class PropertyList : List<Property>
+		{
+			public object this[string key]
+			{
+				get
+				{
+					var r = this.Where(i => i.Key == key).FirstOrDefault();
+					return r.Value;
+				}
+				set
+				{
+					if (!string.IsNullOrEmpty(key) && value != null)
+						this.Add(new Property(key, value));
+				}
+			}
+		}
+
+		public class Property
+		{
+			public string Key { get; set; }
+			public object Value { get; set; }
+
+			public Property() { }
+			
+			public Property(string key, object value)
+			{
+				Key = key;
+				Value = value;
+			}
+		}
+	}
+
+
+	public class SerializableStackTrace
+	{
+		public SerializableStackTrace()
+		{ }
+
+
+		public SerializableStackTrace(StackTrace stackTrace)
+		{
+			foreach(var stackFrame in stackTrace.GetFrames())
+			{
+				this.StackFrames.Add(new SerializableStackFrame(stackFrame));
+			}
+		}
+		public SerializableStackFrameList StackFrames = new SerializableStackFrameList();
+	}
+
+
+	public class SerializableStackFrameList : List<SerializableStackFrame>
+	{
+	}
+
+
+	public class SerializableStackFrame
+	{
+		public SerializableStackFrame()
+		{ }
+
+
+		public SerializableStackFrame(StackFrame stackFrame)
+		{
+			this.FileColumnNumber = stackFrame.GetFileColumnNumber();
+			this.FileLineNumber = stackFrame.GetFileLineNumber();
+			this.FileName = stackFrame.GetFileName();
+			this.ILOffset = stackFrame.GetILOffset();
+			this.NativeOffset = stackFrame.GetNativeOffset();
+			this.MethodBase = new SerializableMethodBase(stackFrame.GetMethod());
+		}
+		public int FileColumnNumber { get; set; }
+		public int FileLineNumber { get; set; }
+		public string FileName { get; set; }
+		public int ILOffset { get; set; }
+		public SerializableMethodBase MethodBase { get; set; }
+		public int NativeOffset { get; set; }
+	}
+
+
+	public class SerializableMethodBase
+	{
+		public SerializableMethodBase()
+		{ }
+
+
+		public SerializableMethodBase(MethodBase methodBase)
+		{
+			this.DeclaringTypeNameSpace = methodBase.DeclaringType.Namespace;
+			this.DeclaringTypeName = methodBase.DeclaringType.Name;
+			this.Name = methodBase.Name;
+			this.Parameters = new SerializableParameterInfoList(methodBase.GetParameters());
+		}
+		public string DeclaringTypeNameSpace { get; set; }
+		public string DeclaringTypeName { get; set; }
+		public string Name { get; set; }
+		public SerializableParameterInfoList Parameters { get; set; }
+	}
+
+
+	public class SerializableParameterInfoList : List<SerializableParameterInfo>
+	{
+		public SerializableParameterInfoList(){ }
+		public SerializableParameterInfoList(ParameterInfo[] parameterInfo)
+		{
+			foreach (var pi in parameterInfo)
+			{
+				this.Add(new SerializableParameterInfo(pi));
+			}
+		}
+	}
+
+
+	public class SerializableParameterInfo
+	{
+		public SerializableParameterInfo() { }
+		public SerializableParameterInfo(ParameterInfo parameterInfo)
+		{
+			this.Name = parameterInfo.Name;
+			this.Type = parameterInfo.ParameterType.Name;
+		}
+		public string Name { get; set; }
+		public string Type { get; set; }
+	}
+
 }
