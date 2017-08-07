@@ -60,6 +60,8 @@
     <Compile Include="ExceptionExtensionTests.cs" />
     <Compile Include="GenerateLineMapTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="JSONSerializerTests.cs" />
+    <Compile Include="XMLSerializerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

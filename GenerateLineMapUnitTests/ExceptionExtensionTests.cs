@@ -76,34 +76,7 @@ namespace GenerateLineMapUnitTests
 
 
 		[TestMethod]
-		public void SerializeToXMLTest()
-		{
-			var ex = new SerializableException();
-			ex.Properties["Type"] = "System.Exception";
-			ex.Properties["DateAndTime"] = DateTime.Now.ToString();
-			ex.Properties["Message"] = "Just a Test";
-
-			var ex2 = new SerializableException();
-			ex2.Properties["Type"] = "System.Exception2";
-			ex2.Properties["DateAndTime"] = DateTime.Now.ToString();
-			ex2.Properties["Message"] = "Just a Test2";
-
-			ex.InnerException = ex2;
-
-			var ex3 = new SerializableException();
-			ex3.Properties["Type"] = "System.Exception3";
-			ex3.Properties["DateAndTime"] = DateTime.Now.ToString();
-			ex3.Properties["Message"] = "Just a Test3";
-
-			ex2.InnerException = ex3;
-
-			var buf = ExceptionExtensions.ExceptionExtensions.SerializeAsXml(ex);
-			Debug.WriteLine(buf);
-		}
-
-
-		[TestMethod]
-		public void SerializableExceptionTest()
+		public void SerializableExceptionToStringTest()
 		{
 			try
 			{
@@ -113,10 +86,10 @@ namespace GenerateLineMapUnitTests
 			}
 			catch (Exception ex)
 			{
-				var trace = new StackTrace(ex);
-				var sx = ex.ToSerializeableException();
-				var buf = ExceptionExtensions.ExceptionExtensions.SerializeAsXml(sx);
+				var buf = ex.ToString(true);
 				Debug.WriteLine(buf);
+				buf.Should().Contain("1st File was not found");
+
 			}
 		}
 	}
