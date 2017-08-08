@@ -51,7 +51,7 @@ namespace TestApp1
 				ExceptionExtensions.ExceptionExtensions.AllowUseOfPDB = false;
 
 				// use extended version
-				var buf = "ERROR: " + ex.ToString(true);
+				var buf = ex.ToString(true);
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine(buf);
 			}

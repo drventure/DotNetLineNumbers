@@ -46,26 +46,26 @@ namespace GenerateLineMapUnitTests
 		[TestMethod]
 		public void SerializeToXMLTest()
 		{
-			var ex = new SerializableException();
-			ex.Properties["Type"] = "System.Exception";
-			ex.Properties["DateAndTime"] = DateTime.Now.ToString();
-			ex.Properties["Message"] = "Just a Test";
+			var sx = new SerializableException();
+			sx["Type"] = "System.Exception";
+			sx["DateAndTime"] = DateTime.Now.ToString();
+			sx["Message"] = "Just a Test";
 
-			var ex2 = new SerializableException();
-			ex2.Properties["Type"] = "System.Exception2";
-			ex2.Properties["DateAndTime"] = DateTime.Now.ToString();
-			ex2.Properties["Message"] = "Just a Test2";
+			var sx2 = new SerializableException();
+			sx2["Type"] = "System.Exception2";
+			sx2["DateAndTime"] = DateTime.Now.ToString();
+			sx2["Message"] = "Just a Test2";
 
-			ex.InnerException = ex2;
+			sx["InnerException"] = sx2;
 
-			var ex3 = new SerializableException();
-			ex3.Properties["Type"] = "System.Exception3";
-			ex3.Properties["DateAndTime"] = DateTime.Now.ToString();
-			ex3.Properties["Message"] = "Just a Test3";
+			var sx3 = new SerializableException();
+			sx3["Type"] = "System.Exception3";
+			sx3["DateAndTime"] = DateTime.Now.ToString();
+			sx3["Message"] = "Just a Test3";
 
-			ex2.InnerException = ex3;
+			sx2["InnerException"] = sx3;
 
-			var buf = SerializeAsXml(ex);
+			var buf = SerializeAsXml(sx);
 			Debug.WriteLine(buf);
 		}
 

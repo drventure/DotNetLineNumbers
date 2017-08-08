@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 
 using ExceptionExtensions;
-using ExceptionToString.Internal;
-
+using ExceptionExtensions.Internal;
+using System.Diagnostics;
 
 /// <summary>
 /// This file specifically implements extension methods on the Exception class
@@ -44,7 +44,7 @@ namespace ExceptionExtensions
 		/// This method provides the default ToString rendering
 		/// </summary>
 		/// <returns></returns>
-		private static string ToString(this SerializableException sx, ExceptionOptions options)
+		public static string ToString(this SerializableException sx, ExceptionOptions options)
 		{
 			try
 			{
@@ -62,16 +62,15 @@ namespace ExceptionExtensions
 
 					// gather up all the properties of the Exception, plus the extended info above
 					// sort it, and render to a stringbuilder
-					foreach (var item in cx.Properties
+					foreach (var item in cx
 						.OrderByDescending(x => string.Equals(x.Key, "Type", StringComparison.Ordinal))
 						.ThenByDescending(x => string.Equals(x.Key, "Message", StringComparison.Ordinal))
 						.ThenByDescending(x => string.Equals(x.Key, "Source", StringComparison.Ordinal))
-						.ThenBy(x => string.Equals(x.Key, nameof(cx.InnerException), StringComparison.Ordinal))
+						.ThenByDescending(x => string.Equals(x.Key, "InnerException", StringComparison.Ordinal))
 						.ThenBy(x => string.Equals(x.Key, nameof(AggregateException.InnerExceptions), StringComparison.Ordinal))
 						.ThenBy(x => x.Key))
 					{
 						object value = item.Value;
-						if (value != null) value = value.ToString();
 						if (value == null || (value is string && string.IsNullOrEmpty((string)value)))
 						{
 							if (options.OmitNullProperties)
@@ -86,7 +85,7 @@ namespace ExceptionExtensions
 
 						sb.AppendValue(item.Key, value, options);
 					}
-					cx = sx.InnerException;
+					cx = sx["InnerException"] as SerializableException;
 				} while (cx != null);
 
 				return sb.ToString().TrimEnd('\r', '\n');
@@ -96,6 +95,85 @@ namespace ExceptionExtensions
 				return string.Format("Error '{0}' while generating exception description", ex2.Message);
 			}
 		}
+
+
+		public static string ToString(this SerializableException.SerializableStackTrace stackTrace, bool skipLocalFrames = false)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			foreach (var sf in stackTrace.StackFrames)
+			{
+				if (skipLocalFrames && sf.MethodBase.DeclaringTypeName.IndexOf(Utilities.CLASSNAME) > -1)
+				{
+					// don't include frames related to this class
+					// this lets of keep any class frames related to this class out of
+					// the strack trace, they'd just be clutter anyway
+				}
+				else
+				{
+					sb.Append(sf.ToString(true));
+				}
+			}
+
+			return sb.ToString();
+		}
+
+
+
+		/// <summary>
+		/// turns a single stack frame object into an informative string
+		/// </summary>
+		/// <param name="sf"></param>
+		/// <returns></returns>
+		public static string ToString(this SerializableException.SerializableStackFrame sf, bool extended)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			if (sf.MethodBase != null)
+			{
+				//build method name
+				string MethodName = sf.MethodBase.DeclaringTypeNameSpace + "." + sf.MethodBase.DeclaringTypeName + "." + sf.MethodBase.Name;
+				sb.Append(MethodName);
+
+				//build method params
+				sb.Append("(");
+				var i = 0;
+				foreach (var param in sf.MethodBase.Parameters)
+				{
+					i += 1;
+					if (i > 1) sb.Append(", ");
+					sb.Append(param.Name);
+					sb.Append(" As ");
+					sb.Append(param.Type);
+				}
+				sb.AppendLine(")");
+			}
+
+
+			// if source code is available, append location info
+			sb.Append("   ");
+			sb.Append(": Source File - ");
+			sb.Append(sf.FileName);
+			if (sf.FileLineNumber != 0)
+			{
+				sb.Append(": line ");
+				sb.Append(string.Format("{0}", sf.FileLineNumber));
+			}
+			if (sf.FileColumnNumber != 0)
+			{
+				sb.Append(", col ");
+				sb.Append(string.Format("{0:#00}", sf.FileColumnNumber));
+			}
+			if (sf.ILOffset != StackFrame.OFFSET_UNKNOWN)
+			{
+				sb.Append(", IL ");
+				sb.Append(string.Format("{0:#0000}", sf.ILOffset));
+			}
+
+			sb.AppendLine();
+			return sb.ToString();
+		}
+										
 
 
 		private static string IndentString(string value, ExceptionOptions options)
@@ -143,7 +221,7 @@ namespace ExceptionExtensions
 /// <summary>
 /// Seperate namespace to allow extension of the StringBuilder and Stacktrace without polluting it elsewhere in the host app
 /// </summary>
-namespace ExceptionToString.Internal
+namespace ExceptionExtensions.Internal
 {
 	public static class StringBuilderExtensions
 	{
@@ -168,38 +246,17 @@ namespace ExceptionToString.Internal
 		}
 
 
-		public static void AppendCollection(this StringBuilder sb, string propertyName, IEnumerable collection, ExceptionOptions options)
-		{
-			sb.AppendLine(string.Format("{0, -23}", string.Format("{0}{1}:", options.Indent, propertyName)));
-
-			var innerOptions = new ExceptionOptions(options, options.CurrentIndentLevel + 1);
-
-			var i = 0;
-			foreach (var item in collection)
-			{
-				var innerPropertyName = string.Format("[{0}]", i);
-
-				if (item is Exception)
-				{
-					var innerException = (Exception)item;
-					sb.AppendException(innerPropertyName, innerException, innerOptions);
-				}
-				else
-				{
-					sb.AppendValue(innerPropertyName, item, innerOptions);
-				}
-
-				++i;
-			}
-		}
-
-
 		public static void AppendValue(this StringBuilder sb, string propertyName, object value, ExceptionOptions options)
 		{
-			if (value is Exception)
+			if (value is SerializableException)
 			{
-				var innerException = (Exception)value;
+				var innerException = (SerializableException)value;
 				sb.AppendException(propertyName, innerException, options);
+			}
+			else if (value is SerializableException.SerializableStackTrace)
+			{
+				sb.Append(string.Format("{0}{1}:", options.Indent, propertyName).PadRight(23));
+				sb.AppendLine(((SerializableException.SerializableStackTrace)value).ToString(true));
 			}
 			else if (value is IEnumerable && !(value is string))
 			{
@@ -211,7 +268,7 @@ namespace ExceptionToString.Internal
 			}
 			else
 			{
-				sb.Append(string.Format("{0, -23}", string.Format("{0}{1}:", options.Indent, propertyName)));
+				sb.Append(string.Format("{0}{1}:", options.Indent, propertyName).PadRight(23));
 				if (value is DictionaryEntry)
 				{
 					DictionaryEntry dictionaryEntry = (DictionaryEntry)value;
@@ -229,11 +286,37 @@ namespace ExceptionToString.Internal
 		}
 
 
-		public static void AppendException(this StringBuilder sb, string propertyName, Exception ex, ExceptionOptions options)
+		public static void AppendCollection(this StringBuilder sb, string propertyName, IEnumerable collection, ExceptionOptions options)
 		{
-			var innerExceptionString = ex.ToString(new ExceptionOptions(options, options.CurrentIndentLevel + 1));
+			sb.AppendLine(string.Format("{0}{1}:", options.Indent, propertyName).PadRight(23));
 
-			sb.AppendLine(string.Format("{0, -23}", string.Format("{0}{1}: ", options.Indent, propertyName)));
+			var innerOptions = new ExceptionOptions(options, options.CurrentIndentLevel + 1);
+
+			var i = 0;
+			foreach (var item in collection)
+			{
+				var innerPropertyName = string.Format("[{0}]", i);
+
+				if (item is SerializableException)
+				{
+					var innerException = (SerializableException)item;
+					sb.AppendException(innerPropertyName, innerException, innerOptions);
+				}
+				else
+				{
+					sb.AppendValue(innerPropertyName, item, innerOptions);
+				}
+
+				++i;
+			}
+		}
+
+
+		public static void AppendException(this StringBuilder sb, string propertyName, SerializableException sx, ExceptionOptions options)
+		{
+			var innerExceptionString = sx.ToString(new ExceptionOptions(options, options.CurrentIndentLevel + 1));
+
+			sb.AppendLine(string.Format("{0}{1}: ", options.Indent, propertyName).PadRight(23));
 			sb.AppendLine(innerExceptionString);
 		}
 	}

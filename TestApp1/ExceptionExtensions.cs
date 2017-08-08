@@ -74,10 +74,23 @@ namespace ExceptionExtensions
 	/// information for that exception and can be either directly serialized
 	/// or have custom serialization applied
 	/// </summary>
-	public class SerializableException
+	public class SerializableException : List<SerializableException.Property>
 	{
-		public PropertyList Properties = new PropertyList();
-		public SerializableException InnerException = null;
+		public object this[string key]
+		{
+			get
+			{
+				var r = this.Where(i => i.Key == key).FirstOrDefault();
+				if (r != null) return r.Value;
+				return null;
+			}
+			set
+			{
+				if (!string.IsNullOrEmpty(key) && value != null)
+					this.Add(new Property(key, value));
+			}
+		}
+
 
 		public SerializableException() { }
 
@@ -86,26 +99,27 @@ namespace ExceptionExtensions
 			try
 			{
 				// grab some extended information for the exception
-				this.Properties["Type"] = ex.GetType().FullName;
-				this.Properties["Date and Time"] = DateTime.Now.ToString();
-				this.Properties["Machine Name"] = Environment.MachineName;
-				this.Properties["Current IP"] = GetCurrentIP();
-				this.Properties["Current User"] = GetUserIdentity();
-				this.Properties["Application Domain"] = System.AppDomain.CurrentDomain.FriendlyName;
-				this.Properties["Assembly Codebase"] = Utilities.ParentAssembly.CodeBase;
-				this.Properties["Assembly Fullname"] = Utilities.ParentAssembly.FullName;
-				this.Properties["Assembly Version"] = Utilities.ParentAssembly.GetName().Version.ToString();
-				this.Properties["Assembly Build Date"] = GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
+				this["Type"] = ex.GetType().FullName;
+				this["Date and Time"] = DateTime.Now.ToString();
+				this["Machine Name"] = Environment.MachineName;
+				this["Current IP"] = GetCurrentIP();
+				this["Current User"] = GetUserIdentity();
+				this["Application Domain"] = System.AppDomain.CurrentDomain.FriendlyName;
+				this["Assembly Codebase"] = Utilities.ParentAssembly.CodeBase;
+				this["Assembly Fullname"] = Utilities.ParentAssembly.FullName;
+				this["Assembly Version"] = Utilities.ParentAssembly.GetName().Version.ToString();
+				this["Assembly Build Date"] = GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
 				//handle the stacktrace special
-				this.Properties["StackTrace"] = new SerializableStackTrace(new StackTrace(ex));
-				if (ex.InnerException != null) this.InnerException = new SerializableException(ex.InnerException, 0);
+				this["StackTrace"] = new SerializableStackTrace(new StackTrace(ex));
+				if (ex.InnerException != null) this["InnerException"] = new SerializableException(ex.InnerException, 0);
 			}
 			catch (Exception ex2)
 			{
-				this.Properties.Clear();
-				this.Properties["Message"] = string.Format("Error '{0}' while generating exception description", ex2.Message);
+				this.Clear();
+				this["Message"] = string.Format("Error '{0}' while generating exception description", ex2.Message);
 			}
 		}
+
 
 		protected SerializableException(Exception ex, int level = 0)
 		{
@@ -125,11 +139,11 @@ namespace ExceptionExtensions
 					var value = item.GetValue(ex, null);
 					if (value is Exception)
 					{
-						this.InnerException = new SerializableException((Exception)value, ++level);
+						this["InnerException"] = new SerializableException((Exception)value, ++level);
 					}
 					else
 					{
-						this.Properties[name] = string.Format("{0}", value);
+						this[name] = string.Format("{0}", value);
 					}
 				}
 			}
@@ -264,6 +278,7 @@ namespace ExceptionExtensions
 		}
 
 
+		[Serializable]
 		[XmlRoot(ElementName = "Properties")]
 		public class PropertyList : List<Property>
 		{
@@ -282,6 +297,8 @@ namespace ExceptionExtensions
 			}
 		}
 
+
+		[Serializable]
 		[XmlRoot(ElementName = "Property")]
 		public class Property
 		{
@@ -298,6 +315,7 @@ namespace ExceptionExtensions
 		}
 
 
+		[Serializable]
 		[XmlRoot(ElementName = "StackTrace")]
 		public class SerializableStackTrace
 		{
@@ -313,16 +331,20 @@ namespace ExceptionExtensions
 					this.StackFrames.Add(new SerializableStackFrame(stackFrame));
 				}
 			}
+
+			[XmlArray]
 			public SerializableStackFrameList StackFrames = new SerializableStackFrameList();
 		}
 
 
+		[Serializable]
 		[XmlRoot(ElementName = "StackFrames")]
 		public class SerializableStackFrameList : List<SerializableStackFrame>
 		{
 		}
 
 
+		[Serializable]
 		[XmlRoot(ElementName = "StackFrame")]
 		public class SerializableStackFrame
 		{
@@ -391,6 +413,7 @@ namespace ExceptionExtensions
 		}
 
 
+		[Serializable]
 		[XmlRoot(ElementName = "Method")]
 		public class SerializableMethodBase
 		{
@@ -411,6 +434,7 @@ namespace ExceptionExtensions
 		}
 
 
+		[Serializable]
 		[XmlRoot(ElementName = "Parameters")]
 		public class SerializableParameterInfoList : List<SerializableParameterInfo>
 		{
@@ -425,6 +449,7 @@ namespace ExceptionExtensions
 		}
 
 
+		[Serializable]
 		[XmlRoot(ElementName = "Parameter")]
 		public class SerializableParameterInfo
 		{
@@ -449,28 +474,6 @@ namespace ExceptionExtensions.Internal
 {
 	public static class StackTraceExtensions
 	{
-		public static string ToString(this SerializableException.SerializableStackTrace stackTrace, bool skipLocalFrames = false)
-		{
-			StringBuilder sb = new StringBuilder();
-
-			foreach (var sf in stackTrace.StackFrames)
-			{
-				if (skipLocalFrames && sf.MethodBase.DeclaringTypeName.IndexOf(Utilities.CLASSNAME) > -1)
-				{
-					// don't include frames related to this class
-					// this lets of keep any class frames related to this class out of
-					// the strack trace, they'd just be clutter anyway
-				}
-				else
-				{
-					sb.Append(sf.ToString());
-				}
-			}
-
-			return sb.ToString();
-		}
-
-
 		/// <summary>
 		/// Map an address offset from a stack frame entry to a linenumber
 		/// using the Method name, the base address of the method and the
@@ -531,61 +534,6 @@ namespace ExceptionExtensions.Internal
 			}
 
 			return sl;
-		}
-
-
-		/// <summary>
-		/// turns a single stack frame object into an informative string
-		/// </summary>
-		/// <param name="sf"></param>
-		/// <returns></returns>
-		private static string StackFrameToString(SerializableException.SerializableStackFrame sf)
-		{
-			StringBuilder sb = new StringBuilder();
-
-			if (sf.MethodBase != null)
-			{
-				//build method name
-				string MethodName = sf.MethodBase.DeclaringTypeNameSpace + "." + sf.MethodBase.DeclaringTypeName + "." + sf.MethodBase.Name;
-				sb.Append(MethodName);
-
-				//build method params
-				sb.Append("(");
-				var i = 0;
-				foreach (var param in sf.MethodBase.Parameters)
-				{
-					i += 1;
-					if (i > 1) sb.Append(", ");
-					sb.Append(param.Name);
-					sb.Append(" As ");
-					sb.Append(param.Type);
-				}
-				sb.AppendLine(")");
-			}
-
-
-			// if source code is available, append location info
-			sb.Append("   ");
-			sb.Append(": Source File - ");
-			sb.Append(sf.FileName);
-			if (sf.FileLineNumber != 0)
-			{
-				sb.Append(": line ");
-				sb.Append(string.Format("{0}", sf.FileLineNumber));
-			}
-			if (sf.FileColumnNumber != 0)
-			{
-				sb.Append(", col ");
-				sb.Append(string.Format("{0:#00}", sf.FileColumnNumber));
-			}
-			if (sf.ILOffset != StackFrame.OFFSET_UNKNOWN)
-			{
-				sb.Append(", IL ");
-				sb.Append(string.Format("{0:#0000}", sf.ILOffset));
-			}
-
-			sb.AppendLine();
-			return sb.ToString();
 		}
 
 
