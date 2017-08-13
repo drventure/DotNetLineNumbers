@@ -25,17 +25,15 @@
 #endregion
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Text;
 using System.Xml.Serialization;
 
-using ExceptionExtensions;
 using ExceptionExtensions.Internal;
+
 
 namespace ExceptionExtensions
 {
@@ -55,6 +53,8 @@ namespace ExceptionExtensions
 
 		/// <summary>
 		/// translate exception object to string, with additional system info
+		/// The serializable exception object is much easier to work with, serialize, convert to string
+		/// or retrieve specific information from.
 		/// </summary>
 		/// <param name="ex"></param>
 		/// <returns></returns>
@@ -76,6 +76,60 @@ namespace ExceptionExtensions
 	/// </summary>
 	public class SerializableException : List<SerializableException.Property>
 	{
+		#region Constructors
+		public SerializableException() { }
+
+		public SerializableException(Exception ex) : this(ex, 0)
+		{ }
+
+
+		protected SerializableException(Exception ex, int level = 0)
+		{
+			var stackTrace = (level == 0) ? new StackTrace(ex) : null;
+			try
+			{
+				// grab some extended information for the exception
+				this["Type"] = ex.GetType().FullName;
+				this["Date and Time"] = DateTime.Now.ToString();
+				this["Machine Name"] = Environment.MachineName;
+				this["Current IP"] = GetCurrentIP();
+				this["Current User"] = GetUserIdentity();
+				this["Application Domain"] = System.AppDomain.CurrentDomain.FriendlyName;
+				this["Assembly Codebase"] = Utilities.ParentAssembly.CodeBase;
+				this["Assembly Fullname"] = Utilities.ParentAssembly.FullName;
+				this["Assembly Version"] = Utilities.ParentAssembly.GetName().Version.ToString();
+				this["Assembly Build Date"] = GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
+				this.GetExceptionProperties(ex, 0, stackTrace);
+			}
+			catch (Exception ex2)
+			{
+				this.Clear();
+				this["Message"] = string.Format("{0} Error '{1}' while generating exception description", ex2.GetType().Name, ex2.Message);
+			}
+		}
+		#endregion
+
+
+		[Serializable]
+		[XmlRoot(ElementName = "Properties")]
+		public class PropertyList : List<Property>
+		{
+			public object this[string key]
+			{
+				get
+				{
+					var r = this.Where(i => i.Key == key).FirstOrDefault();
+					return r.Value;
+				}
+				set
+				{
+					if (!string.IsNullOrEmpty(key) && value != null)
+						this.Add(new Property(key, value));
+				}
+			}
+		}
+
+
 		public object this[string key]
 		{
 			get
@@ -92,37 +146,24 @@ namespace ExceptionExtensions
 		}
 
 
-		public SerializableException() { }
+		#region Internal Info retrieval functions
 
-		public SerializableException(Exception ex)
+		/// <summary>
+		/// Retrieve all the relavent properties of an exception 
+		/// </summary>
+		/// <param name="ex"></param>
+		/// <param name="level"></param>
+		private void GetExceptionProperties(Exception ex, int level = 0, StackTrace stackTrace = null)
 		{
-			try
+			if (stackTrace != null)
 			{
-				// grab some extended information for the exception
-				this["Type"] = ex.GetType().FullName;
-				this["Date and Time"] = DateTime.Now.ToString();
-				this["Machine Name"] = Environment.MachineName;
-				this["Current IP"] = GetCurrentIP();
-				this["Current User"] = GetUserIdentity();
-				this["Application Domain"] = System.AppDomain.CurrentDomain.FriendlyName;
-				this["Assembly Codebase"] = Utilities.ParentAssembly.CodeBase;
-				this["Assembly Fullname"] = Utilities.ParentAssembly.FullName;
-				this["Assembly Version"] = Utilities.ParentAssembly.GetName().Version.ToString();
-				this["Assembly Build Date"] = GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
-				//handle the stacktrace special
-				this["StackTrace"] = new SerializableStackTrace(new StackTrace(ex));
-				if (ex.InnerException != null) this["InnerException"] = new SerializableException(ex.InnerException, 0);
+				//requesting the value for stack trace just renders to a string using the internal
+				//.net functionality. We don't want that.
+				//trace MUST be created in the constructor above or it won't be correct
+				//so it's created there, and passed through to here as an arg
+				this["StackTrace"] = new SerializableStackTrace(stackTrace);
 			}
-			catch (Exception ex2)
-			{
-				this.Clear();
-				this["Message"] = string.Format("Error '{0}' while generating exception description", ex2.Message);
-			}
-		}
 
-
-		protected SerializableException(Exception ex, int level = 0)
-		{
 			// gather up all the properties of the Exception, plus the extended info above
 			// sort it, and render to a stringbuilder
 			foreach (var item in ex
@@ -130,11 +171,7 @@ namespace ExceptionExtensions
 				.GetProperties())
 			{
 				var name = item.Name;
-				if (name == "StackTrace")
-				{
-					// already dealt with stacktrace and there's no need for nested exception
-				}
-				else
+				if (name != "StackTrace")
 				{
 					var value = item.GetValue(ex, null);
 					if (value is Exception)
@@ -143,7 +180,7 @@ namespace ExceptionExtensions
 					}
 					else
 					{
-						this[name] = string.Format("{0}", value);
+						this[name] = value;
 					}
 				}
 			}
@@ -276,26 +313,7 @@ namespace ExceptionExtensions
 				return DateTime.MinValue;
 			}
 		}
-
-
-		[Serializable]
-		[XmlRoot(ElementName = "Properties")]
-		public class PropertyList : List<Property>
-		{
-			public object this[string key]
-			{
-				get
-				{
-					var r = this.Where(i => i.Key == key).FirstOrDefault();
-					return r.Value;
-				}
-				set
-				{
-					if (!string.IsNullOrEmpty(key) && value != null)
-						this.Add(new Property(key, value));
-				}
-			}
-		}
+		#endregion
 
 
 		[Serializable]

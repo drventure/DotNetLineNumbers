@@ -50,43 +50,35 @@ namespace ExceptionExtensions
 			{
 				StringBuilder sb = new StringBuilder();
 
-				var cx = sx;
-
-				// grab some extended information for the exception
-				do
+				if (options.CurrentIndentLevel == 0)
 				{
-					if (cx == sx)
-					{
-						sb.AppendLine("Exception:");
-					}
+					sb.AppendLine(string.Format("{0}Exception: {1}", options.Indent, sx["Type"]));
+				}
 
-					// gather up all the properties of the Exception, plus the extended info above
-					// sort it, and render to a stringbuilder
-					foreach (var item in cx
-						.OrderByDescending(x => string.Equals(x.Key, "Type", StringComparison.Ordinal))
-						.ThenByDescending(x => string.Equals(x.Key, "Message", StringComparison.Ordinal))
-						.ThenByDescending(x => string.Equals(x.Key, "Source", StringComparison.Ordinal))
-						.ThenByDescending(x => string.Equals(x.Key, "InnerException", StringComparison.Ordinal))
-						.ThenBy(x => string.Equals(x.Key, nameof(AggregateException.InnerExceptions), StringComparison.Ordinal))
-						.ThenBy(x => x.Key))
+				// gather up all the properties of the Exception, plus the extended info above
+				// sort it, and render to a stringbuilder
+				foreach (var item in sx
+					.OrderByDescending(x => string.Equals(x.Key, "Type", StringComparison.Ordinal))
+					.ThenByDescending(x => string.Equals(x.Key, "Message", StringComparison.Ordinal))
+					.ThenByDescending(x => string.Equals(x.Key, "Source", StringComparison.Ordinal))
+					.ThenBy(x => string.Equals(x.Key, "InnerException", StringComparison.Ordinal))
+					.ThenBy(x => x.Key))
+				{
+					object value = item.Value;
+					if (value == null || (value is string && string.IsNullOrEmpty((string)value)))
 					{
-						object value = item.Value;
-						if (value == null || (value is string && string.IsNullOrEmpty((string)value)))
+						if (options.OmitNullProperties)
 						{
-							if (options.OmitNullProperties)
-							{
-								continue;
-							}
-							else
-							{
-								value = string.Empty;
-							}
+							continue;
 						}
-
-						sb.AppendValue(item.Key, value, options);
+						else
+						{
+							value = string.Empty;
+						}
 					}
-					cx = sx["InnerException"] as SerializableException;
-				} while (cx != null);
+
+					sb.AppendValue(item.Key, value, options);
+				}
 
 				return sb.ToString().TrimEnd('\r', '\n');
 			}
@@ -101,21 +93,24 @@ namespace ExceptionExtensions
 		{
 			StringBuilder sb = new StringBuilder();
 
-			foreach (var sf in stackTrace.StackFrames)
+			if (stackTrace.StackFrames != null)
 			{
-				if (skipLocalFrames && sf.MethodBase.DeclaringTypeName.IndexOf(Utilities.CLASSNAME) > -1)
+				foreach (var sf in stackTrace.StackFrames)
 				{
-					// don't include frames related to this class
-					// this lets of keep any class frames related to this class out of
-					// the strack trace, they'd just be clutter anyway
-				}
-				else
-				{
-					sb.Append(sf.ToString(true));
+					if (skipLocalFrames && sf.MethodBase.DeclaringTypeName.IndexOf(Utilities.CLASSNAME) > -1)
+					{
+						// don't include frames related to this class
+						// this lets of keep any class frames related to this class out of
+						// the strack trace, they'd just be clutter anyway
+					}
+					else
+					{
+						sb.Append(sf.ToString(true));
+					}
 				}
 			}
 
-			return sb.ToString();
+			return sb.ToString().TrimEnd('\r', '\n');
 		}
 
 
