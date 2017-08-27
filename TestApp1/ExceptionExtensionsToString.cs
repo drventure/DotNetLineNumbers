@@ -57,7 +57,7 @@ namespace ExceptionExtensions
 
 				// gather up all the properties of the Exception, plus the extended info above
 				// sort it, and render to a stringbuilder
-				foreach (var item in sx
+				foreach (var item in sx.Properties
 					.OrderByDescending(x => string.Equals(x.Key, "Type", StringComparison.Ordinal))
 					.ThenByDescending(x => string.Equals(x.Key, "Message", StringComparison.Ordinal))
 					.ThenByDescending(x => string.Equals(x.Key, "Source", StringComparison.Ordinal))

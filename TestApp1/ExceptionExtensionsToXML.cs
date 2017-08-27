@@ -1,16 +1,15 @@
 ﻿using System;
 using System.IO;
-using System.Text;
+using System.Runtime.Serialization;
 using System.Xml;
-using System.Xml.Serialization;
 
 
 /// <summary>
 /// This file specifically implements extension methods on the Exception class
-/// to convert exceptions ToString()
+/// to convert exceptions to XML format
 /// 
-/// It does this by retrieving the exception as a SerializableException
-/// and then rendering that ToString();
+/// It does this by converting the Exception to a SerializableException and 
+/// then using standard XML serialization functions on it
 /// </summary>
 namespace ExceptionExtensions
 {
@@ -33,20 +32,15 @@ namespace ExceptionExtensions
 		/// <returns></returns>
 		private static string ToXML(this SerializableException sx)
 		{
-			var xmlSerializer = new XmlSerializer(sx.GetType());
-
-			using (var ms = new MemoryStream())
+			var serializer = new DataContractSerializer(sx.GetType());
+			using (var sw = new StringWriter())
 			{
-				using (var xw = XmlWriter.Create(ms,
-					new XmlWriterSettings()
-					{
-						Encoding = new UTF8Encoding(false),
-						Indent = true,
-						NewLineOnAttributes = true,
-					}))
+				using (var writer = new XmlTextWriter(sw))
 				{
-					xmlSerializer.Serialize(xw, sx);
-					return Encoding.UTF8.GetString(ms.ToArray());
+					writer.Formatting = Formatting.Indented; // indent the Xml so it's human readable
+					serializer.WriteObject(writer, sx);
+					writer.Flush();
+					return sw.ToString();
 				}
 			}
 		}

@@ -10,10 +10,10 @@ using System.Threading;
 
 /// <summary>
 /// This file specifically implements extension methods on the Exception class
-/// to convert exceptions ToString()
+/// to convert exceptions to JSON format
 /// 
-/// It does this by retrieving the exception as a SerializableException
-/// and then rendering that ToString();
+/// It does this by converting the Exception to a SerializableException and 
+/// then using standard JSON serialization functions on it
 /// </summary>
 namespace ExceptionExtensions
 {
@@ -47,7 +47,12 @@ namespace ExceptionExtensions
 				{
 					using (var writer = JsonReaderWriterFactory.CreateJsonWriter(ms, Encoding.UTF8, true, true, "  "))
 					{
-						DataContractJsonSerializer js = new DataContractJsonSerializer(typeof(SerializableException), new DataContractJsonSerializerSettings() { UseSimpleDictionaryFormat = true });
+						DataContractJsonSerializer js = new DataContractJsonSerializer(
+							typeof(SerializableException), 
+							new DataContractJsonSerializerSettings()
+							{
+								UseSimpleDictionaryFormat = true
+							});
 						js.WriteObject(writer, sx);
 						writer.Flush();
 						ms.Position = 0;

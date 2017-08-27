@@ -9,6 +9,8 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using ExceptionExtensions;
+using System.Runtime.Serialization;
+using System.Xml;
 
 
 namespace GenerateLineMapUnitTests
@@ -65,8 +67,21 @@ namespace GenerateLineMapUnitTests
 
 			sx2["InnerException"] = sx3;
 
-			var buf = SerializeAsXml(sx);
-			Debug.WriteLine(buf);
+			var buf = "";
+			var serializer = new DataContractSerializer(sx.GetType());
+			using (var sw = new StringWriter())
+			{
+				using (var writer = new XmlTextWriter(sw))
+				{
+					writer.Formatting = Formatting.Indented;
+					serializer.WriteObject(writer, sx);
+					writer.Flush();
+					buf = sw.ToString();
+				}
+			}
+			buf.Should().Contain("Just a Test");
+			buf.Should().Contain("Just a Test2");
+			buf.Should().Contain("Just a Test3");
 		}
 
 

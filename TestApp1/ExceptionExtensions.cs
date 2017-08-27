@@ -66,18 +66,19 @@ namespace ExceptionExtensions
 
 
 	[Serializable]
+	[DataContract]
 	[XmlRoot(ElementName = "Exception")]
-	[XmlInclude(typeof(SerializableStackTrace))]
 	[KnownType(typeof(SerializableStackTrace))]
 	/// <summary>
 	/// This serves as a standin for an exception that can contain any arbitary
 	/// information for that exception and can be either directly serialized
 	/// or have custom serialization applied
 	/// </summary>
-	public class SerializableException : List<SerializableException.Property>
+	public class SerializableException
 	{
 		#region Constructors
-		public SerializableException() { }
+		public SerializableException() : this(null, 0)
+		{ }
 
 		public SerializableException(Exception ex) : this(ex, 0)
 		{ }
@@ -85,63 +86,60 @@ namespace ExceptionExtensions
 
 		protected SerializableException(Exception ex, int level = 0)
 		{
-			var stackTrace = (level == 0) ? new StackTrace(ex) : null;
-			try
+			_properties = new PropertyList();
+
+			if (ex != null)
 			{
-				// grab some extended information for the exception
-				this["Type"] = ex.GetType().FullName;
-				this["Date and Time"] = DateTime.Now.ToString();
-				this["Machine Name"] = Environment.MachineName;
-				this["Current IP"] = GetCurrentIP();
-				this["Current User"] = GetUserIdentity();
-				this["Application Domain"] = System.AppDomain.CurrentDomain.FriendlyName;
-				this["Assembly Codebase"] = Utilities.ParentAssembly.CodeBase;
-				this["Assembly Fullname"] = Utilities.ParentAssembly.FullName;
-				this["Assembly Version"] = Utilities.ParentAssembly.GetName().Version.ToString();
-				this["Assembly Build Date"] = GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
-				this.GetExceptionProperties(ex, 0, stackTrace);
-			}
-			catch (Exception ex2)
-			{
-				this.Clear();
-				this["Message"] = string.Format("{0} Error '{1}' while generating exception description", ex2.GetType().Name, ex2.Message);
+				var stackTrace = (level == 0) ? new StackTrace(ex) : null;
+				try
+				{
+					// grab some extended information for the exception
+					this["Type"] = ex.GetType().FullName;
+					this["Date and Time"] = DateTime.Now.ToString();
+					this["Machine Name"] = Environment.MachineName;
+					this["Current IP"] = GetCurrentIP();
+					this["Current User"] = GetUserIdentity();
+					this["Application Domain"] = System.AppDomain.CurrentDomain.FriendlyName;
+					this["Assembly Codebase"] = Utilities.ParentAssembly.CodeBase;
+					this["Assembly Fullname"] = Utilities.ParentAssembly.FullName;
+					this["Assembly Version"] = Utilities.ParentAssembly.GetName().Version.ToString();
+					this["Assembly Build Date"] = GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
+					this.GetExceptionProperties(ex, 0, stackTrace);
+				}
+				catch (Exception ex2)
+				{
+					this.Properties.Clear();
+					this["Message"] = string.Format("{0} Error '{1}' while generating exception description", ex2.GetType().Name, ex2.Message);
+				}
 			}
 		}
 		#endregion
 
 
-		[Serializable]
-		[XmlRoot(ElementName = "Properties")]
-		public class PropertyList : List<Property>
-		{
-			public object this[string key]
-			{
-				get
-				{
-					var r = this.Where(i => i.Key == key).FirstOrDefault();
-					return r.Value;
-				}
-				set
-				{
-					if (!string.IsNullOrEmpty(key) && value != null)
-						this.Add(new Property(key, value));
-				}
-			}
-		}
-
-
-		public object this[string key]
+		private PropertyList _properties;
+		[DataMember]
+		public PropertyList Properties
 		{
 			get
 			{
-				var r = this.Where(i => i.Key == key).FirstOrDefault();
-				if (r != null) return r.Value;
+				return _properties;
+			}
+		}
+
+		public object this[string name]
+		{
+			get
+			{
+				if (this.Properties.ContainsKey(name))
+				{
+					return this.Properties[name];
+				}
 				return null;
 			}
 			set
 			{
-				if (!string.IsNullOrEmpty(key) && value != null)
-					this.Add(new Property(key, value));
+				if (!string.IsNullOrEmpty(name) && value != null)
+					this.Properties[name] = value;
 			}
 		}
 
@@ -180,7 +178,17 @@ namespace ExceptionExtensions
 					}
 					else
 					{
-						this[name] = value;
+						if (value == null || (value != null && value.GetType().IsPrimitive))
+						{
+							//primitive types should always be serializable
+							this[name] = value;
+						}
+						else
+						{
+							//non primitive types need checking
+							//TBD for now, just ToString it
+							this[name] = value.ToString();
+						}
 					}
 				}
 			}
@@ -317,32 +325,45 @@ namespace ExceptionExtensions
 
 
 		[Serializable]
+		[CollectionDataContract]
+		[XmlRoot(ElementName = "Properties")]
+		public class PropertyList : Dictionary<string, object>
+		{ }
+
+
+		[Serializable]
+		[DataContract]
 		[XmlRoot(ElementName = "Property")]
 		public class Property
 		{
-			public string Key { get; set; }
+			[DataMember]
+			public string Name { get; set; }
+			[DataMember]
 			public object Value { get; set; }
 
 			public Property() { }
 
-			public Property(string key, object value)
+			public Property(string name, object value)
 			{
-				Key = key;
+				Name = name;
 				Value = value;
 			}
 		}
 
 
 		[Serializable]
+		[DataContract]
 		[XmlRoot(ElementName = "StackTrace")]
+		//[KnownType(typeof(SerializableStackFrameList))]
 		public class SerializableStackTrace
 		{
 			public SerializableStackTrace()
 			{
+				this.StackFrames = new SerializableStackFrameList();
 			}
 
 
-			public SerializableStackTrace(StackTrace stackTrace)
+			public SerializableStackTrace(StackTrace stackTrace) : this()
 			{
 				foreach (var stackFrame in stackTrace.GetFrames())
 				{
@@ -350,20 +371,26 @@ namespace ExceptionExtensions
 				}
 			}
 
+
+			[DataMember]
 			[XmlArray]
-			public SerializableStackFrameList StackFrames = new SerializableStackFrameList();
+			public SerializableStackFrameList StackFrames { get; private set; }
 		}
 
 
 		[Serializable]
+		[CollectionDataContract]
 		[XmlRoot(ElementName = "StackFrames")]
+		//[KnownType(typeof(SerializableStackFrame))]
 		public class SerializableStackFrameList : List<SerializableStackFrame>
 		{
 		}
 
 
 		[Serializable]
+		[DataContract]
 		[XmlRoot(ElementName = "StackFrame")]
+		//[KnownType(typeof(SerializableMethodBase))]
 		public class SerializableStackFrame
 		{
 			public SerializableStackFrame()
@@ -422,17 +449,25 @@ namespace ExceptionExtensions
 					}
 				}
 			}
+			[DataMember]
 			public int FileColumnNumber { get; set; }
+			[DataMember]
 			public int FileLineNumber { get; set; }
+			[DataMember]
 			public string FileName { get; set; }
+			[DataMember]
 			public int ILOffset { get; set; }
+			[DataMember]
 			public SerializableMethodBase MethodBase { get; set; }
+			[DataMember]
 			public int NativeOffset { get; set; }
 		}
 
 
 		[Serializable]
+		[DataContract]
 		[XmlRoot(ElementName = "Method")]
+		//[KnownType(typeof(SerializableParameterInfoList))]
 		public class SerializableMethodBase
 		{
 			public SerializableMethodBase() { }
@@ -445,15 +480,21 @@ namespace ExceptionExtensions
 				this.Name = methodBase.Name;
 				this.Parameters = new SerializableParameterInfoList(methodBase.GetParameters());
 			}
+			[DataMember]
 			public string DeclaringTypeNameSpace { get; set; }
+			[DataMember]
 			public string DeclaringTypeName { get; set; }
+			[DataMember]
 			public string Name { get; set; }
+			[DataMember]
 			public SerializableParameterInfoList Parameters { get; set; }
 		}
 
 
 		[Serializable]
+		[CollectionDataContract]
 		[XmlRoot(ElementName = "Parameters")]
+		//[KnownType(typeof(SerializableParameterInfo))]
 		public class SerializableParameterInfoList : List<SerializableParameterInfo>
 		{
 			public SerializableParameterInfoList() { }
@@ -468,6 +509,7 @@ namespace ExceptionExtensions
 
 
 		[Serializable]
+		[DataContract]
 		[XmlRoot(ElementName = "Parameter")]
 		public class SerializableParameterInfo
 		{
@@ -476,9 +518,14 @@ namespace ExceptionExtensions
 			{
 				this.Name = parameterInfo.Name;
 				this.Type = parameterInfo.ParameterType.Name;
+				this.Value = "TBD";
 			}
+			[DataMember]
 			public string Name { get; set; }
+			[DataMember]
 			public string Type { get; set; }
+			[DataMember]
+			public string Value { get; set; }
 		}
 	}
 }
