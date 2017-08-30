@@ -422,7 +422,7 @@ namespace GenerateLineMap
 			{
 				Log.LogMessage("Creating symbol buffer report");
 
-				using (var tw = new StreamWriter(this.Filename + ".linemapreport", false))
+				using (var tw = new StreamWriter(this.OutFilename + ".linemapreport", false))
 				{
 					tw.Write(pCreatePDBReport(AssemblyLineMap).ToString());
 					tw.Flush();
@@ -448,6 +448,16 @@ namespace GenerateLineMap
 			{
 				sb.AppendLine(string.Format("   {0,-10:X}  {1,-10}  {2}", symbolEx.Token, symbolEx.Address, symbolEx.Name));
 			}
+
+			sb.AppendLine("========");
+			sb.AppendLine("NAMES:");
+			sb.AppendLine("========");
+			sb.AppendLine(string.Format("   {0,-10}  {1}", "Index", "Name"));
+			for (int i = 0; i < AssemblyLineMap.Names.Count; i++)
+			{
+				sb.AppendLine(string.Format("   {0,-10}  {1}", i, AssemblyLineMap.Names[i]));
+			}
+
 			sb.AppendLine("========");
 			sb.AppendLine("LINE NUMBERS:");
 			sb.AppendLine("========");
@@ -472,14 +482,6 @@ namespace GenerateLineMap
 				sb.AppendLine(string.Format("   {0,-10}  {1,-11}  {2,-10:X}  {3}", lineex.Address, lineex.Line, t, n));
 			}
 
-			sb.AppendLine("========");
-			sb.AppendLine("NAMES:");
-			sb.AppendLine("========");
-			sb.AppendLine(string.Format("   {0,-10}  {1}", "Index", "Name"));
-			for (int i = 0; i < AssemblyLineMap.Names.Count; i++)
-			{
-				sb.AppendLine(string.Format("   {0,-10}  {1}", i, AssemblyLineMap.Names[i]));
-			}
 			return sb;
 		}
 
