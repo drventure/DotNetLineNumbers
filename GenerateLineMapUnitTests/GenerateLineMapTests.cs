@@ -74,8 +74,14 @@ namespace GenerateLineMapUnitTests
 		{
 			using (var consoleOutput = new ConsoleOutput())
 			{
+				// copy the app to test on to a different filename, this is required
+				// because, since TestApp1 is referenced by the unit test, VS tends to want to
+				// lock it open for debugging purposes, which prevents GenerateLineMap from updating
+				// its resources.
+				System.IO.File.Copy("TestApp1.Exe", "TestApp1-rpt.exe", true);
+
 				// Check exit is normal
-				StartConsoleApplication("GenerateLineMap.exe", "/report TestApp1.exe /out:TestApp1-3.exe").Should().Be(0);
+				StartConsoleApplication("GenerateLineMap.exe", "/report TestApp1-rpt.exe").Should().Be(0);
 
 				Debug.WriteLine(consoleOutput.Output);
 
