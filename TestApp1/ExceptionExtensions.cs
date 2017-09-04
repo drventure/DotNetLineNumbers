@@ -30,6 +30,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Text;
 using System.Xml.Serialization;
 
 using ExceptionExtensions.Internal;
@@ -58,478 +59,110 @@ namespace ExceptionExtensions
 		/// </summary>
 		/// <param name="ex"></param>
 		/// <returns></returns>
-		public static SerializableException ToSerializableException(this Exception ex)
+		public static string ToExpandedString(this Exception ex)
 		{
-			return new SerializableException(ex);
-		}
-	}
-
-
-	[Serializable]
-	[DataContract]
-	[XmlRoot(ElementName = "Exception")]
-	[KnownType(typeof(SerializableStackTrace))]
-	/// <summary>
-	/// This serves as a standin for an exception that can contain any arbitary
-	/// information for that exception and can be either directly serialized
-	/// or have custom serialization applied
-	/// </summary>
-	public class SerializableException
-	{
-		#region Constructors
-		public SerializableException() : this(null, 0)
-		{ }
-
-		public SerializableException(Exception ex) : this(ex, 0)
-		{ }
-
-
-		protected SerializableException(Exception ex, int level = 0)
-		{
-			_properties = new PropertyList();
-
-			if (ex != null)
-			{
-				var stackTrace = (level == 0) ? new StackTrace(ex) : null;
-				try
-				{
-					// grab some extended information for the exception
-					this["Type"] = ex.GetType().FullName;
-					this["Date and Time"] = DateTime.Now.ToString();
-					this["Machine Name"] = Environment.MachineName;
-					this["Current IP"] = GetCurrentIP();
-					this["Current User"] = GetUserIdentity();
-					this["Application Domain"] = System.AppDomain.CurrentDomain.FriendlyName;
-					this["Assembly Codebase"] = Utilities.ParentAssembly.CodeBase;
-					this["Assembly Fullname"] = Utilities.ParentAssembly.FullName;
-					this["Assembly Version"] = Utilities.ParentAssembly.GetName().Version.ToString();
-					this["Assembly Build Date"] = GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
-					this.GetExceptionProperties(ex, 0, stackTrace);
-				}
-				catch (Exception ex2)
-				{
-					this.Properties.Clear();
-					this["Message"] = string.Format("{0} Error '{1}' while generating exception description", ex2.GetType().Name, ex2.Message);
-				}
-			}
-		}
-		#endregion
-
-
-		private PropertyList _properties;
-		[DataMember]
-		public PropertyList Properties
-		{
-			get
-			{
-				return _properties;
-			}
+			return ToExpandedString(ex, new ExceptionOptions());
 		}
 
-		public object this[string name]
-		{
-			get
-			{
-				if (this.Properties.ContainsKey(name))
-				{
-					return this.Properties[name];
-				}
-				return null;
-			}
-			set
-			{
-				if (!string.IsNullOrEmpty(name) && value != null)
-					this.Properties[name] = value;
-			}
-		}
-
-
-		#region Internal Info retrieval functions
 
 		/// <summary>
-		/// Retrieve all the relavent properties of an exception 
+		/// translate exception object to string, with additional system info
+		/// The serializable exception object is much easier to work with, serialize, convert to string
+		/// or retrieve specific information from.
 		/// </summary>
 		/// <param name="ex"></param>
-		/// <param name="level"></param>
-		private void GetExceptionProperties(Exception ex, int level = 0, StackTrace stackTrace = null)
+		/// <returns></returns>
+		public static string ToExpandedString(this Exception ex, ExceptionOptions options)
 		{
-			if (stackTrace != null)
-			{
-				//requesting the value for stack trace just renders to a string using the internal
-				//.net functionality. We don't want that.
-				//trace MUST be created in the constructor above or it won't be correct
-				//so it's created there, and passed through to here as an arg
-				this["StackTrace"] = new SerializableStackTrace(stackTrace);
-			}
+			return _toExpandedString(ex, options);
+		}
 
-			// gather up all the properties of the Exception, plus the extended info above
-			// sort it, and render to a stringbuilder
-			foreach (var item in ex
-				.GetType()
-				.GetProperties())
+
+		/// <summary>
+		/// This method provides the default ToString rendering
+		/// </summary>
+		/// <returns></returns>
+		private static string _toExpandedString(Exception ex, ExceptionOptions options)
+		{
+			if (ex == null) return string.Empty;
+
+			StringBuilder sb = new StringBuilder();
+
+			try
 			{
-				var name = item.Name;
-				if (name != "StackTrace")
+				// grab some extended information for the exception
+				var extendedProps = new List<KeyValuePair<string, object>>();
+
+				// only need the extended properties once
+				if (options.CurrentIndentLevel == 0)
 				{
-					var value = item.GetValue(ex, null);
-					if (value is Exception)
+					sb.AppendLine(string.Format("{0}Exception: {1}", options.Indent, ex.GetType().FullName));
+
+					extendedProps.Add(new KeyValuePair<string, object>("Type", ex.GetType().FullName));
+					extendedProps.Add(new KeyValuePair<string, object>("Date and Time", DateTime.Now.ToString()));
+					extendedProps.Add(new KeyValuePair<string, object>("Machine Name", Environment.MachineName));
+					extendedProps.Add(new KeyValuePair<string, object>("Current IP", Utilities.GetCurrentIP()));
+					extendedProps.Add(new KeyValuePair<string, object>("Current User", Utilities.GetUserIdentity()));
+					extendedProps.Add(new KeyValuePair<string, object>("Application Domain", System.AppDomain.CurrentDomain.FriendlyName));
+					extendedProps.Add(new KeyValuePair<string, object>("Assembly Codebase", Utilities.ParentAssembly.CodeBase));
+					extendedProps.Add(new KeyValuePair<string, object>("Assembly Fullname", Utilities.ParentAssembly.FullName));
+					extendedProps.Add(new KeyValuePair<string, object>("Assembly Version", Utilities.ParentAssembly.GetName().Version.ToString()));
+					extendedProps.Add(new KeyValuePair<string, object>("Assembly Build Date", Utilities.GetAssemblyBuildDate(Utilities.ParentAssembly).ToString()));
+				}
+
+				// gather up all the properties of the Exception, plus the extended info above
+				// sort it, and render to a stringbuilder
+				foreach (KeyValuePair<string, object> item in ex
+					.GetType()
+					.GetProperties()
+					.Select(x => new KeyValuePair<string, object>(x.Name, x))
+					.Concat(extendedProps)
+					.OrderByDescending(x => string.Equals(x.Key, "Type", StringComparison.Ordinal))
+					.ThenByDescending(x => string.Equals(x.Key, nameof(ex.Message), StringComparison.Ordinal))
+					.ThenByDescending(x => string.Equals(x.Key, nameof(ex.Source), StringComparison.Ordinal))
+					.ThenBy(x => string.Equals(x.Key, nameof(ex.InnerException), StringComparison.Ordinal))
+					.ThenBy(x => string.Equals(x.Key, nameof(AggregateException.InnerExceptions), StringComparison.Ordinal))
+					.ThenBy(x => x.Key))
+				{
+					object value = item.Value;
+					if (item.Key == "StackTrace")
 					{
-						this["InnerException"] = new SerializableException((Exception)value, ++level);
+						//handle the stacktrace special
+						var buf = new StackTrace(ex).ToString(true).TrimEnd('\r', '\n').Replace("\r\n", string.Format("\r\n{0, -23}", "")).TrimEnd();
+						if (string.IsNullOrEmpty(buf) && options.OmitNullProperties) continue;
+						value = buf;
 					}
-					else
+					else if (item.Value is PropertyInfo)
 					{
-						if (value == null || (value != null && value.GetType().IsPrimitive))
+						value = (item.Value as PropertyInfo).GetValue(ex, null);
+						if (value == null || (value is string && string.IsNullOrEmpty((string)value)))
 						{
-							//primitive types should always be serializable
-							this[name] = value;
-						}
-						else
-						{
-							//non primitive types need checking
-							//TBD for now, just ToString it
-							this[name] = value.ToString();
-						}
-					}
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// get IP address of this machine
-		/// not an ideal method for a number of reasons (guess why!)
-		/// but the alternatives are very ugly
-		/// </summary>
-		/// <returns></returns>
-		private string GetCurrentIP()
-		{
-			try
-			{
-				return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
-			}
-			catch
-			{
-				// just provide a default value
-				return "127.0.0.1";
-			}
-		}
-
-
-
-		/// <summary>
-		/// retrieve user identity with fallback on error to safer method
-		/// </summary>
-		/// <returns></returns>
-		private string GetUserIdentity()
-		{
-			string strTemp = GetCurrentWindowsIdentity();
-			if (string.IsNullOrEmpty(strTemp))
-			{
-				strTemp = GetCurrentEnvironmentIdentity();
-			}
-			return strTemp;
-		}
-
-
-		/// <summary>
-		/// exception-safe WindowsIdentity.GetCurrent retrieval returns "domain\username"
-		/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
-		/// </summary>
-		/// <returns></returns>
-		private string GetCurrentWindowsIdentity()
-		{
-			try
-			{
-				return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-			}
-			catch
-			{
-				// just provide a default value
-				return string.Empty;
-			}
-		}
-
-
-		/// <summary>
-		/// exception-safe "domain\username" retrieval from Environment
-		/// </summary>
-		/// <returns></returns>
-		private string GetCurrentEnvironmentIdentity()
-		{
-			try
-			{
-				return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
-			}
-			catch
-			{
-				// just provide a default value
-				return string.Empty;
-			}
-		}
-
-
-		/// <summary>
-		/// returns build datetime of assembly
-		/// assumes default assembly value in AssemblyInfo:
-		/// {Assembly: AssemblyVersion("1.0.*")}
-		///
-		/// filesystem create time is used, if revision and build were overridden by user
-		/// </summary>
-		/// <param name="objAssembly"></param>
-		/// <param name="bForceFileDate"></param>
-		/// <returns></returns>
-		private DateTime GetAssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
-		{
-			var objVersion = objAssembly.GetName().Version;
-			DateTime dtBuild = default(DateTime);
-
-			if (bForceFileDate)
-			{
-				dtBuild = GetAssemblyFileTime(objAssembly);
-			}
-			else
-			{
-				dtBuild = ((DateTime.Parse("01/01/2000")).AddDays(objVersion.Build).AddSeconds(objVersion.Revision * 2));
-				if (TimeZone.IsDaylightSavingTime(DateTime.Now, TimeZone.CurrentTimeZone.GetDaylightChanges(DateTime.Now.Year)))
-				{
-					dtBuild = dtBuild.AddHours(1);
-				}
-				if (dtBuild > DateTime.Now | objVersion.Build < 730 | objVersion.Revision == 0)
-				{
-					dtBuild = GetAssemblyFileTime(objAssembly);
-				}
-			}
-
-			return dtBuild;
-		}
-
-
-		/// <summary>
-		/// exception-safe file attrib retrieval; we don't care if this fails
-		/// </summary>
-		/// <param name="objAssembly"></param>
-		/// <returns></returns>
-		private DateTime GetAssemblyFileTime(System.Reflection.Assembly objAssembly)
-		{
-			try
-			{
-				return System.IO.File.GetLastWriteTime(objAssembly.Location);
-			}
-			catch
-			{
-				// just provide a default value
-				return DateTime.MinValue;
-			}
-		}
-		#endregion
-
-
-		[Serializable]
-		[CollectionDataContract]
-		[XmlRoot(ElementName = "Properties")]
-		public class PropertyList : Dictionary<string, object>
-		{ }
-
-
-		[Serializable]
-		[DataContract]
-		[XmlRoot(ElementName = "Property")]
-		public class Property
-		{
-			[DataMember]
-			public string Name { get; set; }
-			[DataMember]
-			public object Value { get; set; }
-
-			public Property() { }
-
-			public Property(string name, object value)
-			{
-				Name = name;
-				Value = value;
-			}
-		}
-
-
-		[Serializable]
-		[DataContract]
-		[XmlRoot(ElementName = "StackTrace")]
-		//[KnownType(typeof(SerializableStackFrameList))]
-		public class SerializableStackTrace
-		{
-			public SerializableStackTrace()
-			{
-				this.StackFrames = new SerializableStackFrameList();
-			}
-
-
-			public SerializableStackTrace(StackTrace stackTrace) : this()
-			{
-				foreach (var stackFrame in stackTrace.GetFrames())
-				{
-					this.StackFrames.Add(new SerializableStackFrame(stackFrame));
-				}
-			}
-
-
-			[DataMember]
-			[XmlArray]
-			public SerializableStackFrameList StackFrames { get; private set; }
-		}
-
-
-		[Serializable]
-		[CollectionDataContract]
-		[XmlRoot(ElementName = "StackFrames")]
-		//[KnownType(typeof(SerializableStackFrame))]
-		public class SerializableStackFrameList : List<SerializableStackFrame>
-		{
-		}
-
-
-		[Serializable]
-		[DataContract]
-		[XmlRoot(ElementName = "StackFrame")]
-		//[KnownType(typeof(SerializableMethodBase))]
-		public class SerializableStackFrame
-		{
-			public SerializableStackFrame()
-			{
-			}
-
-
-			public SerializableStackFrame(StackFrame stackFrame)
-			{
-				this.ILOffset = stackFrame.GetILOffset();
-				this.NativeOffset = stackFrame.GetNativeOffset();
-				this.MethodBase = new SerializableMethodBase(stackFrame.GetMethod());
-
-				if (stackFrame.GetFileName() != null && stackFrame.GetFileName().Length != 0 && ExceptionExtensions.AllowUseOfPDB)
-				{
-					// the PDB appears to be available, since the above elements are 
-					// not blank, so just use it's information
-					this.FileName = System.IO.Path.GetFileName(stackFrame.GetFileName());
-					this.FileLineNumber = stackFrame.GetFileLineNumber();
-					this.FileColumnNumber = stackFrame.GetFileColumnNumber();
-				}
-				else
-				{
-					// the PDB is not available, so attempt to retrieve 
-					// any embedded linemap information
-					if (Utilities.ParentAssembly != null)
-					{
-						this.FileName = System.IO.Path.GetFileName(Utilities.ParentAssembly.CodeBase);
-					}
-					else
-					{
-						this.FileName = "Unable to determine Assembly Filename";
-					}
-
-					// Get the native code offset and convert to a line number
-					// first, make sure our linemap is loaded
-					try
-					{
-						var mi = (MethodInfo)stackFrame.GetMethod();
-						if (mi != null)
-						{
-							LineMap.AssemblyLineMaps.Add(mi.DeclaringType.Assembly);
-
-							var sl = stackFrame.MapStackFrameToSourceLine();
-							if (sl.Line != 0)
+							if (options.OmitNullProperties)
 							{
-								this.FileName = sl.SourceFile;
-								this.FileLineNumber = sl.Line;
+								continue;
+							}
+							else
+							{
+								value = string.Empty;
 							}
 						}
 					}
-					catch (Exception ex)
-					{
-						// any problems in loading the Linemap, just write to debugger and call it a day
-						Debug.WriteLine(string.Format("Unable to load line map information. Error: {0}", ex.ToString()));
-					}
+
+					sb.AppendValue(item.Key, value, options);
 				}
+
+				return sb.ToString().TrimEnd('\r', '\n');
 			}
-			[DataMember]
-			public int FileColumnNumber { get; set; }
-			[DataMember]
-			public int FileLineNumber { get; set; }
-			[DataMember]
-			public string FileName { get; set; }
-			[DataMember]
-			public int ILOffset { get; set; }
-			[DataMember]
-			public SerializableMethodBase MethodBase { get; set; }
-			[DataMember]
-			public int NativeOffset { get; set; }
-		}
-
-
-		[Serializable]
-		[DataContract]
-		[XmlRoot(ElementName = "Method")]
-		//[KnownType(typeof(SerializableParameterInfoList))]
-		public class SerializableMethodBase
-		{
-			public SerializableMethodBase() { }
-
-
-			public SerializableMethodBase(MethodBase methodBase)
+			catch (Exception ex2)
 			{
-				this.DeclaringTypeNameSpace = methodBase.DeclaringType.Namespace;
-				this.DeclaringTypeName = methodBase.DeclaringType.Name;
-				this.Name = methodBase.Name;
-				this.Parameters = new SerializableParameterInfoList(methodBase.GetParameters());
+				sb.Clear();
+				sb.AppendLine(string.Format("{0} Error '{1}' while generating exception description", ex2.GetType().Name, ex2.Message));
 			}
-			[DataMember]
-			public string DeclaringTypeNameSpace { get; set; }
-			[DataMember]
-			public string DeclaringTypeName { get; set; }
-			[DataMember]
-			public string Name { get; set; }
-			[DataMember]
-			public SerializableParameterInfoList Parameters { get; set; }
-		}
 
-
-		[Serializable]
-		[CollectionDataContract]
-		[XmlRoot(ElementName = "Parameters")]
-		//[KnownType(typeof(SerializableParameterInfo))]
-		public class SerializableParameterInfoList : List<SerializableParameterInfo>
-		{
-			public SerializableParameterInfoList() { }
-			public SerializableParameterInfoList(ParameterInfo[] parameterInfo)
-			{
-				foreach (var pi in parameterInfo)
-				{
-					this.Add(new SerializableParameterInfo(pi));
-				}
-			}
-		}
-
-
-		[Serializable]
-		[DataContract]
-		[XmlRoot(ElementName = "Parameter")]
-		public class SerializableParameterInfo
-		{
-			public SerializableParameterInfo() { }
-			public SerializableParameterInfo(ParameterInfo parameterInfo)
-			{
-				this.Name = parameterInfo.Name;
-				this.Type = parameterInfo.ParameterType.Name;
-				this.Value = "TBD";
-			}
-			[DataMember]
-			public string Name { get; set; }
-			[DataMember]
-			public string Type { get; set; }
-			[DataMember]
-			public string Value { get; set; }
+			return sb.ToString();
 		}
 	}
 }
-
 
 
 /// <summary>
@@ -539,6 +172,139 @@ namespace ExceptionExtensions.Internal
 {
 	public static class StackTraceExtensions
 	{
+		public static string ToString(this StackTrace stackTrace, bool skipLocalFrames = false)
+		{
+			StringBuilder sb = new StringBuilder();
+
+			for (int intFrame = 0; intFrame <= stackTrace.FrameCount - 1; intFrame++)
+			{
+				StackFrame sf = stackTrace.GetFrame(intFrame);
+
+				if (skipLocalFrames && sf.GetMethod().DeclaringType.Name.IndexOf(Utilities.CLASSNAME) > -1)
+				{
+					// don't include frames related to this class
+					// this lets of keep any class frames related to this class out of
+					// the strack trace, they'd just be clutter anyway
+				}
+				else
+				{
+					sb.Append(StackFrameToString(sf));
+				}
+			}
+
+			return sb.ToString();
+		}
+
+
+		/// <summary>
+		/// turns a single stack frame object into an informative string
+		/// </summary>
+		/// <param name="sf"></param>
+		/// <returns></returns>
+		private static string StackFrameToString(StackFrame sf)
+		{
+			StringBuilder sb = new StringBuilder();
+			int intParam = 0;
+			MemberInfo mi = sf.GetMethod();
+
+			//build method name
+			string MethodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
+			sb.Append(MethodName);
+
+			//build method params
+			ParameterInfo[] objParameters = sf.GetMethod().GetParameters();
+			sb.Append("(");
+			intParam = 0;
+			foreach (ParameterInfo objParameter in objParameters)
+			{
+				intParam += 1;
+				if (intParam > 1)
+					sb.Append(", ");
+				sb.Append(objParameter.Name);
+				sb.Append(" As ");
+				sb.Append(objParameter.ParameterType.Name);
+			}
+			sb.AppendLine(")");
+
+			// if source code is available, append location info
+			sb.Append("   ");
+			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && ExceptionExtensions.AllowUseOfPDB)
+			{
+				// the PDB appears to be available, since the above elements are 
+				// not blank, so just use it's information
+
+				sb.Append(System.IO.Path.GetFileName(sf.GetFileName()));
+				var Line = sf.GetFileLineNumber();
+				if (Line != 0)
+				{
+					sb.Append(": line ");
+					sb.Append(string.Format("{0}", Line));
+				}
+				var col = sf.GetFileColumnNumber();
+				if (col != 0)
+				{
+					sb.Append(", col ");
+					sb.Append(string.Format("{0:#00}", sf.GetFileColumnNumber()));
+				}
+				// if IL is available, append IL location info
+				if (sf.GetILOffset() != StackFrame.OFFSET_UNKNOWN)
+				{
+					sb.Append(", IL ");
+					sb.Append(string.Format("{0:#0000}", sf.GetILOffset()));
+				}
+			}
+			else
+			{
+				// the PDB is not available, so attempt to retrieve 
+				// any embedded linemap information
+				string Filename;
+				if (Utilities.ParentAssembly != null)
+				{
+					Filename = System.IO.Path.GetFileName(Utilities.ParentAssembly.CodeBase);
+				}
+				else
+				{
+					Filename = "Unable to determine Assembly Filename";
+				}
+
+				sb.Append(Filename);
+				// Get the native code offset and convert to a line number
+				// first, make sure our linemap is loaded
+				try
+				{
+					LineMap.AssemblyLineMaps.Add(sf.GetMethod().DeclaringType.Assembly);
+
+					var sl = MapStackFrameToSourceLine(sf);
+					if (sl.Line != 0)
+					{
+						sb.Append(": Source File - ");
+						sb.Append(sl.SourceFile);
+						sb.Append(": line ");
+						sb.Append(string.Format("{0}", sl.Line));
+					}
+
+				}
+				catch (Exception ex)
+				{
+					// any problems in loading the Linemap, just write to debugger and call it a day
+					Debug.WriteLine(string.Format("Unable to load line map information. Error: {0}", ex.ToString()));
+				}
+				finally
+				{
+					// native code offset is always available
+					var IL = sf.GetILOffset();
+					if (IL != StackFrame.OFFSET_UNKNOWN)
+					{
+						sb.Append(": IL ");
+						sb.Append(string.Format("{0:#00000}", IL));
+					}
+				}
+			}
+			sb.AppendLine();
+			return sb.ToString();
+		}
+
+		
 		/// <summary>
 		/// Map an address offset from a stack frame entry to a linenumber
 		/// using the Method name, the base address of the method and the
@@ -621,6 +387,12 @@ namespace ExceptionExtensions.Internal
 		public static string CLASSNAME = "GenerateLineMapExceptionExtensions";
 
 
+		private static string IndentString(string value, ExceptionOptions options)
+		{
+			return value.Replace(Environment.NewLine, Environment.NewLine + options.Indent);
+		}
+
+
 		private static Assembly _parentAssembly = null;
 		/// <summary>
 		/// Retrieve the root assembly of the executing assembly
@@ -649,5 +421,136 @@ namespace ExceptionExtensions.Internal
 				return _parentAssembly;
 			}
 		}
+
+
+		/// <summary>
+		/// exception-safe file attrib retrieval; we don't care if this fails
+		/// </summary>
+		/// <param name="objAssembly"></param>
+		/// <returns></returns>
+		public static DateTime GetAssemblyFileTime(System.Reflection.Assembly objAssembly)
+		{
+			try
+			{
+				return System.IO.File.GetLastWriteTime(objAssembly.Location);
+			}
+			catch
+			{
+				// just provide a default value
+				return DateTime.MinValue;
+			}
+		}
+
+
+		/// <summary>
+		/// returns build datetime of assembly
+		/// assumes default assembly value in AssemblyInfo:
+		/// {Assembly: AssemblyVersion("1.0.*")}
+		///
+		/// filesystem create time is used, if revision and build were overridden by user
+		/// </summary>
+		/// <param name="objAssembly"></param>
+		/// <param name="bForceFileDate"></param>
+		/// <returns></returns>
+		public static DateTime GetAssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
+		{
+			var objVersion = objAssembly.GetName().Version;
+			DateTime dtBuild = default(DateTime);
+
+			if (bForceFileDate)
+			{
+				dtBuild = Utilities.GetAssemblyFileTime(objAssembly);
+			}
+			else
+			{
+				dtBuild = ((DateTime.Parse("01/01/2000")).AddDays(objVersion.Build).AddSeconds(objVersion.Revision * 2));
+				if (TimeZone.IsDaylightSavingTime(DateTime.Now, TimeZone.CurrentTimeZone.GetDaylightChanges(DateTime.Now.Year)))
+				{
+					dtBuild = dtBuild.AddHours(1);
+				}
+				if (dtBuild > DateTime.Now | objVersion.Build < 730 | objVersion.Revision == 0)
+				{
+					dtBuild = Utilities.GetAssemblyFileTime(objAssembly);
+				}
+			}
+
+			return dtBuild;
+		}
+
+
+		/// <summary>
+		/// get IP address of this machine
+		/// not an ideal method for a number of reasons (guess why!)
+		/// but the alternatives are very ugly
+		/// </summary>
+		/// <returns></returns>
+		public static string GetCurrentIP()
+		{
+			try
+			{
+				return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
+			}
+			catch
+			{
+				// just provide a default value
+				return "127.0.0.1";
+			}
+		}
+
+
+		/// <summary>
+		/// retrieve user identity with fallback on error to safer method
+		/// </summary>
+		/// <returns></returns>
+		public static string GetUserIdentity()
+		{
+			string strTemp = GetCurrentWindowsIdentity();
+			if (string.IsNullOrEmpty(strTemp))
+			{
+				strTemp = GetCurrentEnvironmentIdentity();
+			}
+			return strTemp;
+		}
+
+
+		/// <summary>
+		/// exception-safe WindowsIdentity.GetCurrent retrieval returns "domain\username"
+		/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
+		/// </summary>
+		/// <returns></returns>
+		private static string GetCurrentWindowsIdentity()
+		{
+			try
+			{
+				return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+			}
+			catch
+			{
+				// just provide a default value
+				return string.Empty;
+			}
+		}
+
+
+		/// <summary>
+		/// exception-safe "domain\username" retrieval from Environment
+		/// </summary>
+		/// <returns></returns>
+		private static string GetCurrentEnvironmentIdentity()
+		{
+			try
+			{
+				return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
+			}
+			catch
+			{
+				// just provide a default value
+				return string.Empty;
+			}
+		}
+
+
+
 	}
 }
+

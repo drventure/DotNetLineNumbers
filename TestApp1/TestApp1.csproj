@@ -77,12 +77,13 @@
     <Compile Include="..\GenerateLineMap\LineMap.cs">
       <Link>LineMap.cs</Link>
     </Compile>
+    <Compile Include="ExceptionExtensions.cs" />
     <Compile Include="ExceptionExtensionsToJSON.cs" />
     <Compile Include="ExceptionExtensionsToString.cs" />
     <Compile Include="ExceptionExtensionsToXML.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ExceptionExtensions.cs" />
+    <Compile Include="SerializableException.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

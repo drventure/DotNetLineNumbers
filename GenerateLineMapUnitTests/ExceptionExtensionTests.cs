@@ -54,7 +54,7 @@ namespace GenerateLineMapUnitTests
 			}
 			catch (Exception ex)
 			{
-				Debug.WriteLine(ex.ToString(ExceptionOptions.Default));
+				Debug.WriteLine(ex.ToExpandedString(ExceptionOptions.Default));
 			}
 		}
 
@@ -70,7 +70,7 @@ namespace GenerateLineMapUnitTests
 			}
 			catch (Exception ex)
 			{
-				Debug.WriteLine(ex.ToString(true));
+				Debug.WriteLine(ex.ToExpandedString());
 			}
 		}
 
@@ -86,7 +86,7 @@ namespace GenerateLineMapUnitTests
 			}
 			catch (Exception ex)
 			{
-				var buf = ex.ToString(true);
+				var buf = ex.ToExpandedString();
 				Debug.WriteLine(buf);
 				buf.Should().Contain("1st File was not found");
 
