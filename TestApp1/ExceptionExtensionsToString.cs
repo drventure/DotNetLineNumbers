@@ -179,7 +179,7 @@ namespace ExceptionExtensions.Internal
 
 		public static void AppendException(this StringBuilder sb, string propertyName, Exception ex, ExceptionOptions options)
 		{
-			var innerExceptionString = ex.ToExpandedString(new ExceptionOptions(options, options.CurrentIndentLevel + 1));
+			var innerExceptionString = ex.ToString(new ExceptionOptions(options, options.CurrentIndentLevel + 1));
 
 			sb.AppendLine(string.Format("{0}{1}: ", options.Indent, propertyName).PadRight(23));
 			sb.AppendLine(innerExceptionString);

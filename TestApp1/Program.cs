@@ -47,11 +47,11 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
-				//Yes, this is nasty, but there would be no reason for a typical app to make use of it like this
-				ExceptionExtensions.ExceptionExtensions.AllowUseOfPDB = false;
+				//Yes, this is nasty, but there would be no reason for a typical app to make use of this property
+				ExceptionExtensions.Internal.Utilities.AllowUseOfPDB = false;
 
 				// use extended version
-				var buf = ex.ToExpandedString();
+				var buf = ex.ToString(ExceptionOptions.Default);
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine(buf);
 			}

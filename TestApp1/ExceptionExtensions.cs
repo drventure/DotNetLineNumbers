@@ -29,9 +29,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Text;
-using System.Xml.Serialization;
 
 using ExceptionExtensions.Internal;
 
@@ -46,43 +44,13 @@ namespace ExceptionExtensions
 	public static partial class ExceptionExtensions
 	{
 		/// <summary>
-		/// Force the use of the PDB if available
-		/// This is primarily used when debugging/Unit testing
-		/// </summary>
-		public static bool AllowUseOfPDB { get; set; }
-
-
-		/// <summary>
 		/// translate exception object to string, with additional system info
 		/// The serializable exception object is much easier to work with, serialize, convert to string
 		/// or retrieve specific information from.
 		/// </summary>
 		/// <param name="ex"></param>
 		/// <returns></returns>
-		public static string ToExpandedString(this Exception ex)
-		{
-			return ToExpandedString(ex, new ExceptionOptions());
-		}
-
-
-		/// <summary>
-		/// translate exception object to string, with additional system info
-		/// The serializable exception object is much easier to work with, serialize, convert to string
-		/// or retrieve specific information from.
-		/// </summary>
-		/// <param name="ex"></param>
-		/// <returns></returns>
-		public static string ToExpandedString(this Exception ex, ExceptionOptions options)
-		{
-			return _toExpandedString(ex, options);
-		}
-
-
-		/// <summary>
-		/// This method provides the default ToString rendering
-		/// </summary>
-		/// <returns></returns>
-		private static string _toExpandedString(Exception ex, ExceptionOptions options)
+		public static string ToString(this Exception ex, ExceptionOptions options)
 		{
 			if (ex == null) return string.Empty;
 
@@ -166,7 +134,8 @@ namespace ExceptionExtensions
 
 
 /// <summary>
-/// Seperate namespace to allow extension of the StringBuilder and Stacktrace without polluting it elsewhere in the host app
+/// Seperate namespace to allow extension of the StringBuilder and Stacktrace without making any of these functions
+/// visible to the rest of the host app just because they're "using ExceptionExtensions"
 /// </summary>
 namespace ExceptionExtensions.Internal
 {
@@ -228,7 +197,7 @@ namespace ExceptionExtensions.Internal
 
 			// if source code is available, append location info
 			sb.Append("   ");
-			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && ExceptionExtensions.AllowUseOfPDB)
+			if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && Utilities.AllowUseOfPDB)
 			{
 				// the PDB appears to be available, since the above elements are 
 				// not blank, so just use it's information
@@ -385,6 +354,12 @@ namespace ExceptionExtensions.Internal
 		/// Used to identify stack frames that relate to "this" class so they can be skipped
 		/// </summary>
 		public static string CLASSNAME = "GenerateLineMapExceptionExtensions";
+
+		/// <summary>
+		/// Force the use of the PDB if available
+		/// This is primarily used when debugging/Unit testing
+		/// </summary>
+		public static bool AllowUseOfPDB { get; set; }
 
 
 		private static string IndentString(string value, ExceptionOptions options)
@@ -548,9 +523,6 @@ namespace ExceptionExtensions.Internal
 				return string.Empty;
 			}
 		}
-
-
-
 	}
 }
 

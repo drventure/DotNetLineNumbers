@@ -27,7 +27,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Xml.Serialization;
@@ -271,7 +270,7 @@ namespace ExceptionExtensions
 				this.NativeOffset = stackFrame.GetNativeOffset();
 				this.MethodBase = new SerializableMethodBase(stackFrame.GetMethod());
 
-				if (stackFrame.GetFileName() != null && stackFrame.GetFileName().Length != 0 && ExceptionExtensions.AllowUseOfPDB)
+				if (stackFrame.GetFileName() != null && stackFrame.GetFileName().Length != 0 && Utilities.AllowUseOfPDB)
 				{
 					// the PDB appears to be available, since the above elements are 
 					// not blank, so just use it's information
