@@ -44,7 +44,7 @@ namespace GenerateLineMap.MsBuild.Task
         public string OutputFile { get; set; } = null;
 
         [DataMember(Order = 2)]
-        public string TargetPlatform { get; set; } = null;
+        public string TargetPlatform { get; set; } = string.Empty;
 
         [DataMember(Order = 3)]
         public string AlternativeGenerateLineMapPath { get; set; } = null;

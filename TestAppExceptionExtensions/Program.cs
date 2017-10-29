@@ -25,6 +25,7 @@
 #endregion
 
 using System;
+
 using ExceptionExtensions;
 
 
@@ -32,10 +33,6 @@ namespace TestApp1
 {
 	public class Program
 	{
-		/// <summary>
-		/// Very simple app that just exercises the LineNumber retrieval functionality of GenerateLineMap
-		/// </summary>
-		/// <param name="args"></param>
 		public static void Main(string[] args)
 		{
 			try
@@ -50,11 +47,11 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
-				//render the exception
-				var buf = ex.ToString();
-				ex.IgnorePDB();
-				buf += "\r\n   Line number: " + ex.GetLine();
-				buf += "\r\n   SourceFile: " + ex.GetSourceFile();
+				//Yes, this is nasty, but there would be no reason for a typical app to make use of this property
+				ExceptionExtensions.Internal.Utilities.AllowUseOfPDB = false;
+
+				// use extended version
+				var buf = ex.ToString(ExceptionOptions.Default);
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine(buf);
 			}

@@ -26,12 +26,17 @@
   <files>
     <!-- Add a readme -->
     <file src="GenerateLineMap-ReadMe.txt" target="" />
-    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.exe" target="tools\GenerateLineMap.exe" />
-    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.exe.config" target="tools\GenerateLineMap.exe.config" />
-    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.pdb" target="tools\GenerateLineMap.pdb" />
-    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\Mono.Cecil.dll" target="tools\Mono.Cecil.dll" />
-    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.MsBuild.Task.dll" target="tools\GenerateLineMap.MsBuild.Task.dll" />
-    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.MsBuild.Task.pdb" target="tools\GenerateLineMap.MsBuild.Task.pdb" />
-    <file src="..\GenerateLineMap.MSBuild.Task\build\GenerateLineMap.MSBuild.Task.targets" target="build\GenerateLineMap.MSBuild.Task.targets" />
+    
+    <!-- Add the required Line.cs file -->
+    <file src="..\GenerateLineMap\Line.cs" target="" />
+    
+    <!-- Other required files-->
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.exe"               target="tools\GenerateLineMap.exe" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.exe.config"        target="tools\GenerateLineMap.exe.config" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.pdb"               target="tools\GenerateLineMap.pdb" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\Mono.Cecil.dll"                    target="tools\Mono.Cecil.dll" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.MsBuild.Task.dll"  target="tools\GenerateLineMap.MsBuild.Task.dll" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.MsBuild.Task.pdb"  target="tools\GenerateLineMap.MsBuild.Task.pdb" />
+    <file src="..\GenerateLineMap.MSBuild.Task\build\GenerateLineMap.targets"                         target="build\GenerateLineMap.targets" />
   </files>
 </package>

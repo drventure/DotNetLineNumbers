@@ -48,6 +48,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\GenerateLineMap\Line.cs">
+      <Link>Line.cs</Link>
+    </Content>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>SharedAssemblyInfo.cs</Link>
     </Compile>
@@ -60,7 +63,7 @@
     <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="build\GenerateLineMap.MSBuild.Task.targets">
+    <None Include="build\GenerateLineMap.targets">
       <SubType>Designer</SubType>
     </None>
     <None Include="GenerateLineMap.MSBuild.Task.nuspec">

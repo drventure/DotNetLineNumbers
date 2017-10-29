@@ -1,18 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- 
+  NOTE: The NAME of this file MUST MATCH the id of the nuget in
+  the NUSPEC file for build targets to get inserted into the
+  target project properly
+-->
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<UsingTask AssemblyFile="$(MSBuildThisFileDirectory)..\tools\GenerateLineMap.MsBuild.Task.dll" TaskName="GenerateLineMapTask" />
 	<!-- Inject our task into the build process -->
 	<PropertyGroup>
-		<BuildDependsOn>$(BuildDependsOn);
-      GenerateLineMap</BuildDependsOn>
+		<BuildDependsOn>$(BuildDependsOn);GenerateLineMap</BuildDependsOn>
 	</PropertyGroup>
 	<!-- Define our task here -->
-	<Target Name="GenerateLineMap">
-		<!-- AfterTargets="CopyFilesToOutputDirectory"> -->
-		<ItemGroup>
-			<CopyLocalReferences Include="@(ReferencePath)" Condition=" '%(CopyLocal)' == 'true' "/>
-		</ItemGroup>
-		<GenerateLineMapTask
+  <Target Name="GenerateLineMap">
+    <!-- AfterTargets="CopyFilesToOutputDirectory">-->
+    <ItemGroup>
+      <CopyLocalReferences Include="@(ReferencePath)" Condition=" '%(CopyLocal)' == 'true' "/>
+    </ItemGroup>
+    <GenerateLineMapTask
       SolutionDir="$(SolutionDir)"
       SolutionPath="$(SolutionPath)"
       ProjectDir="$(ProjectDir)"
@@ -27,5 +31,5 @@
       KeyFile="$(AssemblyOriginatorKeyFile)"
       ConfigurationFilePath="$(ProjectDir)GenerateLineMap.json"
       />
-	</Target>
+  </Target>
 </Project>
