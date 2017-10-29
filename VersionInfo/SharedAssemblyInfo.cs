@@ -40,6 +40,6 @@ using System.Runtime.InteropServices;
 /// </summary>
 internal struct VersionInfo
 {
-	public const string Version = "0.0.0.6";
+	public const string Version = "0.0.0.7";
 	//this accommodates Nuget Semantic versioning	
 }
