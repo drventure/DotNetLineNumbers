@@ -1,19 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
-    <id>$id$</id>
+    <!-- <id>$id</id> -->
+    <!-- Name the package explicitly because we don't want the unweildly full assembly name as the Nuget Name -->
+    <id>GenerateLineMap</id>
     <version>$version$</version>
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <licenseUrl>http://www.vbfengshui.com</licenseUrl>
-    <projectUrl>http://www.vbfengshui.com</projectUrl>
-    <iconUrl>http://www.vbfengshui.com</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes></releaseNotes>
     <copyright>Darin Higgins (c) 2017</copyright>
-    <tags>generatelinemap msbuild dynamics crm 365 merge</tags>
+    <tags>generatelinemap msbuild merge VB c# visual studio</tags>
+    <projectUrl>https://github.com/drventure/GenerateLineMap-MSBuild-Task</projectUrl>
+    <licenseUrl>https://github.com/drventure/GenerateLineMap-MSBuild-Task/blob/master/LICENSE</licenseUrl>
+    <iconUrl>http://www.vbfengshui.com</iconUrl>
     <references>
       <!-- 
         null references entry because the dll and exe should NOT get referenced in the target project
@@ -23,8 +25,13 @@
   </metadata>
   <files>
     <!-- Add a readme -->
-    <file src="readme.txt" target="" />
-    <file src="bin\$configuration$\GenerateLineMap.exe" target="tools\" />
-    <file src="build\GenerateLineMap.MSBuild.Task.targets" target="build\GenerateLineMap.MSBuild.Task.targets" />
+    <file src="GenerateLineMap-ReadMe.txt" target="" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.exe" target="tools\GenerateLineMap.exe" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.exe.config" target="tools\GenerateLineMap.exe.config" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.pdb" target="tools\GenerateLineMap.pdb" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\Mono.Cecil.dll" target="tools\Mono.Cecil.dll" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.MsBuild.Task.dll" target="tools\GenerateLineMap.MsBuild.Task.dll" />
+    <file src="..\GenerateLineMap.MSBuild.Task\bin\$configuration$\GenerateLineMap.MsBuild.Task.pdb" target="tools\GenerateLineMap.MsBuild.Task.pdb" />
+    <file src="..\GenerateLineMap.MSBuild.Task\build\GenerateLineMap.MSBuild.Task.targets" target="build\GenerateLineMap.MSBuild.Task.targets" />
   </files>
 </package>
