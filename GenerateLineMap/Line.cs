@@ -107,6 +107,7 @@ namespace ExceptionExtensions
 					if (sl.Line != 0) return sl;
 				}
 
+
 				// first, get the base addr of the method
 				// if possible
 				// you have to have symbols to do this
@@ -115,7 +116,15 @@ namespace ExceptionExtensions
 
 				// first, check if for symbols for the assembly for this stack frame
 				if (!AssemblyLineMaps.Keys.Contains(stackFrame.GetMethod().DeclaringType.Assembly.CodeBase))
+				{
+					AssemblyLineMaps.Add(stackFrame.GetMethod().DeclaringType.Assembly);
+				}
+
+				// if it's still not available, not much else we can do
+				if (!AssemblyLineMaps.Keys.Contains(stackFrame.GetMethod().DeclaringType.Assembly.CodeBase))
+				{
 					return sl;
+				}
 
 				// retrieve the cache
 				var alm = AssemblyLineMaps[stackFrame.GetMethod().DeclaringType.Assembly.CodeBase];

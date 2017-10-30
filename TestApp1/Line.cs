@@ -107,18 +107,21 @@ namespace ExceptionExtensions
 					if (sl.Line != 0) return sl;
 				}
 
-				// first, get the base addr of the method
-				// if possible
-				// you have to have symbols to do this
-				if (AssemblyLineMaps.Count == 0)
-					return sl;
 
 				// first, check if for symbols for the assembly for this stack frame
 				if (!AssemblyLineMaps.Keys.Contains(stackFrame.GetMethod().DeclaringType.Assembly.CodeBase))
-					return sl;
+				{
+					AssemblyLineMaps.Add(stackFrame.GetMethod().DeclaringType.Assembly);
+				}
 
 				// retrieve the cache
 				var alm = AssemblyLineMaps[stackFrame.GetMethod().DeclaringType.Assembly.CodeBase];
+
+				// if it's still not available, not much else we can do
+				if (!AssemblyLineMaps.Keys.Contains(stackFrame.GetMethod().DeclaringType.Assembly.CodeBase))
+				{
+					return sl;
+				}
 
 				// does the symbols list contain the metadata token for this method?
 				MemberInfo mi = stackFrame.GetMethod();
