@@ -43,8 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\GenerateLineMap\LineMap.cs">
-      <Link>LineMap.cs</Link>
+    <Compile Include="..\GenerateLineMap\Line.cs">
+      <Link>Line.cs</Link>
     </Compile>
     <Compile Include="ExceptionExtensions.cs" />
     <Compile Include="ExceptionExtensionsToJSON.cs" />

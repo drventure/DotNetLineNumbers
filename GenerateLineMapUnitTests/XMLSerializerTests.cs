@@ -2,15 +2,16 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Text;
+using System.Xml;
 using System.Xml.Serialization;
 
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using ExceptionExtensions;
-using System.Runtime.Serialization;
-using System.Xml;
+using ExceptionExtensions.Internal;
 
 
 namespace GenerateLineMapUnitTests

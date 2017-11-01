@@ -72,9 +72,9 @@
       <Project>{ea13ab2d-71f0-4634-911b-84bfd0d29232}</Project>
       <Name>GenerateLineMap</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TestApp1\TestApp1.csproj">
-      <Project>{126ba7f9-cd7d-4bb3-8d2a-b011a385fc16}</Project>
-      <Name>TestApp1</Name>
+    <ProjectReference Include="..\TestAppExceptionExtensions\TestAppExceptionExtensions.csproj">
+      <Project>{0e9b8bad-003f-4f0e-b686-0a17ce41cac7}</Project>
+      <Name>TestAppExceptionExtensions</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
