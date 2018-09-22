@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 Imports System.Runtime.Serialization
@@ -9,9 +9,9 @@ Imports System.Security.Cryptography
 Public Class LineMapKeys
     Public Shared ENCKEY As Byte() = New Byte(31) {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}
     Public Shared ENCIV As Byte() = New Byte(15) {65, 2, 68, 26, 7, 178, 200, 3, 65, 110, 68, 13, 69, 16, 200, 219}
-    Public Shared ResTypeName As String = "LINEMAP"
-    Public Shared ResName As String = "LINEMAPDATA"
-    Public Shared ResLang As Integer = 0
+	Public Shared ResTypeName As String = "LNM"
+	Public Shared ResName As String = "LNMDATA"
+	Public Shared ResLang As Integer = 0
 End Class
 
 
@@ -40,16 +40,16 @@ Public Class LineMapReader
             Throw New FileNotFoundException("The file could not be found.", FileName)
         End If
 
-        '---- write the uncompressed stream out to a file (for debugging mainly)
-        'pStreamToFile(FileName & ".linemap", pSymbolsToStream(Symbols, Lines))
+		'---- write the uncompressed stream out to a file (for debugging mainly)
+		'pStreamToFile(FileName & ".linemap", pSymbolsToStream(Symbols, Lines))
 
-        '---- compressed and encrypt the stream
-        '     technically, I should probably CLOSE and DISPOSE the streams
-        '     but this is just a quick and dirty tool
-        '     TODO Is this "functional programming?!?"
-        pStreamToSymbols(pDecompressStream(pDecryptStream(pFileToStream(FileName & ".linemap"))), Symbols, Lines)
+		'---- compressed and encrypt the stream
+		'     technically, I should probably CLOSE and DISPOSE the streams
+		'     but this is just a quick and dirty tool
+		'     TODO Is this "functional programming?!?"
+		pStreamToSymbols(pDecompressStream(pDecryptStream(pFileToStream(FileName & ".lmp"))), Symbols, Lines)
 
-        Debug.Print(Symbols.Count.ToString)
+		Debug.Print(Symbols.Count.ToString)
         Debug.Print(Lines.Count.ToString)
     End Sub
 

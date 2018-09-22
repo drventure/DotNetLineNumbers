@@ -1,4 +1,4 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
@@ -74,7 +74,7 @@ namespace GenerateLineMap
 		/// <remarks></remarks>
 		public static void Main(string[] args)
 		{
-			string fileName = "";
+			string fileName = args[0];
 			bool bReport = false;
 			bool bFile = false;
 			bool bAPIResource = true;
@@ -234,27 +234,26 @@ namespace GenerateLineMap
 
 			Log.LogMessage("where options are:");
 
-			Log.LogMessage("   [/report] [[/file]|[/resource]|[/apiresource]]");
+			Log.LogMessage("   [/report][[/file]|[/resource]|[/apiresource]]");
 
 			Log.LogMessage("");
-			Log.LogMessage("/report        Generate report of contents of PDB file");
-
-			Log.LogMessage("/file          Output a linemap file with the symbol and line num buffers");
-
 			Log.LogMessage("/resource      (default) Create a linemap .NET resource in the target");
 
 			Log.LogMessage("               EXE/DLL file");
 
+			Log.LogMessage("/report        Generate report of contents of PDB file");
+
+			Log.LogMessage("/file          Output a linemap file with the symbol and line num buffers");
+
 			Log.LogMessage("/apiresource   Create a linemap windows resource in the target EXE/DLL file");
 
 			Log.LogMessage("");
+
 			Log.LogMessage("The default is 'apiresource' which embeds the linemap into");
 
 			Log.LogMessage("the target executable as a standard windows resource.");
 
-			Log.LogMessage(".NET resource support is experimental at this point.");
-
-			Log.LogMessage("The 'file' option is mainly for testing. The resulting *.linemap");
+			Log.LogMessage("The 'file' option is mainly for testing. The resulting *.lmp");
 
 			Log.LogMessage("file will contain source names and line numbers but no other");
 

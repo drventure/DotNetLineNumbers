@@ -1,4 +1,4 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
@@ -26,6 +26,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -54,37 +55,21 @@ namespace GenerateLineMap
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 		private struct SYMBOL_INFO
 		{
-
 			public int SizeOfStruct;
-
 			public int TypeIndex;
-
 			public Int64 Reserved0;
-
 			public Int64 Reserved1;
-
 			public int Index;
-
 			public int size;
-
 			public Int64 ModBase;
-
 			public CV_SymbolInfoFlags Flags;
-
 			public Int64 Value;
-
 			public Int64 Address;
-
 			public int Register;
-
 			public int Scope;
-
 			public int Tag;
-
 			public int NameLen;
-
 			public int MaxNameLen;
-
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 300)]
 			public string Name;
 		}
@@ -102,48 +87,109 @@ namespace GenerateLineMap
 		private struct SRCCODEINFO
 		{
 			public int SizeOfStruct;
-
-			public int Key;
-
+			public IntPtr Key;
 			public Int64 ModBase;
-
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_PATH + 1)]
 			public string obj;
-
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_PATH + 1)]
 			public string FileName;
-
 			public int LineNumber;
-
 			public Int64 Address;
+		}
+
+
+		private enum SYM_TYPE
+		{
+			SymNone = 0,
+  			SymCoff = 1,
+  			SymCv = 2,
+  			SymPdb = 3,
+  			SymExport = 4,
+  			SymDeferred = 5,
+  			SymSym = 6,
+  			SymDia = 7,
+  			SymVirtual = 8,
+		}
+
+
+		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+		private struct IMAGEHLP_MODULE
+		{
+			int SizeOfStruct;
+			int BaseOfImage;
+			int ImageSize;
+			int TimeDateStamp;
+			int CheckSum;
+			int NumSyms;
+			SYM_TYPE SymType;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+			string ModuleName;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+			string ImageName;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+			string LoadedImageName;
+		}
+
+
+		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+		private struct IMAGEHLP_MODULE64
+		{
+			int SizeOfStruct;
+			Int64 BaseOfImage;
+			int ImageSize;
+			int TimeDateStamp;
+			int CheckSum;
+			int NumSyms;
+			SYM_TYPE SymType;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+			string ModuleName;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+			string ImageName;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+			string LoadedImageName;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+			string LoadedPdbName;
+			int CVSig;
+			[MarshalAs(UnmanagedType.LPStr, SizeConst = MAX_PATH + 3)]
+			string CVData;
+			int PdbSig;
+			Guid PdbSig70;
+			int PdbAge;
+			bool PdbUnmatched;
+			bool DbgUnmatched;
+			bool LineNumbers;
+			bool GlobalSymbols;
+			bool TypeInfo;
+			bool SourceIndexed;
+			bool Publics;
+			int MachineType;
+			int Reserved;
 		}
 
 
 		private enum CV_SymbolInfoFlags
 		{
 			IMAGEHLP_SYMBOL_INFO_VALUEPRESENT = 0x1,
-
 			IMAGEHLP_SYMBOL_INFO_REGISTER = 0x8,
 			IMAGEHLP_SYMBOL_INFO_REGRELATIVE = 0x10,
-
 			IMAGEHLP_SYMBOL_INFO_FRAMERELATIVE = 0x20,
 			IMAGEHLP_SYMBOL_INFO_PARAMETER = 0x40,
-
 			IMAGEHLP_SYMBOL_INFO_LOCAL = 0x80,
 			IMAGEHLP_SYMBOL_INFO_CONSTANT = 0x100,
-
 			IMAGEHLP_SYMBOL_FUNCTION = 0x800,
 			IMAGEHLP_SYMBOL_VIRTUAL = 0x1000,
-
 			IMAGEHLP_SYMBOL_THUNK = 0x2000,
 			IMAGEHLP_SYMBOL_TLSREL = 0x4000,
-
 			IMAGEHLP_SYMBOL_SLOT = 0x8000,
 			IMAGEHLP_SYMBOL_ILREL = 0x10000,
-
 			IMAGEHLP_SYMBOL_METADATA = 0x20000,
 			IMAGEHLP_SYMBOL_CLR_TOKEN = 0x40000,
 		}
+		#endregion
+
+		#region " Callbacks "
+		private delegate bool PSYM_ENUMLINES_CALLBACK(ref SRCCODEINFO srcinfo, IntPtr userContext);
+							 
 		#endregion
 
 
@@ -158,14 +204,23 @@ namespace GenerateLineMap
 
 		[DllImport("dbghelp.dll")]
 		private static extern Int64 SymLoadModuleEx(
-		   int hProcess, 
-		   int hFile, 
-		   string ImageName, 
-		   int ModuleName, 
-		   Int64 BaseOfDll, 
-		   int SizeOfDll, 
-		   int pModData, 
-		   int flags);
+			int hProcess, 
+			int hFile, 
+			string ImageName, 
+			int ModuleName, 
+			Int64 BaseOfDll, 
+			int SizeOfDll, 
+			int pModData, 
+			int flags
+		);
+
+		[DllImport("dbghelp.dll")]
+		private static extern bool SymGetModuleInfo(
+			int hProcess,
+			int dwAddr,
+			IMAGEHLP_MODULE ModuleInfo
+		);
+
 
 		// I believe this is deprecatedin dbghelp 6.0 or later
 		//Private Declare Function SymLoadModule Lib "dbghelp.dll" ( _
@@ -195,7 +250,7 @@ namespace GenerateLineMap
 		   int hProcess,
 		   Int64 BaseOfDll,
 		   int Mask,
-		   SymEnumSymbolsCallback lpCallback,
+		   PSYM_ENUMSYMBOLS_CALLBACK lpCallback,
 		   int UserContext);
 
 
@@ -206,7 +261,7 @@ namespace GenerateLineMap
 		   Int64 BaseOfDll,
 		   int obj,
 		   int File,
-		   SymEnumLinesCallback lpCallback,
+		   PSYM_ENUMLINES_CALLBACK lpCallback,
 		   int UserContext);
 
 
@@ -219,7 +274,7 @@ namespace GenerateLineMap
 		   int File,
 		   int Line,
 		   int Flags,
-		   SymEnumLinesCallback lpCallback,
+		   PSYM_ENUMLINES_CALLBACK lpCallback,
 		   int UserContext);
 
 
@@ -351,9 +406,9 @@ namespace GenerateLineMap
 			var EncryptedStream = pEncryptStream(CompressedStream);
 
 
-			// swap out the below two lines to generate a linemap file that is not compressed or encrypted
-			pStreamToFile(this.OutFilename + ".linemap", EncryptedStream);
-			//pStreamToFile(Me.Filename & ".linemap", alm.ToStream);
+			// swap out the below two lines to generate a linemap (lnm) file that is not compressed or encrypted
+			pStreamToFile(this.OutFilename + ".lmp", EncryptedStream);
+			//pStreamToFile(Me.Filename & ".lmp", alm.ToStream);
 
 			// write the report
 			WriteReport(alm);
@@ -444,7 +499,18 @@ namespace GenerateLineMap
 			sb.AppendLine("SYMBOLS:");
 			sb.AppendLine("========");
 			sb.AppendLine(string.Format("   {0,-10}  {1,-10}  {2}  ", "Token", "Address", "Symbol"));
-			foreach (var symbolEx in AssemblyLineMap.Symbols.Values)
+			sb.AppendLine(string.Format("   {0,-10}  {1,-10}  {2}  ", "-----", "-------", "------"));
+
+			var symbols = AssemblyLineMap.Symbols.Values.Select(s =>
+			{
+				var lineex = AssemblyLineMap.AddressToLineMap.Where(l => l.Address == s.Address).FirstOrDefault();
+				var name = lineex?.ObjectName;
+				name = (!string.IsNullOrEmpty(name) ? name + "." : "") + s.Name;
+				return new LineMap.AssemblyLineMap.SymbolInfo(name, s.Address, s.Token);
+			}).ToList();
+			symbols.Sort((x, y) => x.Name.CompareTo(y.Name));
+
+			foreach (var symbolEx in symbols)
 			{
 				sb.AppendLine(string.Format("   {0,-10:X}  {1,-10}  {2}", symbolEx.Token, symbolEx.Address, symbolEx.Name));
 			}
@@ -452,11 +518,31 @@ namespace GenerateLineMap
 			sb.AppendLine("LINE NUMBERS:");
 			sb.AppendLine("========");
 			sb.AppendLine(string.Format("   {0,-10}  {1,-11}  {2,-10}  {3}", "Address", "Line number", "Token", "Symbol/FileName"));
+			sb.AppendLine(string.Format("   {0,-10}  {1,-11}  {2,-10}  {3}", "-------", "-----------", "-----", "---------------"));
 
+			//Order by line and then by address for reporting
+			AssemblyLineMap.AddressToLineMap.Sort((x, y) =>
+			{
+				if (x.SourceFile.CompareTo(y.SourceFile) < 0)
+					return -1;
+				else if (x.SourceFile.CompareTo(y.SourceFile) > 0)
+					return 1;
+				else if (x.Line < y.Line)
+					return -1;
+				else if (x.Line > y.Line)
+					return 1;
+				else if (x.Address < y.Address)
+					return -1;
+				else if (x.Address > y.Address)
+					return 1;
+				else return 0;
+			});
+
+			// let the symbol run till the next transition is detected
+			LineMap.AssemblyLineMap.SymbolInfo sym = null;
 			foreach (var lineex in AssemblyLineMap.AddressToLineMap)
 			{
 				// find the symbol for this line number
-				LineMap.AssemblyLineMap.SymbolInfo sym = null;
 				foreach (var symbolex in AssemblyLineMap.Symbols.Values)
 				{
 					if (symbolex.Address == lineex.Address)
@@ -466,16 +552,18 @@ namespace GenerateLineMap
 						break;
 					}
 				}
-				var n = (sym != null ? lineex.ObjectName + "." + sym.Name : "") + " / " + lineex.SourceFile;
-				var t = sym != null ? sym.Token : 0;
+				if (lineex.Line == 138) System.Diagnostics.Debugger.Break();
+				var name = lineex.SourceFile + ":" + lineex.ObjectName + (sym != null ? "." + sym.Name : "");
+				var token = sym != null ? sym.Token : 0;
 
-				sb.AppendLine(string.Format("   {0,-10}  {1,-11}  {2,-10:X}  {3}", lineex.Address, lineex.Line, t, n));
+				sb.AppendLine(string.Format("   {0,-10}  {1,-11}  {2,-10:X}  {3}", lineex.Address, lineex.Line, token, name));
 			}
 
 			sb.AppendLine("========");
 			sb.AppendLine("NAMES:");
 			sb.AppendLine("========");
 			sb.AppendLine(string.Format("   {0,-10}  {1}", "Index", "Name"));
+			sb.AppendLine(string.Format("   {0,-10}  {1}", "-----", "----"));
 			for (int i = 0; i < AssemblyLineMap.Names.Count; i++)
 			{
 				sb.AppendLine(string.Format("   {0,-10}  {1}", i, AssemblyLineMap.Names[i]));
@@ -511,12 +599,15 @@ namespace GenerateLineMap
 				if (SymInitialize(hProcess, "", false) != 0)
 				{
 					dwModuleBase = SymLoadModuleEx(hProcess, 0, FileName, 0, 0, 0, 0, 0);
-			
+
 					if (dwModuleBase != 0)
 					{
-						// Enumerate all the symbol names 
+						// this appearently is required in some cases where the moduleinfo load may be deferred
+						IMAGEHLP_MODULE moduleInfo = new IMAGEHLP_MODULE();
+						var r = SymGetModuleInfo(hProcess, 0, moduleInfo);
 
-						var rEnumSymbolsDelegate = new SymEnumSymbolsCallback(SymEnumSymbolsProc);
+						// Enumerate all the symbol names 
+						var rEnumSymbolsDelegate = new PSYM_ENUMSYMBOLS_CALLBACK(SymEnumSymbolsCallback_proc);
 						if (SymEnumSymbols(hProcess, dwModuleBase, 0, rEnumSymbolsDelegate, 0) == 0)
 						{
 							// unable to retrieve the symbol list
@@ -524,9 +615,9 @@ namespace GenerateLineMap
 						}
 
 						// now enum all the source lines and their respective addresses
-						var rEnumLinesDelegate = new SymEnumLinesCallback(SymEnumLinesProc);
+						var pSymEnumLinesCallback_proc = new PSYM_ENUMLINES_CALLBACK(SymEnumLinesCallback_proc);
 
-						if (SymEnumSourceLines(hProcess, dwModuleBase, 0, 0, 0, 0, rEnumLinesDelegate, 0) == 0)
+						if (SymEnumSourceLines(hProcess, dwModuleBase, 0, 0, 0, 0, pSymEnumLinesCallback_proc, 0) == 0)
 						{
 							// unable to retrieve the line number list
 							throw new UnableToEnumLinesException();
@@ -695,11 +786,15 @@ namespace GenerateLineMap
 		/// <param name="UserContext"></param>
 		/// <returns></returns>
 		/// <remarks></remarks>
-		private delegate int SymEnumSymbolsCallback(ref SYMBOL_INFO syminfo, int Size, int UserContext);
+		private delegate int PSYM_ENUMSYMBOLS_CALLBACK(ref SYMBOL_INFO syminfo, int Size, int UserContext);
 
-		private int SymEnumSymbolsProc(ref SYMBOL_INFO syminfo, int Size, int UserContext)
+		private int SymEnumSymbolsCallback_proc(ref SYMBOL_INFO syminfo, int Size, int UserContext)
 		{
-			if (syminfo.Flags == (CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_CLR_TOKEN | CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_METADATA))
+			if ((syminfo.Flags & 
+				(CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_CLR_TOKEN | 
+				CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_METADATA | 
+				CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_FUNCTION)) 
+				!= 0)
 			{
 				// we only really care about CLR metadata tokens
 				// anything else is basically a variable or internal
@@ -726,8 +821,11 @@ namespace GenerateLineMap
 		/// <param name="UserContext"></param>
 		/// <returns></returns>
 		/// <remarks></remarks>
-		private int SymEnumLinesProc(ref SRCCODEINFO srcinfo, int UserContext)
+		private bool SymEnumLinesCallback_proc(ref SRCCODEINFO srcinfo, IntPtr UserContext)
 		{
+			if (srcinfo.LineNumber == 335) System.Diagnostics.Debugger.Break();
+			if (srcinfo.LineNumber == 343) System.Diagnostics.Debugger.Break();
+
 			if (srcinfo.LineNumber == 0xFEEFEE)
 			{
 				// skip these entries
@@ -772,10 +870,8 @@ namespace GenerateLineMap
 			}
 
 			// Tell the caller we succeeded
-			return -1;
+			return true;
 		}
-
-		private delegate int SymEnumLinesCallback(ref SRCCODEINFO srcinfo, int UserContext);
 
 #endregion
 	}

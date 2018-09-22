@@ -1,4 +1,4 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
@@ -86,8 +86,8 @@ public class LineMap
 		public static byte[] ENCIV = new byte[16] {
 			65, 2, 68, 26, 7, 178, 200, 3, 65, 110, 68, 13, 69, 16, 200, 219
 		};
-		public static string ResTypeName = "LINEMAP";
-		public static string ResName = "LINEMAPDATA";
+		public static string ResTypeName = "LNM";
+		public static string ResName = "LNMDATA";
 		public static short ResLang = 0;
 	}
 
@@ -144,14 +144,16 @@ public class LineMap
 				this.ObjectNameIndex = ObjectNameIndex;
 			}
 		}
+
+
 		/// <summary>
 		/// Track the Line number list enumerated from the PDB
 		/// Note, the list is already sorted
 		/// </summary>
 		/// <remarks></remarks>
 		[DataMember()]
-
 		public List<AddressToLine> AddressToLineMap = new List<AddressToLine>();
+
 
 		/// <summary>
 		/// Private class to track Symbols read from the PDB file
@@ -192,7 +194,6 @@ public class LineMap
 		/// </summary>
 		/// <remarks></remarks>
 		[DataMember()]
-
 		public Dictionary<long, SymbolInfo> Symbols = new Dictionary<long, SymbolInfo>();
 
 		/// <summary>
@@ -298,7 +299,7 @@ public class LineMap
 		/// <remarks></remarks>
 		private void Load()
 		{
-			Stream buf = FileToStream(this.FileName + ".linemap");
+			Stream buf = FileToStream(this.FileName + ".lmp");
 			var buf2 = DecryptStream(buf);
 			Transfer(Depersist(DecompressStream(buf2)));
 		}
@@ -350,7 +351,7 @@ public class LineMap
 				else
 				{
 					//Check for a side by side linemap file
-					string mapfile = this.FileName + ".linemap";
+					string mapfile = this.FileName + ".lmp";
 					if (File.Exists(mapfile))
 					{
 						//load it from there
@@ -382,7 +383,7 @@ public class LineMap
 			{
 				if (this.Symbols.Count == 0)
 				{
-					// weren't able to load resources, so try the LINEMAP file
+					// weren't able to load resources, so try the LINEMAP (LNM) file
 					Load();
 				}
 

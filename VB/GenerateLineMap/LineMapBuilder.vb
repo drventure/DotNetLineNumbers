@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Runtime.InteropServices
 Imports System.Text
 
@@ -261,12 +261,12 @@ Public Class LineMapBuilder
         Dim CompressedStream = pCompressStream(alm.ToStream)
         Dim EncryptedStream = pEncryptStream(CompressedStream)
 
-        '---- swap out the below two lines to generate a linemap file that is not compressed or encrypted
-        pStreamToFile(Me.OutFilename & ".linemap", EncryptedStream)
-        'pStreamToFile(Me.Filename & ".linemap", alm.ToStream)
+		'---- swap out the below two lines to generate a linemap (lnm) file that is not compressed or encrypted
+		pStreamToFile(Me.OutFilename & ".lmp", EncryptedStream)
+		'pStreamToFile(Me.Filename & ".lmp", alm.ToStream)
 
-        '---- write the report
-        pCheckToWriteReport(alm)
+		'---- write the report
+		pCheckToWriteReport(alm)
     End Sub
 
 

@@ -1,4 +1,4 @@
-﻿Imports System.Reflection
+Imports System.Reflection
 Imports System.Runtime.Serialization
 Imports System.Runtime.InteropServices
 Imports System.IO
@@ -46,9 +46,9 @@ Public Class LineMap
     Friend Class LineMapKeys
         Public Shared ENCKEY As Byte() = New Byte(31) {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}
         Public Shared ENCIV As Byte() = New Byte(15) {65, 2, 68, 26, 7, 178, 200, 3, 65, 110, 68, 13, 69, 16, 200, 219}
-        Public Shared ResTypeName As String = "LINEMAP"
-        Public Shared ResName As String = "LINEMAPDATA"
-        Public Shared ResLang As Short = 0
+		Public Shared ResTypeName As String = "LNM"
+		Public Shared ResName As String = "LNMDATA"
+		Public Shared ResLang As Short = 0
     End Class
 
 
@@ -238,8 +238,8 @@ Public Class LineMap
         ''' </summary>
         ''' <remarks></remarks>
         Private Sub Load()
-            Transfer(Depersist(DecompressStream(DecryptStream(FileToStream(Me.FileName & ".linemap")))))
-        End Sub
+			Transfer(Depersist(DecompressStream(DecryptStream(FileToStream(Me.FileName & ".lmp")))))
+		End Sub
 
 
         ''' <summary>
@@ -296,8 +296,8 @@ Public Class LineMap
 
             Try
                 If Me.Symbols.Count = 0 Then
-                    '---- weren't able to load resources, so try the LINEMAP file
-                    Load()
+					'---- weren't able to load resources, so try the LINEMAP (LNM) file
+					Load()
                 End If
             Catch ex As Exception
 

@@ -1,4 +1,4 @@
-﻿Imports System
+Imports System
 Imports System.IO
 Imports System.Resources
 Imports System.Reflection
@@ -144,8 +144,8 @@ Module modMain
         Console.WriteLine("The default is 'apiresource' which embeds the linemap into")
         Console.WriteLine("the target executable as a standard windows resource.")
         Console.WriteLine(".NET resource support is experimental at this point.")
-        Console.WriteLine("The 'file' option is mainly for testing. The resulting *.linemap")
-        Console.WriteLine("file will contain source names and line numbers but no other")
+		Console.WriteLine("The 'file' option is mainly for testing. The resulting *.lmp")
+		Console.WriteLine("file will contain source names and line numbers but no other")
         Console.WriteLine("information commonly found in PDB files.")
         Console.WriteLine()
         Console.WriteLine("Returns an exitcode of 0 on success, 1 on failure")
