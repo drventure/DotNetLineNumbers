@@ -102,4 +102,7 @@
     <None Include="Mono.Cecil\readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>"%25CommonProgramFiles(x86)%25\microsoft shared\TextTemplating\14.0\TextTransform.exe" -a !!BuildConfiguration!$(Configuration) "$(SolutionDir)VersionInfo\SharedAssemblyInfo.tt"</PreBuildEvent>
+  </PropertyGroup>
 </Project>
