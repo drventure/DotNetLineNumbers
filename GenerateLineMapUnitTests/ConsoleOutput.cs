@@ -42,7 +42,7 @@ namespace GenerateLineMapUnitTests
 			Console.SetOut(stringWriter);
 		}
 
-		public string Ouput
+		public string Output
 		{
 			get
 			{

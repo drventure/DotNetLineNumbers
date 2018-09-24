@@ -66,6 +66,7 @@
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Line.cs" />
     <Compile Include="LineMap.cs" />
     <Compile Include="LineMapBuilder.cs" />
     <Compile Include="Log.cs" />

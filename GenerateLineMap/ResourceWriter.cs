@@ -137,7 +137,7 @@ namespace GenerateLineMap
 		public void Add(object ResType, object ResName, short wLanguage, ref List<byte> NewValue)
 		{
 			string buf = "";
-			NewValue.ForEach(c => { buf += c.ToString(); } );
+			NewValue.ForEach(c => { buf += c.ToString(); });
 			this.Update(ResType, ResName, wLanguage, ref buf);
 		}
 
@@ -258,7 +258,6 @@ namespace GenerateLineMap
 			{
 				throw new ResWriteCantEndException(Marshal.GetLastWin32Error());
 			}
-
 		}
 
 

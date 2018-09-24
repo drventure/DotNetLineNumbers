@@ -35,7 +35,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace GenerateLineMapUnitTests
 {
 	[TestClass]
-	public class GenerateLineMapUnitTests
+	public class GenerateLineMapTests
 	{
 		[TestInitialize]
 		public void TestInitialize()
@@ -64,7 +64,7 @@ namespace GenerateLineMapUnitTests
 				StartConsoleApplication("GenerateLineMap.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("GenerateLineMap");
+				consoleOutput.Output.Should().Contain("GenerateLineMap");
 			}
 		}
 
@@ -74,11 +74,19 @@ namespace GenerateLineMapUnitTests
 		{
 			using (var consoleOutput = new ConsoleOutput())
 			{
+				// copy the app to test on to a different filename, this is required
+				// because, since TestApp1 is referenced by the unit test, VS tends to want to
+				// lock it open for debugging purposes, which prevents GenerateLineMap from updating
+				// its resources.
+				System.IO.File.Copy("TestApp1.Exe", "TestApp1-rpt.exe", true);
+
 				// Check exit is normal
-				StartConsoleApplication("GenerateLineMap.exe", "/report TestApp1.exe").Should().Be(0);
+				StartConsoleApplication("GenerateLineMap.exe", "/report TestApp1-rpt.exe").Should().Be(0);
+
+				Debug.WriteLine(consoleOutput.Output);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Retrieved 12 strings");
+				consoleOutput.Output.Should().Contain("Retrieved 1 string");
 			}
 		}
 
@@ -87,12 +95,12 @@ namespace GenerateLineMapUnitTests
 		public void TestGenerateReport()
 		{
 			// invoke the app main directly
-			GenerateLineMap.Program.Main(new string[] { "path", "/report", "TestApp1.exe" });
+			GenerateLineMap.Program.Main(new string[] { "path", "/report", "TestApp1.exe", "/out:TestApp1-3.exe" });
 
 			var filename = "TestApp1.exe.linemapreport";
 			File.Exists(filename).Should().BeTrue();
 
-			var buf = File.ReadAllText("TestApp1.exe.linemapreport");
+			var buf = File.ReadAllText("TestApp1-3.exe.linemapreport");
 			buf.Should().Contain("SYMBOLS:");
 			buf.Should().Contain("LINE NUMBERS:");
 			buf.Should().Contain("NAMES:");
@@ -105,13 +113,13 @@ namespace GenerateLineMapUnitTests
 		{
 			using (var consoleOutput = new ConsoleOutput())
 			{
-				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1.exe", "/file", "TestApp1.exe" });
+				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1-2.exe", "/file", "TestApp1.exe" });
 
 				//call the console app main routine
 				TestApp1.Program.Main(new string[] { });
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Program.cs: line 46");
+				consoleOutput.Output.Should().Contain("Program.cs: line 46");
 			}
 		}
 
@@ -123,18 +131,19 @@ namespace GenerateLineMapUnitTests
 			{
 				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1-1.exe", "TestApp1.exe" });
 
-				//make sure PDB doesn't exist anymore
-				if (File.Exists("TestApp1.pdb"))
-				{
-					File.SetAttributes("TestApp1.pdb", FileAttributes.Normal);
-					File.Delete("TestApp1.pdb");
-				}
+				//ideally, make sure PDB doesn't exist anymore
+				//however, VS appears to lock this file open
+				//if (File.Exists("TestApp1.pdb"))
+				//{
+				//	File.SetAttributes("TestApp1.pdb", FileAttributes.Normal);
+				//	File.Delete("TestApp1.pdb");
+				//}
 
 				//execute test app, should file and write stack trace to console
 				StartConsoleApplication("TestApp1-1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Ouput.Should().Contain("Program.cs: line 46");
+				consoleOutput.Output.Should().Contain("Program.cs: line 46");
 			}
 		}
 
