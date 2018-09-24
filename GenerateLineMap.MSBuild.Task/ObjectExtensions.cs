@@ -25,47 +25,21 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
 using System.Text;
-using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 
 namespace GenerateLineMap.MsBuild.Task
 {
+	static class ObjectExtensions
+	{
 
-	/// <summary>
-	/// Settings class for serializing/deserializing our app settings to JSON
-	/// </summary>
-    public class Settings
-    {
+		public static bool IsNull(this object value)
+		{
+			return value == null;
+		}
 
-        public GeneralSettings General { get; set; } = new GeneralSettings();
-
-        public AdvancedSettings Advanced { get; set; } = new AdvancedSettings();
-
-        public string ToJson()
-        {
-            var srl = new JavaScriptSerializer();
-            var json = srl.Serialize(this);
-            return json;
-        }
-
-        public static Settings FromJson(string jsonString)
-        {
-
-            if (string.IsNullOrWhiteSpace(jsonString))
-            {
-                throw new ArgumentNullException(nameof(jsonString));
-            }
-
-            var srl = new JavaScriptSerializer();
-            var obj = srl.Deserialize<Settings>(jsonString);
-
-            return obj;
-        }
-    }
+		public static bool IsNotNull(this string value)
+		{
+			return !value.IsNull();
+		}
+	}
 }

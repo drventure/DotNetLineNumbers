@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>$id$</id>
@@ -6,14 +6,16 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <licenseUrl>http://www.vbfengshui.com</licenseUrl>
-    <projectUrl>http://www.vbfengshui.com</projectUrl>
-    <iconUrl>http://www.vbfengshui.com</iconUrl>
+    <licenseUrl>http://www.codingfengshui.com</licenseUrl>
+    <projectUrl>http://www.codingfengshui.com</projectUrl>
+    <iconUrl>http://www.codingfengshui.com</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <developmentDependency>true</developmentDependency>
+    <dependencies />
     <description>$description$</description>
     <releaseNotes></releaseNotes>
-    <copyright>Darin Higgins (c) 2017</copyright>
-    <tags>generatelinemap msbuild dynamics crm 365 merge</tags>
+    <copyright>Darin Higgins (c) 2018</copyright>
+    <tags>generatelinemap msbuild</tags>
     <references>
       <!-- 
         null references entry because the dll and exe should NOT get referenced in the target project
@@ -24,7 +26,11 @@
   <files>
     <!-- Add a readme -->
     <file src="readme.txt" target="" />
-    <file src="bin\$configuration$\GenerateLineMap.exe" target="tools\" />
-    <file src="build\GenerateLineMap.MSBuild.Task.targets" target="build\GenerateLineMap.MSBuild.Task.targets" />
+    <file src="build\GenerateLineMap.MSBuild.Task.targets" target="build" />
+    <file src="bin\$configuration$\GenerateLineMap.exe" target="tools" />
+    <file src="bin\$configuration$\GenerateLineMap.pdb" target="tools" />
+    <file src="bin\$configuration$\GenerateLineMap.MSBuild.Task.dll" target="tools" />
+    <file src="bin\$configuration$\GenerateLineMap.MSBuild.Task.pdb" target="tools" />
+    <file src="bin\$configuration$\Mono.Cecil.dll" target="tools" />
   </files>
 </package>

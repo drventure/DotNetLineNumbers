@@ -1,8 +1,8 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
-    Copyright (c) 2017 Darin Higgins
+    Copyright (c) 2018 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,9 @@ namespace TestApp1
 	{
 		public static void Main(string[] args)
 		{
+			//initialize exception extensions
+			//ExceptionExtensions.ExceptionExtensions.UsePDB = false;
+
 			try
 			{
 				var x = 1;
@@ -47,7 +50,6 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
-				ExceptionExtensions.ExceptionExtensions.UsePDB = false;
 				var buf = "ERROR: " + ex.ToStringExtended();
 				Console.WriteLine(buf);
 				buf = "ERROR: " + ex.ToString();

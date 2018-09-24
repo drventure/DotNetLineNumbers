@@ -54,6 +54,7 @@
     <Compile Include="AdvancedSettings.cs" />
     <Compile Include="ExeLocationHelper.cs" />
     <Compile Include="GeneralSettings.cs" />
+    <Compile Include="ObjectExtensions.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="GenerateLineMapTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -78,7 +79,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName)</PostBuildEvent>
+    <PostBuildEvent>REM Build the nupkg file directly into a Nuget folder
+IF NOT EXIST "$(SolutionDir)Nuget" mkdir "$(SolutionDir)Nuget"
+Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName) -OutputDirectory "$(SolutionDir)Nuget"
+</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

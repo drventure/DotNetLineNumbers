@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2017 Darin Higgins
+    Copyright (c) 2018 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -86,8 +86,8 @@ public class LineMap
 		public static byte[] ENCIV = new byte[16] {
 			65, 2, 68, 26, 7, 178, 200, 3, 65, 110, 68, 13, 69, 16, 200, 219
 		};
-		public static string ResTypeName = "LNM";
-		public static string ResName = "LNMDATA";
+		public static string ResTypeName = "LMP";
+		public static string ResName = "LMPDATA";
 		public static short ResLang = 0;
 	}
 
@@ -359,15 +359,18 @@ public class LineMap
 					}
 				}
 
-				// deserialize the symbol map and line num list
-				using (System.IO.MemoryStream MemStream = new MemoryStream(bytes))
+				if (bytes != null)
 				{
-					// release the byte array to free up the memory
-					bytes = null;
-					// and depersist the object
-					Stream temp = MemStream;
-					var temp2 = DecryptStream(temp);
-					Transfer(Depersist(DecompressStream(temp2)));
+					// deserialize the symbol map and line num list
+					using (System.IO.MemoryStream MemStream = new MemoryStream(bytes))
+					{
+						// release the byte array to free up the memory
+						bytes = null;
+						// and depersist the object
+						Stream temp = MemStream;
+						var temp2 = DecryptStream(temp);
+						Transfer(Depersist(DecompressStream(temp2)));
+					}
 				}
 
 			}
@@ -383,7 +386,7 @@ public class LineMap
 			{
 				if (this.Symbols.Count == 0)
 				{
-					// weren't able to load resources, so try the LINEMAP (LNM) file
+					// weren't able to load resources, so try the LINEMAP (LMP) file
 					Load();
 				}
 

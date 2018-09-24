@@ -1,8 +1,8 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
-    Copyright (c) 2017 Darin Higgins
+    Copyright (c) 2018 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -36,63 +36,19 @@ namespace GenerateLineMap.MsBuild.Task
 
         #region Property Wrappers
 
-        public bool AllowMultipleAssemblyLevelAttributes { get; set; } = false;
-
-        public bool AllowWildCards { get; set; } = false;
-
-        public bool AllowZeroPeKind { get; set; } = false;
-
-        public string AttributeFile { get; set; } = null;
-
-        public bool Closed { get; set; } = false;
-
-        public bool CopyAttributes { get; set; } = true;
-
-        public bool DebugInfo { get; set; } = true;
-
-        public bool DelaySign { get; set; } = false;
-
-        public string ExcludeFile { get; set; } = "";
-
-        public int FileAlignment { get; set; } = 512;
-
-        public bool Internalize { get; set; } = false;
-
-        public bool Log { get; set; } = false;
-
-        public string LogFile { get; set; } = null;
-
-        public bool PublicKeyTokens { get; set; } = true;
-
-        public string TargetKind { get; set; } = null;
-
-        public bool UnionMerge { get; set; } = false;
-
         public string Version { get; set; } = null;
 
-        public bool XmlDocumentation { get; set; } = false;
-
         #endregion
+
 
         #region Method Wrappers
-
-        /// <summary>
-        /// Default is none. This option allows the user to either allow all public types to be renamed when they are duplicates, or to specify it for arbitrary type names.
-        /// </summary>
-        public string AllowDuplicateType { get; set; } = null;
-
-        /// <summary>
-        /// internal use
-        /// </summary>
-        public List<string> SearchDirectories { get; set; }
-
         #endregion
+
 
         #region Constructors
 
         public AdvancedSettings()
         {
-            SearchDirectories = new List<string>();
         }
 
         #endregion

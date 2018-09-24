@@ -1,6 +1,6 @@
-﻿==============================================================================
+==============================================================================
 GenerateLineMap Line Map insertion utility
-Copyright (c) 2010-2017 Darin Higgins 
+Copyright (c) 2010-2018 Darin Higgins 
 
 The MSBuild Task portion of this project was based on
 the excellent "ILMerge_MSBuild_Task" project by 

@@ -1,8 +1,8 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
-    Copyright (c) 2017 Darin Higgins
+    Copyright (c) 2018 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -48,8 +48,5 @@ namespace GenerateLineMap.MsBuild.Task
 
         [DataMember(Order = 3)]
         public string AlternativeGenerateLineMapPath { get; set; } = null;
-
-		[DataMember(Order = 4)]
-		public string AlternativeILMergePath { get; set; } = null;
 	}
 }

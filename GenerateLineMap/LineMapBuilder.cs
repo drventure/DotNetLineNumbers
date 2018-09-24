@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2017 Darin Higgins
+    Copyright (c) 2018 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -406,7 +406,7 @@ namespace GenerateLineMap
 			var EncryptedStream = pEncryptStream(CompressedStream);
 
 
-			// swap out the below two lines to generate a linemap (lnm) file that is not compressed or encrypted
+			// swap out the below two lines to generate a linemap (lmp) file that is not compressed or encrypted
 			pStreamToFile(this.OutFilename + ".lmp", EncryptedStream);
 			//pStreamToFile(Me.Filename & ".lmp", alm.ToStream);
 
@@ -552,7 +552,7 @@ namespace GenerateLineMap
 						break;
 					}
 				}
-				if (lineex.Line == 138) System.Diagnostics.Debugger.Break();
+				//if (lineex.Line == 138) System.Diagnostics.Debugger.Break();
 				var name = lineex.SourceFile + ":" + lineex.ObjectName + (sym != null ? "." + sym.Name : "");
 				var token = sym != null ? sym.Token : 0;
 
@@ -823,8 +823,8 @@ namespace GenerateLineMap
 		/// <remarks></remarks>
 		private bool SymEnumLinesCallback_proc(ref SRCCODEINFO srcinfo, IntPtr UserContext)
 		{
-			if (srcinfo.LineNumber == 335) System.Diagnostics.Debugger.Break();
-			if (srcinfo.LineNumber == 343) System.Diagnostics.Debugger.Break();
+			//if (srcinfo.LineNumber == 335) System.Diagnostics.Debugger.Break();
+			//if (srcinfo.LineNumber == 343) System.Diagnostics.Debugger.Break();
 
 			if (srcinfo.LineNumber == 0xFEEFEE)
 			{

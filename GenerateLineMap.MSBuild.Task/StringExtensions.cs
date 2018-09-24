@@ -1,8 +1,8 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
-    Copyright (c) 2017 Darin Higgins
+    Copyright (c) 2018 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -32,12 +32,17 @@ namespace GenerateLineMap.MsBuild.Task
     static class StringExtensions
     {
 
-        public static bool IsNotNull(this string value)
+        public static bool IsNullOrWhiteSpace(this string value)
         {
-            return !string.IsNullOrWhiteSpace(value);
+            return string.IsNullOrWhiteSpace(value);
         }
 
-        public static bool IsNumeric(this string value)
+		public static bool IsNotNullOrWhiteSpace(this string value)
+		{
+			return !string.IsNullOrWhiteSpace(value);
+		}
+
+		public static bool IsNumeric(this string value)
         {
             float output;
             return float.TryParse(value, out output);

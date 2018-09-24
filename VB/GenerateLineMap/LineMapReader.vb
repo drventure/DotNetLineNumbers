@@ -9,8 +9,8 @@ Imports System.Security.Cryptography
 Public Class LineMapKeys
     Public Shared ENCKEY As Byte() = New Byte(31) {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}
     Public Shared ENCIV As Byte() = New Byte(15) {65, 2, 68, 26, 7, 178, 200, 3, 65, 110, 68, 13, 69, 16, 200, 219}
-	Public Shared ResTypeName As String = "LNM"
-	Public Shared ResName As String = "LNMDATA"
+	Public Shared ResTypeName As String = "LMP"
+	Public Shared ResName As String = "LMPDATA"
 	Public Shared ResLang As Integer = 0
 End Class
 

@@ -1,8 +1,8 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
-    Copyright (c) 2017 Darin Higgins
+    Copyright (c) 2018 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -65,14 +65,13 @@ namespace GenerateLineMap.MsBuild.Task
 
 		public string ProjectPath { get; set; }
 
-		[Required]
 		public string TargetDir { get; set; }
 
 		public string TargetPath { get; set; }
 
+		[Required]
 		public string TargetFileName { get; set; }
 
-		[Required]
 		public string TargetFrameworkVersion { get; set; }
 
 		public string TargetArchitecture { get; set; }
@@ -108,10 +107,7 @@ namespace GenerateLineMap.MsBuild.Task
 			var settings = new Settings();
 
 			// try to read configuration if file exists
-			if (!ReadConfigFile(out jsonConfig))
-			{
-				return false;
-			}
+			if (!ReadConfigFile(out jsonConfig)) return false;
 
 			// replace tokens if applicable
 			if (!string.IsNullOrWhiteSpace(jsonConfig))
@@ -125,7 +121,7 @@ namespace GenerateLineMap.MsBuild.Task
 				return false;
 			}
 
-			if (settings == null)
+			if (settings.IsNull())
 			{
 				// create instance if seetings still null which indicates a custom json config was not used
 				settings = new Settings();
@@ -134,7 +130,7 @@ namespace GenerateLineMap.MsBuild.Task
 			// apply defaults
 			SetDefaults(settings);
 
-			if (settings.General.AlternativeGenerateLineMapPath.IsNotNull())
+			if (settings.General.AlternativeGenerateLineMapPath.IsNotNullOrWhiteSpace())
 			{
 				if (!File.Exists(settings.General.AlternativeGenerateLineMapPath))
 				{
@@ -150,14 +146,6 @@ namespace GenerateLineMap.MsBuild.Task
 			else
 			{
 				exePath = this.GetILMergePath();
-			}
-
-			if (!exePath.IsNotNull())
-			{
-				Log.LogError("GenerateLineMap.exe was no located. Make sure you have the ILMerge nuget package installed. "
-					+ "If you defined a custom packages folder in your Nuget.Config it is possible we are having a hard time figuring it out. "
-					+ "In this case please use attribute 'AlternativeILMergePath' in the configuration file to indicate the full path for GenerateLineMap.exe.");
-				return false;
 			}
 
 			return GenerateLineMapBasedOn(settings);
@@ -231,32 +219,22 @@ namespace GenerateLineMap.MsBuild.Task
 		private void SetDefaults(Settings settings)
 		{
 
-			if (settings == null) throw new ArgumentNullException(nameof(settings));
+			if (settings.IsNull()) throw new ArgumentNullException(nameof(settings));
 
-			if (settings.General == null)
+			if (settings.General.IsNull())
 			{
 				settings.General = new GeneralSettings();
 			}
 
-			if (!settings.General.OutputFile.IsNotNull())
+			if (!settings.General.OutputFile.IsNotNullOrWhiteSpace())
 			{
 				settings.General.OutputFile = Path.Combine(this.TargetDir, "ILMerge", this.TargetFileName);
 				Log.LogMessage("Applying default value for OutputFile.");
 			}
 
-			if (settings.Advanced == null)
+			if (settings.Advanced.IsNull())
 			{
 				settings.Advanced = new AdvancedSettings();
-			}
-
-			if (settings.Advanced.SearchDirectories == null)
-			{
-				settings.Advanced.SearchDirectories = new List<string>();
-			}
-
-			if (!settings.Advanced.SearchDirectories.Contains(this.TargetDir))
-			{
-				settings.Advanced.SearchDirectories.Add(this.TargetDir);
 			}
 		}
 
@@ -266,7 +244,7 @@ namespace GenerateLineMap.MsBuild.Task
 			bool success = true;
 			//Assembly ilmerge = LoadILMerge(mergerPath);
 			//Type ilmergeType = ilmerge.GetType("ILMerging.ILMerge", true, true);
-			//if (ilmergeType == null) throw new InvalidOperationException("Cannot find 'ILMerging.ILMerge' in executable.");
+			//if (ilmergeType.IsNull()) throw new InvalidOperationException("Cannot find 'ILMerging.ILMerge' in executable.");
 
 			Log.LogMessage("Setting up GenerateLineMap.");
 
@@ -300,12 +278,7 @@ namespace GenerateLineMap.MsBuild.Task
 				Log.LogErrorFromException(exception);
 				success = false;
 			}
-			finally
-			{
-				//merger = null;
-				//ilmerge = null;
-			}
-
+		
 			return success;
 		}
 		

@@ -1,14 +1,14 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // Shared Assembly info for GenerateLineMap Projects
+#region "Static Assembly Version info
 [assembly: AssemblyCompany("Darin Higgins")]
 [assembly: AssemblyProduct("GenerateLineMap")]
-[assembly: AssemblyCopyright("Copyright © 2017 Darin Higgins")]
+[assembly: AssemblyCopyright("Copyright © 2018 Darin Higgins")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
-
 #if DEBUG
 [assembly: AssemblyConfiguration("Debug")]
 #else
@@ -34,12 +34,14 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion(VersionInfo.Version)]
 //this attrib supports semantic versioning
 [assembly: AssemblyInformationalVersion(VersionInfo.Version)]
+#endregion
 
 /// <summary>
 /// This allows us to have a single place for version info
+///	This also accommodates Nuget Semantic versioning
 /// </summary>
 internal struct VersionInfo
 {
-	public const string Version = "0.0.0.6";
-	//this accommodates Nuget Semantic versioning	
+	public const string Version = "0.0.0.11";
 }
+
