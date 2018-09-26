@@ -248,7 +248,7 @@ namespace GenerateLineMap.MsBuild.Task
 
 			Log.LogMessage("Setting up GenerateLineMap.");
 
-			string[] tp = settings.General.TargetPlatform.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+			//string[] tp = settings.General.TargetPlatform.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
 
 			try
 			{

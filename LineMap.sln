@@ -22,6 +22,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VersionInfo", "VersionInfo", "{3D89CD87-07DD-49F7-A28F-2D5A27540E24}"
 	ProjectSection(SolutionItems) = preProject
 		VersionInfo\SharedAssemblyInfo.cs = VersionInfo\SharedAssemblyInfo.cs
+		VersionInfo\SharedAssemblyInfo.tt = VersionInfo\SharedAssemblyInfo.tt
 	EndProjectSection
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "GenerateLineMap", "VB\GenerateLineMap\GenerateLineMap.vbproj", "{C68DDF56-C26F-4FBC-BDAC-6D1774307951}"
@@ -129,5 +130,8 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C68DDF56-C26F-4FBC-BDAC-6D1774307951} = {B544155D-E941-447E-A241-6876B495F15E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AA6F0309-0C01-42B3-BC63-8F1B76CA2B81}
 	EndGlobalSection
 EndGlobal

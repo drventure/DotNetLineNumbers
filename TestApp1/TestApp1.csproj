@@ -82,6 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="build\GenerateLineMap.MSBuild.Task.targets" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -100,11 +101,11 @@
     <Content Include="Readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\GenerateLineMap.MSBuild.Task.0.0.0.11\build\GenerateLineMap.MSBuild.Task.targets" Condition="Exists('..\packages\GenerateLineMap.MSBuild.Task.0.0.0.11\build\GenerateLineMap.MSBuild.Task.targets')" />
+  <Import Project="..\packages\GenerateLineMap.MSBuild.Task.0.0.0.23\build\GenerateLineMap.MSBuild.Task.targets" Condition="Exists('..\packages\GenerateLineMap.MSBuild.Task.0.0.0.23\build\GenerateLineMap.MSBuild.Task.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\GenerateLineMap.MSBuild.Task.0.0.0.11\build\GenerateLineMap.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\GenerateLineMap.MSBuild.Task.0.0.0.11\build\GenerateLineMap.MSBuild.Task.targets'))" />
+    <Error Condition="!Exists('..\packages\GenerateLineMap.MSBuild.Task.0.0.0.23\build\GenerateLineMap.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\GenerateLineMap.MSBuild.Task.0.0.0.23\build\GenerateLineMap.MSBuild.Task.targets'))" />
   </Target>
 </Project>

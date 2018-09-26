@@ -64,9 +64,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
-      <Link>SharedAssemblyInfo.cs</Link>
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Line.cs" />
     <Compile Include="LineMap.cs" />
     <Compile Include="LineMapBuilder.cs" />
     <Compile Include="Log.cs" />
@@ -102,4 +101,7 @@
     <None Include="Mono.Cecil\readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>"%25CommonProgramFiles(x86)%25\microsoft shared\TextTemplating\14.0\TextTransform.exe" -a !!BuildConfiguration!$(Configuration) "$(SolutionDir)VersionInfo\SharedAssemblyInfo.tt"</PreBuildEvent>
+  </PropertyGroup>
 </Project>

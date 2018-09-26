@@ -1,4 +1,4 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
@@ -128,6 +128,13 @@ namespace GenerateLineMap
 			string ImageName;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
 			string LoadedImageName;
+
+			public static IMAGEHLP_MODULE Create()
+			{
+				var r = new IMAGEHLP_MODULE();
+				r.SizeOfStruct = System.Runtime.InteropServices.Marshal.SizeOf(r);
+				return r;
+			}
 		}
 
 
@@ -164,6 +171,15 @@ namespace GenerateLineMap
 			bool Publics;
 			int MachineType;
 			int Reserved;
+			[MarshalAs(UnmanagedType.LPStr, SizeConst = MAX_PATH)]
+			string Padding;
+
+			public static IMAGEHLP_MODULE64 Create()
+			{
+				var r = new IMAGEHLP_MODULE64();
+				r.SizeOfStruct = System.Runtime.InteropServices.Marshal.SizeOf(r);
+				return r;
+			}
 		}
 
 
@@ -218,7 +234,7 @@ namespace GenerateLineMap
 		private static extern bool SymGetModuleInfo(
 			int hProcess,
 			int dwAddr,
-			IMAGEHLP_MODULE ModuleInfo
+			ref IMAGEHLP_MODULE64 ModuleInfo
 		);
 
 
@@ -603,8 +619,8 @@ namespace GenerateLineMap
 					if (dwModuleBase != 0)
 					{
 						// this appearently is required in some cases where the moduleinfo load may be deferred
-						IMAGEHLP_MODULE moduleInfo = new IMAGEHLP_MODULE();
-						var r = SymGetModuleInfo(hProcess, 0, moduleInfo);
+						IMAGEHLP_MODULE64 moduleInfo = IMAGEHLP_MODULE64.Create();
+						var r = SymGetModuleInfo(hProcess, 0, ref moduleInfo);
 
 						// Enumerate all the symbol names 
 						var rEnumSymbolsDelegate = new PSYM_ENUMSYMBOLS_CALLBACK(SymEnumSymbolsCallback_proc);

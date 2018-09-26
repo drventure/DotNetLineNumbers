@@ -40,7 +40,7 @@ using System.Xml;
 /// </summary>
 /// <remarks></remarks>
 /// <editHistory></editHistory>
-public class LineMapX
+public class LineMap
 {
 	private const string LINEMAPNAMESPACE = "http://schemas.linemap.net";
 
@@ -48,7 +48,7 @@ public class LineMapX
 	/// No need for a constructor on this class
 	/// </summary>
 	/// <remarks></remarks>
-	private LineMapX()
+	private LineMap()
 	{
 	}
 	[DllImport("kernel32", EntryPoint = "FindResourceExA", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
@@ -97,7 +97,7 @@ public class LineMapX
 	/// </summary>
 	/// <remarks></remarks>
 	/// <editHistory></editHistory>
-	[DataContract(Namespace = LINEMAPNAMESPACE)]
+	[DataContract(Namespace = LineMap.LINEMAPNAMESPACE)]
 	public class AssemblyLineMap
 	{
 		/// <summary>
@@ -107,7 +107,7 @@ public class LineMapX
 		/// <remarks></remarks>
 
 		public string FileName;
-		[DataContract(Namespace = LINEMAPNAMESPACE)]
+		[DataContract(Namespace = LineMap.LINEMAPNAMESPACE)]
 		public class AddressToLine
 		{
 			// these members must get serialized
@@ -160,7 +160,7 @@ public class LineMapX
 		/// </summary>
 		/// <remarks></remarks>
 		/// <editHistory></editHistory>
-		[DataContract(Namespace = LINEMAPNAMESPACE)]
+		[DataContract(Namespace = LineMap.LINEMAPNAMESPACE)]
 		public class SymbolInfo
 		{
 			// these need to be persisted
@@ -328,24 +328,24 @@ public class LineMapX
 				// Important Note: The FindResourceEx function appears to be case
 				// sensitive in that you really HAVE to pass in UPPER CASE search
 				// arguments
-				var hres = FindResourceEx(hInst.ToInt32(), LineMapKeys.ResTypeName, LineMapKeys.ResName, LineMapKeys.ResLang);
+				var hres = LineMap.FindResourceEx(hInst.ToInt32(), LineMapKeys.ResTypeName, LineMapKeys.ResName, LineMapKeys.ResLang);
 
 				byte[] bytes = null;
 				if (hres != IntPtr.Zero)
 				{
 					// Load the resource to get it into memory
-					var hresdata = LoadResource(hInst, hres);
+					var hresdata = LineMap.LoadResource(hInst, hres);
 
-					IntPtr lpdata = LockResource(hresdata);
-					var sz = SizeofResource(hInst, hres);
+					IntPtr lpdata = LineMap.LockResource(hresdata);
+					var sz = LineMap.SizeofResource(hInst, hres);
 
 					if (lpdata != IntPtr.Zero & sz > 0)
 					{
 						// able to lock it,
 						// so copy the data into a byte array
 						bytes = new byte[sz];
-						CopyMemory(ref bytes[0], lpdata, sz);
-						FreeResource(hresdata);
+						LineMap.CopyMemory(ref bytes[0], lpdata, sz);
+						LineMap.FreeResource(hresdata);
 					}
 				}
 				else

@@ -1,10 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <UsingTask 
-    TaskName="GenerateLineMapTask" 
-    AssemblyFile="$(MSBuildThisFileDirectory)..\tools\GenerateLineMap.MsBuild.Task.dll" 
-  />
+  <UsingTask AssemblyFile="$(MSBuildThisFileDirectory)..\tools\GenerateLineMap.MsBuild.Task.dll" TaskName="GenerateLineMapTask" />
 
   <!-- Inject our task into the build process -->
   <PropertyGroup>
@@ -15,16 +12,12 @@
   </PropertyGroup>
 
   <!-- Define our task here -->
-  <Target Name="GenerateLineMap" AfterTargets="CopyFilesToOutputDirectory">
+  <Target Name="GenerateLineMap">   <!-- AfterTargets="CopyFilesToOutputDirectory"> -->
 
     <ItemGroup>
       <CopyLocalReferences Include="@(ReferencePath)" Condition=" '%(CopyLocal)' == 'true' "/>
     </ItemGroup>
 
-    <!-- 
-        this config directly references the GenerateLineMapTask.cs file
-        the parms here are replicated as required parameters in that class
-    -->
     <GenerateLineMapTask
       SolutionDir="$(SolutionDir)"
       SolutionPath="$(SolutionPath)"
@@ -38,7 +31,7 @@
       TargetFrameworkVersion="$(TargetFrameworkVersion)"
       TargetArchitecture="$(Platform)"
       KeyFile="$(AssemblyOriginatorKeyFile)"
-      ConfigurationFilePath="$(ProjectDir)GenerateLineMap_Config.json"
+      ConfigurationFilePath="$(ProjectDir)ILMergeConfig.json"
       />
   </Target>
 </Project>

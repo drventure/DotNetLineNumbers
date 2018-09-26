@@ -49,7 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
-      <Link>SharedAssemblyInfo.cs</Link>
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AdvancedSettings.cs" />
     <Compile Include="ExeLocationHelper.cs" />
@@ -61,14 +61,12 @@
     <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="build\GenerateLineMap.MSBuild.Task.targets">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="GenerateLineMap.MSBuild.Task.nuspec">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="build\GenerateLineMap.MSBuild.Task.targets" />
     <Content Include="Readme.txt" />
   </ItemGroup>
   <ItemGroup>
