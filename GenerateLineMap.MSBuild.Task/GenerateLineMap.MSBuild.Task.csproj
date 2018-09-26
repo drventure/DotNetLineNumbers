@@ -67,7 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="build\GenerateLineMap.MSBuild.Task.targets" />
-    <Content Include="Readme.txt" />
+    <None Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GenerateLineMap\GenerateLineMap.csproj">

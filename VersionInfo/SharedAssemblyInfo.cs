@@ -35,5 +35,5 @@ using System.Resources;
 /// </summary>
 internal struct VersionInfo
 {
-    public const string Version = "0.0.0.23";
+    public const string Version = "0.0.0.25";
 }
