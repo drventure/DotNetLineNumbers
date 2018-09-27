@@ -1,4 +1,4 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
@@ -26,9 +26,6 @@
 
 using System;
 
-using ExceptionExtensions;
-
-
 namespace TestApp1
 {
 	public class Program
@@ -36,7 +33,7 @@ namespace TestApp1
 		public static void Main(string[] args)
 		{
 			//initialize exception extensions
-			//ExceptionExtensions.ExceptionExtensions.UsePDB = false;
+			//ExceptionExtensions.UsePDB = false;
 
 			try
 			{
@@ -50,11 +47,12 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
-				var buf = "ERROR: " + ex.ToStringExtended();
+				var buf = "ERROR: \r\n" + ex.ToStringExtended();
 				Console.WriteLine(buf);
+				System.Diagnostics.Debug.WriteLine("-----\r\n" + buf + "----");
 				buf = "ERROR: " + ex.ToString();
 				Console.WriteLine(buf);
-				System.Diagnostics.Debug.WriteLine(buf);
+				System.Diagnostics.Debug.WriteLine("-----\r\n" + buf + "----");
 			}
 		}
 	}

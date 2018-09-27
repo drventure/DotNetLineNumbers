@@ -376,7 +376,7 @@ public class LineMap
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
+				Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
 				// yes, it's bad form to catch all exceptions like this
 				// but this is part of an exception handler
 				// so it really can't be allowed to fail with an exception!
@@ -393,7 +393,7 @@ public class LineMap
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
+				Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
 			}
 		}
 
@@ -477,7 +477,7 @@ public class LineMap
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
+				Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
 				// any problems, nothing much to do, so return an empty stream
 				return new MemoryStream();
 			}
