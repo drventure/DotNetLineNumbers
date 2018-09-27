@@ -84,7 +84,6 @@ public static class ExceptionExtensions
 
 
 	#region Private Members
-	private const string ERRCLASSNAME = "ExceptionExtensions";
 	private const string INDENT = "[[3]]";
 
 	/// <summary>
@@ -337,16 +336,6 @@ public static class ExceptionExtensions
 	/// <returns></returns>
 	private static string SysInfoToString(Exception Ex = null)
 	{
-		var date = render(() => DateTime.Now.ToString());
-		var machineName = render(() => Environment.MachineName);
-		var currentIP = render(() => GetCurrentIP());
-		var userIdentity = render(() => UserIdentity());
-		var currentDomain = render(() => System.AppDomain.CurrentDomain.FriendlyName);
-		var codeBase = render(() => ParentAssembly.CodeBase);
-		var assemblyName = render(() => ParentAssembly.FullName);
-		var assemblyVersion = render(() => ParentAssembly.GetName().Version.ToString());
-		var assemblyBuildDate = render(() => AssemblyBuildDate(ParentAssembly).ToString());
-
 		string template = Cleanup($@"
 			Date and Time:         {date}
 			Machine Name:          {machineName}
@@ -363,21 +352,55 @@ public static class ExceptionExtensions
 
 
 	/// <summary>
+	/// return the current date for logging purposes
+	/// </summary>
+	private static string date
+	{
+		get
+		{
+			return DateTime.Now.ToString();
+		}
+	}
+
+
+	/// <summary>
 	/// get IP address of this machine
 	/// not an ideal method for a number of reasons (guess why!)
 	/// but the alternatives are very ugly
 	/// </summary>
 	/// <returns></returns>
-	private static string GetCurrentIP()
-	{
-		try
+	private static string currentIP
 		{
-			return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
+			get
+			{
+				try
+				{
+					return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
+				}
+				catch
+				{
+					//just provide a default value
+					return "127.0.0.1";
+				}
+			}
 		}
-		catch
+
+
+	/// <summary>
+	/// Return the current machine name for logging purposes
+	/// </summary>
+	private static string machineName
+	{
+		get
 		{
-			//just provide a default value
-			return "127.0.0.1";
+			try
+			{
+				return Environment.MachineName;
+			}
+			catch 
+			{
+				return "unavailable";
+			}
 		}
 	}
 
@@ -386,14 +409,119 @@ public static class ExceptionExtensions
 	/// retrieve user identity with fallback on error to safer method
 	/// </summary>
 	/// <returns></returns>
-	private static string UserIdentity()
+	private static string userIdentity
 	{
-		string strTemp = CurrentWindowsIdentity();
-		if (string.IsNullOrEmpty(strTemp))
+		get
 		{
-			strTemp = CurrentEnvironmentIdentity();
+			try
+			{
+				string ident = currentWindowsIdentity;
+				if (string.IsNullOrEmpty(ident))
+				{
+					ident = currentEnvironmentIdentity;
+				}
+				return ident;
+			}
+			catch
+			{
+				return "unavailable";
+			}
 		}
-		return strTemp;
+	}
+
+
+	/// <summary>
+	/// return the current app domain name for logging
+	/// </summary>
+	private static string currentDomain
+	{
+		get
+		{
+			try
+			{
+				return System.AppDomain.CurrentDomain.FriendlyName;
+			}
+			catch 
+			{
+				return "unavailable";
+			}
+		}
+	}
+
+
+	/// <summary>
+	/// Return the codebase location for logging
+	/// </summary>
+	private static string codeBase
+	{
+		get
+		{
+			try
+			{
+				return ParentAssembly.CodeBase;
+			}
+			catch 
+			{
+				return "unavailable";
+			}
+		}
+	}
+
+
+	/// <summary>
+	/// return the assembly version for logging
+	/// </summary>
+	private static string assemblyVersion
+	{
+		get
+		{
+			try
+			{
+				return ParentAssembly.GetName().Version.ToString();
+			}
+			catch 
+			{
+				return "unavailable";
+			}
+		}
+	}
+
+
+	/// <summary>
+	/// Return the Assembly Build date for logging
+	/// </summary>
+	private static string assemblyBuildDate
+	{
+		get
+		{
+			try
+			{
+				return GetAssemblyBuildDate(ParentAssembly).ToString();
+			}
+			catch 
+			{
+				return "unavailable";
+			}
+		}
+	}
+
+
+	/// <summary>
+	/// return the assemblyName for logging
+	/// </summary>
+	private static string assemblyName
+	{
+		get
+		{
+			try
+			{
+				return ParentAssembly.FullName;
+			}
+			catch 
+			{
+				return "unavailable";
+			}
+		}
 	}
 
 
@@ -402,16 +530,19 @@ public static class ExceptionExtensions
 	/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
 	/// </summary>
 	/// <returns></returns>
-	private static string CurrentWindowsIdentity()
+	private static string currentWindowsIdentity
 	{
-		try
+		get
 		{
-			return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-		}
-		catch
-		{
-			//just provide a default value
-			return "";
+			try
+			{
+				return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+			}
+			catch
+			{
+				//just provide a default value
+				return "";
+			}
 		}
 	}
 
@@ -420,16 +551,19 @@ public static class ExceptionExtensions
 	/// exception-safe "domain\username" retrieval from Environment
 	/// </summary>
 	/// <returns></returns>
-	private static string CurrentEnvironmentIdentity()
+	private static string currentEnvironmentIdentity
 	{
-		try
+		get
 		{
-			return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
-		}
-		catch
-		{
-			//just provide a default value
-			return "";
+			try
+			{
+				return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
+			}
+			catch
+			{
+				//just provide a default value
+				return "";
+			}
 		}
 	}
 
@@ -444,14 +578,14 @@ public static class ExceptionExtensions
 	/// <param name="objAssembly"></param>
 	/// <param name="bForceFileDate"></param>
 	/// <returns></returns>
-	private static DateTime AssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
+	private static DateTime GetAssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
 	{
 		System.Version objVersion = objAssembly.GetName().Version;
 		DateTime dtBuild = default(DateTime);
 
 		if (bForceFileDate)
 		{
-			dtBuild = AssemblyFileTime(objAssembly);
+			dtBuild = GetAssemblyFileTime(objAssembly);
 		}
 		else
 		{
@@ -462,7 +596,7 @@ public static class ExceptionExtensions
 			}
 			if (dtBuild > DateTime.Now | objVersion.Build < 730 | objVersion.Revision == 0)
 			{
-				dtBuild = AssemblyFileTime(objAssembly);
+				dtBuild = GetAssemblyFileTime(objAssembly);
 			}
 		}
 
@@ -475,7 +609,7 @@ public static class ExceptionExtensions
 	/// </summary>
 	/// <param name="objAssembly"></param>
 	/// <returns></returns>
-	private static DateTime AssemblyFileTime(System.Reflection.Assembly objAssembly)
+	private static DateTime GetAssemblyFileTime(System.Reflection.Assembly objAssembly)
 	{
 		try
 		{
@@ -490,30 +624,13 @@ public static class ExceptionExtensions
 
 
 	/// <summary>
-	/// enhanced stack trace generator (exception)
-	/// </summary>
-	/// <param name="ex"></param>
-	/// <returns></returns>
-	private static string InternalEnhancedStackTrace(Exception ex)
-	{
-		if (ex == null)
-		{
-			return EnhancedStackTrace(new StackTrace(true), ERRCLASSNAME);
-		}
-		else
-		{
-			return EnhancedStackTrace(new StackTrace(ex, true));
-		}
-	}
-
-
-	/// <summary>
 	/// enhanced stack trace generator (no params)
 	/// </summary>
 	/// <returns></returns>
 	private static string EnhancedStackTrace()
 	{
-		return EnhancedStackTrace(new StackTrace(true), ERRCLASSNAME);
+		//use the type of THIS class and ignore any stackframes in it
+		return EnhancedStackTrace(new StackTrace(true), MethodBase.GetCurrentMethod().DeclaringType.Name);
 	}
 
 
@@ -525,32 +642,59 @@ public static class ExceptionExtensions
 	/// <returns></returns>
 	private static string EnhancedStackTrace(StackTrace stackTrace, string classNameToSkip = "")
 	{
-		int intFrame = 0;
-
-		StringBuilder sb = new StringBuilder();
-
-		sb.Append("---- Stack Trace ----");
-		sb.Append(Environment.NewLine);
-
-		int FrameNum = 0;
-		for (intFrame = 0; intFrame <= stackTrace.FrameCount - 1; intFrame++)
+		try
 		{
-			StackFrame sf = stackTrace.GetFrame(intFrame);
+			int intFrame = 0;
 
-			if (classNameToSkip.Length > 0 && sf.GetMethod().DeclaringType.Name.IndexOf(classNameToSkip) > -1)
+			StringBuilder sb = new StringBuilder();
+
+			sb.Append("---- Stack Trace ----");
+			sb.Append(Environment.NewLine);
+
+			int FrameNum = 0;
+			for (intFrame = 0; intFrame <= stackTrace.FrameCount - 1; intFrame++)
 			{
-				// don't include frames with this name
-				// this lets of keep any ERR class frames out of
-				// the strack trace, they'd just be clutter
+				StackFrame sf = stackTrace.GetFrame(intFrame);
+
+				if (classNameToSkip.Length > 0 && sf.GetMethod().DeclaringType.Name.IndexOf(classNameToSkip) > -1)
+				{
+					// don't include frames with this name
+					// this lets of keep any ERR class frames out of
+					// the strack trace, they'd just be clutter
+				}
+				else
+				{
+					FrameNum += 1;
+					sb.Append(StackFrameToString(FrameNum, sf));
+				}
 			}
-			else
-			{
-				FrameNum += 1;
-				sb.Append(StackFrameToString(FrameNum, sf));
-			}
+
+			return sb.ToString();
+		}
+		catch
+		{
+			return "stack trace unavailable";
 		}
 
-		return sb.ToString();
+	}
+
+
+	/// <summary>
+	/// enhanced stack trace generator (exception)
+	/// </summary>
+	/// <param name="ex"></param>
+	/// <returns></returns>
+	private static string InternalEnhancedStackTrace(Exception ex)
+	{
+		if (ex == null)
+		{
+			//ignore any stackframes from THIS class
+			return EnhancedStackTrace(new StackTrace(true), MethodBase.GetCurrentMethod().DeclaringType.Name);
+		}
+		else
+		{
+			return EnhancedStackTrace(new StackTrace(ex, true));
+		}
 	}
 
 
