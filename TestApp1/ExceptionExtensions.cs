@@ -45,28 +45,36 @@ public static class ExceptionExtensions
 	/// <returns></returns>
 	public static string ToStringExtended(this Exception Ex)
 	{
-		//-- sometimes the original exception is wrapped in a more relevant outer exception
-		//-- the detail exception is the "inner" exception
-		//-- see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
-		string innertemplate = "";
-		if ((Ex.InnerException != null))
+		try
 		{
-			innertemplate = Cleanup($@"
-				(Inner Exception)
-				{render(() => Ex.InnerException.ToString())} 
-				(Outer Exception)
-				");
+			//-- sometimes the original exception is wrapped in a more relevant outer exception
+			//-- the detail exception is the "inner" exception
+			//-- see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
+			string innertemplate = "";
+			if ((Ex.InnerException != null))
+			{
+				innertemplate = Cleanup($@"
+					(Inner Exception)
+					{Ex.ToStringExtended()} 
+					(Outer Exception)
+					");
+			}
+
+			string template = Cleanup($@"
+				{innertemplate}{SysInfoToString()}
+				Exception Source:      {Ex.Source} 
+				Exception Type:        {Ex.GetType().FullName}
+				Exception Message:     {Ex.Message}
+				Exception Target Site: {Ex.TargetSite?.Name}
+				{EnhancedStackTrace(Ex)}");
+
+			return template;
 		}
-
-		string template = Cleanup($@"
-			{innertemplate}{SysInfoToString()}
-			Exception Source:      {render(() => Ex.Source)} 
-			Exception Type:        {render(() => Ex.GetType().FullName)}
-			Exception Message:     {render(() => Ex.Message)}
-			Exception Target Site: {render(() => Ex.TargetSite.Name)}
-			{render(() => EnhancedStackTrace(Ex))}");
-
-		return template;
+		catch (Exception ex)
+		{
+			//there was a problem rendering the extended exception, fall back to generic ToString()
+			return Ex.ToString() + "\r\nProblem rendering Exception: " + ex.ToString();
+		}
 	}
 
 
@@ -94,74 +102,59 @@ public static class ExceptionExtensions
 	/// <returns></returns>
 	private static string StackFrameToString(int FrameNum, StackFrame sf)
 	{
-		StringBuilder sb = new StringBuilder();
-		int intParam = 0;
+		//build method name
 		MemberInfo mi = sf.GetMethod();
+		string methodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
 
-		//-- build method name
-		sb.Append(INDENT);
-		string MethodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
-		sb.Append(MethodName);
-		//If FrameNum = 1 Then rCachedErr.Method = MethodName
-
-		//-- build method params
+		//build method params
 		ParameterInfo[] objParameters = sf.GetMethod().GetParameters();
-		sb.Append("(");
-		intParam = 0;
+		int param = 0;
+		string parameters = "";
 		foreach (ParameterInfo objParameter in objParameters)
 		{
-			intParam += 1;
-			if (intParam > 1)
-				sb.Append(", ");
-			sb.Append(objParameter.Name);
-			sb.Append(" As ");
-			sb.Append(objParameter.ParameterType.Name);
+			param++;
+			if (param > 1) parameters += ", ";
+			parameters += objParameter.ParameterType.Name + " " + objParameter.Name;
 		}
-		sb.Append(")");
-		sb.Append(Environment.NewLine);
 
-		//-- if source code is available, append location info
-		sb.Append(INDENT + INDENT);
-		if (sf.GetFileName() != null && sf.GetFileName().Length != 0 && ExceptionExtensions.UsePDB)
+		string filename = "";
+		if (sf.GetFileName() != null && sf.GetFileName().Length != 0)
 		{
-			// the PDB appears to be available, since the above elements are 
-			// not blank, so just use it's information
-
-			sb.Append(System.IO.Path.GetFileName(sf.GetFileName()));
-			var Line = sf.GetFileLineNumber();
-			if (Line != 0)
-			{
-				sb.Append(": line ");
-				sb.Append(string.Format("{0}", Line));
-			}
-			var col = sf.GetFileColumnNumber();
-			if (col != 0)
-			{
-				sb.Append(", col ");
-				sb.Append(string.Format("{0:#00}", sf.GetFileColumnNumber()));
-			}
-			//-- if IL is available, append IL location info
-			if (sf.GetILOffset() != StackFrame.OFFSET_UNKNOWN)
-			{
-				sb.Append(", IL ");
-				sb.Append(string.Format("{0:#0000}", sf.GetILOffset()));
-			}
+			//file is available via PDB so use it
+			filename = System.IO.Path.GetFileName(sf.GetFileName());
+		}
+		else if (ParentAssembly != null)
+		{
+			filename = System.IO.Path.GetFileName(ParentAssembly.CodeBase);
 		}
 		else
 		{
-			// the PDB is not available, so attempt to retrieve 
-			// any embedded linemap information
-			string Filename;
-			if (ParentAssembly != null)
-			{
-				Filename = System.IO.Path.GetFileName(ParentAssembly.CodeBase);
-			}
-			else
-			{
-				Filename = "Unable to determine Assembly Filename";
-			}
-			//If FrameNum = 1 Then rCachedErr.FileName = FileName
-			sb.Append(Filename);
+			filename = "Unable to determine Assembly Filename";
+		}
+
+		string line = "";
+		if (sf.GetFileLineNumber() != 0)
+		{
+			//line is available via pdb so use it
+			line = ": line " + string.Format("{0}", sf.GetFileLineNumber());
+		}
+
+		string column = "";
+		if (sf.GetFileColumnNumber() != 0)
+		{
+			//column is available via pdb so use it
+			column = ", col " + string.Format("{0:#00}", sf.GetFileColumnNumber());
+		}
+
+		string il = "";
+		if (sf.GetILOffset() != StackFrame.OFFSET_UNKNOWN)
+		{
+			//IL is available, append IL location info
+			il = ", IL " + string.Format("{0:#0000}", sf.GetILOffset());
+		}
+
+		if (filename == "" || line == "")
+		{ 
 			// Get the native code offset and convert to a line number
 			// first, make sure our linemap is loaded
 			try
@@ -171,31 +164,19 @@ public static class ExceptionExtensions
 				sf = new MappedStackFrame(sf);
 				if (sf.GetFileLineNumber() != 0)
 				{
-					sb.Append(": Source File - ");
-					sb.Append(sf.GetFileName());
-					sb.Append(": line ");
-					sb.Append(string.Format("{0}", sf.GetFileLineNumber()));
+					filename = ": Source File -" + sf.GetFileName();
+					line = ": line " + string.Format("{0}", sf.GetFileLineNumber());
 				}
-
 			}
 			catch (Exception ex)
 			{
 				//any problems in loading the Linemap, just write to debugger and call it a day
-				Debug.WriteLine(string.Format("Unable to load line map information. Error: {0}", ex.ToString()));
-			}
-			finally
-			{
-				//-- native code offset is always available
-				var IL = sf.GetILOffset();
-				if (IL != StackFrame.OFFSET_UNKNOWN)
-				{
-					sb.Append(": IL ");
-					sb.Append(string.Format("{0:#00000}", IL));
-				}
+				line = $"Unable to load line map information. Error: {ex.ToString()}";
 			}
 		}
-		sb.Append(Environment.NewLine);
-		return sb.ToString();
+
+		return $@"{INDENT}{methodName}({parameters})
+			{INDENT}{INDENT}{filename}{line}{column}{il}";
 	}
 
 
@@ -699,24 +680,6 @@ public static class ExceptionExtensions
 
 
 	/// <summary>
-	/// Protected rendering of Exception information
-	/// </summary>
-	/// <param name="render"></param>
-	/// <returns></returns>
-	private static string render(Func<string> render)
-	{
-		try
-		{
-			return render.Invoke();
-		}
-		catch (Exception ex)
-		{
-			return ex.Message;
-		}
-	}
-
-
-	/// <summary>
 	/// Cleanup the templated strings.
 	/// A bit brute force, but this doesn't have to be performant
 	/// </summary>
@@ -724,11 +687,15 @@ public static class ExceptionExtensions
 	/// <returns></returns>
 	private static string Cleanup(string buf)
 	{
+		//trim leading and trailing crlfs
 		buf = buf.Trim(new char[] { '\r', '\n' });
+		//remove tabs (they could end up in the string via the IDE)
 		buf = buf.Replace("\t", "");
+		//remove leading line spacing (as a result of @"" strings in the IDE)
 		buf = buf.Replace("\r\n    ", "\r\n ");
 		buf = buf.Replace("\r\n   ", "\r\n ");
 		buf = buf.Replace("\r\n  ", "\r\n ");
+		//put spaces back for this marker
 		buf = buf.Replace("[[3]]", "   ");
 		return buf;
 	}
