@@ -26,17 +26,13 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Security;
 using System.Text;
 
 
 public static class ExceptionExtensions
 {
 	#region Public Members
-	public static bool UsePDB { get; set; }
-
 
 	/// <summary>
 	/// translate exception object to string, with additional system info
@@ -159,8 +155,6 @@ public static class ExceptionExtensions
 			// first, make sure our linemap is loaded
 			try
 			{
-				LineMap.AssemblyLineMaps.Add(sf.GetMethod().DeclaringType.Assembly);
-
 				sf = new MappedStackFrame(sf);
 				if (sf.GetFileLineNumber() != 0)
 				{
@@ -206,105 +200,6 @@ public static class ExceptionExtensions
 				}
 			}
 			return _parentAssembly;
-		}
-	}
-
-
-	/// <summary>
-	/// A remapped stack frame with Line# and source file 
-	/// </summary>
-	public class MappedStackFrame : StackFrame
-	{
-		StackFrame _stackFrame = null;
-		int _line = 0;
-		string _sourceFile = "";
-
-		public MappedStackFrame(StackFrame stackFrame)
-		{
-			_stackFrame = stackFrame;
-			// first, get the base addr of the method
-			// if possible
-
-			// you have to have symbols to do this
-			if (LineMap.AssemblyLineMaps.Count == 0)
-				return;
-
-			// first, check if for symbols for the assembly for this stack frame
-			if (!LineMap.AssemblyLineMaps.Keys.Contains(stackFrame.GetMethod().DeclaringType.Assembly.CodeBase))
-				return;
-
-			// retrieve the cache
-			var alm = LineMap.AssemblyLineMaps[stackFrame.GetMethod().DeclaringType.Assembly.CodeBase];
-
-			// does the symbols list contain the metadata token for this method?
-			MemberInfo mi = stackFrame.GetMethod();
-			// Don't call this mdtoken or PostSharp will barf on it! Jeez
-			long mdtokn = mi.MetadataToken;
-			if (!alm.Symbols.ContainsKey(mdtokn))
-				return;
-
-			// all is good so get the line offset (as close as possible, considering any optimizations that
-			// might be in effect)
-			var ILOffset = stackFrame.GetILOffset();
-			if (ILOffset != StackFrame.OFFSET_UNKNOWN)
-			{
-				Int64 Addr = alm.Symbols[mdtokn].Address + ILOffset;
-
-				// now start hunting down the line number entry
-				// use a simple search. LINQ might make this easier
-				// but I'm not sure how. Also, a binary search would be faster
-				// but this isn't something that's really performance dependent
-				int i = 1;
-				for (i = alm.AddressToLineMap.Count - 1; i >= 0; i += -1)
-				{
-					if (alm.AddressToLineMap[i].Address <= Addr)
-					{
-						break;
-					}
-				}
-				// since the address may end up between line numbers,
-				// always return the line num found
-				// even if it's not an exact match
-				_line = alm.AddressToLineMap[i].Line;
-				_sourceFile = alm.Names[alm.AddressToLineMap[i].SourceFileIndex];
-				return;
-			}
-			else
-			{
-				return;
-			}
-		}
-
-
-		public override int GetFileLineNumber()
-		{
-			return (_line > 0) ? _line : _stackFrame.GetFileLineNumber();
-		}
-	   	[SecuritySafeCritical]
-		public override string GetFileName()
-		{
-			return (!string.IsNullOrEmpty(_sourceFile) ? _sourceFile : _stackFrame.GetFileName());
-		}
-		public override int GetFileColumnNumber()
-		{
-			return _stackFrame.GetFileColumnNumber();
-		}
-		public override int GetILOffset()
-		{
-			return _stackFrame.GetILOffset();
-		}
-		public override MethodBase GetMethod()
-		{
-			return _stackFrame.GetMethod();
-		}
-		public override int GetNativeOffset()
-		{
-			return _stackFrame.GetNativeOffset();
-		}
-		[SecuritySafeCritical]
-		public override string ToString()
-		{
-			return _stackFrame.ToString();
 		}
 	}
 
