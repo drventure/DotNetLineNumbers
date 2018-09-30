@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>GenerateLineMap</RootNamespace>
     <AssemblyName>GenerateLineMap</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <SccProjectName>
@@ -102,6 +102,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>"%25CommonProgramFiles(x86)%25\microsoft shared\TextTemplating\14.0\TextTransform.exe" -a !!BuildConfiguration!$(Configuration) "$(SolutionDir)VersionInfo\SharedAssemblyInfo.tt"</PreBuildEvent>
+    <PreBuildEvent>"$(DevEnvDir)TextTransform.exe" -a !!BuildConfiguration!$(Configuration) "$(SolutionDir)VersionInfo\SharedAssemblyInfo.tt"</PreBuildEvent>
   </PropertyGroup>
 </Project>
