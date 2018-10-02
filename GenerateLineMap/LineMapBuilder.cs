@@ -115,19 +115,19 @@ namespace GenerateLineMap
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 		private struct IMAGEHLP_MODULE
 		{
-			int SizeOfStruct;
-			int BaseOfImage;
-			int ImageSize;
-			int TimeDateStamp;
-			int CheckSum;
-			int NumSyms;
-			SYM_TYPE SymType;
+			public int SizeOfStruct;
+			public int BaseOfImage;
+			public int ImageSize;
+			public int TimeDateStamp;
+			public int CheckSum;
+			public int NumSyms;
+			public SYM_TYPE SymType;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-			string ModuleName;
+			public string ModuleName;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-			string ImageName;
+			public string ImageName;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-			string LoadedImageName;
+			public string LoadedImageName;
 
 			public static IMAGEHLP_MODULE Create()
 			{
@@ -141,38 +141,38 @@ namespace GenerateLineMap
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
 		private struct IMAGEHLP_MODULE64
 		{
-			int SizeOfStruct;
-			Int64 BaseOfImage;
-			int ImageSize;
-			int TimeDateStamp;
-			int CheckSum;
-			int NumSyms;
-			SYM_TYPE SymType;
+			public int SizeOfStruct;
+			public Int64 BaseOfImage;
+			public int ImageSize;
+			public int TimeDateStamp;
+			public int CheckSum;
+			public int NumSyms;
+			public SYM_TYPE SymType;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-			string ModuleName;
+			public string ModuleName;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-			string ImageName;
+			public string ImageName;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-			string LoadedImageName;
+			public string LoadedImageName;
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-			string LoadedPdbName;
-			int CVSig;
+			public string LoadedPdbName;
+			public int CVSig;
 			[MarshalAs(UnmanagedType.LPStr, SizeConst = MAX_PATH + 3)]
-			string CVData;
-			int PdbSig;
+			public string CVData;
+			public int PdbSig;
 			Guid PdbSig70;
-			int PdbAge;
-			bool PdbUnmatched;
-			bool DbgUnmatched;
-			bool LineNumbers;
-			bool GlobalSymbols;
-			bool TypeInfo;
-			bool SourceIndexed;
-			bool Publics;
-			int MachineType;
-			int Reserved;
+			public int PdbAge;
+			public bool PdbUnmatched;
+			public bool DbgUnmatched;
+			public bool LineNumbers;
+			public bool GlobalSymbols;
+			public bool TypeInfo;
+			public bool SourceIndexed;
+			public bool Publics;
+			public int MachineType;
+			public int Reserved;
 			[MarshalAs(UnmanagedType.LPStr, SizeConst = MAX_PATH)]
-			string Padding;
+			public string Padding;
 
 			public static IMAGEHLP_MODULE64 Create()
 			{
@@ -203,13 +203,111 @@ namespace GenerateLineMap
 		}
 		#endregion
 
-		#region " Callbacks "
+
+		#region Callbacks
 		private delegate bool PSYM_ENUMLINES_CALLBACK(ref SRCCODEINFO srcinfo, IntPtr userContext);
-							 
+
+
+		/// <summary>
+		/// Delegate to handle Symbol Enumeration Callback
+		/// </summary>
+		/// <param name="syminfo"></param>
+		/// <param name="Size"></param>
+		/// <param name="UserContext"></param>
+		/// <returns></returns>
+		/// <remarks></remarks>
+		private delegate int PSYM_ENUMSYMBOLS_CALLBACK(ref SYMBOL_INFO syminfo, int Size, int UserContext);
+
 		#endregion
 
 
 		#region " API Definitions"
+		private int SymEnumSymbolsCallback_proc(ref SYMBOL_INFO syminfo, int Size, int UserContext)
+		{
+			if ((syminfo.Flags &
+				(CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_CLR_TOKEN |
+				CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_METADATA |
+				CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_FUNCTION))
+				!= 0)
+			{
+				// we only really care about CLR metadata tokens
+				// anything else is basically a variable or internal
+				// info we wouldn't be worried about anyway.
+				// This might change and I get to know more about debugging
+				//.net!
+
+				var Tokn = syminfo.Value;
+				var si = new LineMap.AssemblyLineMap.SymbolInfo(syminfo.Name.Substring(0, syminfo.NameLen), syminfo.Address, Tokn);
+
+				_alm.Symbols.Add(Tokn, si);
+			}
+
+			// return this to the call to let it keep enumerating
+			return -1;
+		}
+
+
+		/// <summary>
+		/// Handle the callback to enumerate all the Line numbers in the given DLL/EXE
+		/// based on info from the PDB
+		/// </summary>
+		/// <param name="srcinfo"></param>
+		/// <param name="UserContext"></param>
+		/// <returns></returns>
+		/// <remarks></remarks>
+		private bool SymEnumLinesCallback_proc(ref SRCCODEINFO srcinfo, IntPtr UserContext)
+		{
+			//if (srcinfo.LineNumber == 335) System.Diagnostics.Debugger.Break();
+			//if (srcinfo.LineNumber == 343) System.Diagnostics.Debugger.Break();
+
+			if (srcinfo.LineNumber == 0xFEEFEE)
+			{
+				// skip these entries
+				// I believe they mark the end of a set of linenumbers associated
+				// with a particular method, but they don't appear to contain
+				// valid line number info in any case.
+			}
+			else
+			{
+				try
+				{
+					// add the new line number and it's address
+					// NOTE, this address is an IL Offset, not a native code offset
+
+					var FileName = srcinfo.FileName.Split('\\');
+
+					string Name;
+
+					var i = FileName.GetUpperBound(0);
+
+					if (i > 2)
+					{
+						Name = "...\\" + FileName[i - 2] + "\\" + FileName[i - 1] + "\\" + FileName[i];
+					}
+					else if (i > 1)
+					{
+						Name = "...\\" + FileName[i - 1] + "\\" + FileName[i];
+					}
+					else
+					{
+						Name = Path.GetFileName(srcinfo.FileName);
+					}
+
+					_alm.AddAddressToLine(srcinfo.LineNumber, srcinfo.Address, Name, srcinfo.obj);
+				}
+				catch (Exception ex)
+				{
+					Log.LogError(ex, "Unable to enum lines");
+					// catch everything because we DO NOT
+					// want to throw an exception from here!
+				}
+			}
+
+			// Tell the caller we succeeded
+			return true;
+		}
+
+
 		[DllImport("dbghelp.dll")]
 		private static extern int SymInitialize(
 		   int hProcess,
@@ -260,7 +358,6 @@ namespace GenerateLineMap
 		   int Flags );
 
 
-
 		[DllImport("dbghelp.dll")]
 		private static extern int SymEnumSymbols(
 		   int hProcess,
@@ -268,7 +365,6 @@ namespace GenerateLineMap
 		   int Mask,
 		   PSYM_ENUMSYMBOLS_CALLBACK lpCallback,
 		   int UserContext);
-
 
 
 		[DllImport("dbghelp.dll")]
@@ -279,7 +375,6 @@ namespace GenerateLineMap
 		   int File,
 		   PSYM_ENUMLINES_CALLBACK lpCallback,
 		   int UserContext);
-
 
 
 		[DllImport("dbghelp.dll")]
@@ -317,6 +412,7 @@ namespace GenerateLineMap
 		#endregion
 
 
+		#region Constructors
 		/// <summary>
 		/// Constructor to setup this class to read a specific PDB
 		/// </summary>
@@ -333,8 +429,11 @@ namespace GenerateLineMap
 			this.Filename = FileName;
 			this.OutFilename = OutFileName;
 		}
+		#endregion
 
 
+		#region Public Members
+		private string _Filename = "";
 		/// <summary>
 		/// Name of EXE/DLL file to process
 		/// </summary>
@@ -345,7 +444,7 @@ namespace GenerateLineMap
 		{
 			get
 			{
-				return rFilename;
+				return _Filename;
 			}
 
 			set
@@ -354,12 +453,12 @@ namespace GenerateLineMap
 				{
 					throw new FileNotFoundException("The file could not be found.", value);
 				}
-				rFilename = value;
+				_Filename = value;
 			}
 		}
-		private string rFilename = "";
 
 
+		private string _OutFilename;
 		/// <summary>
 		/// Name of the output file
 		/// </summary>
@@ -369,20 +468,19 @@ namespace GenerateLineMap
 		{
 			get
 			{
-				if (string.IsNullOrEmpty(rOutFilename))
-					return rFilename;
+				if (string.IsNullOrEmpty(_OutFilename))
+					return _Filename;
 				else
-					return rOutFilename;
+					return _OutFilename;
 			}
 			set
 			{
-				rOutFilename = value;
+				_OutFilename = value;
 			}
 		}
-		private string rOutFilename;
 
 
-		private bool rbCreateMapReport = false;
+		private bool _CreateMapReport = false;
 		/// <summary>
 		/// true to generate a Line map report
 		/// this is mainly for Debugging purposes
@@ -393,14 +491,13 @@ namespace GenerateLineMap
 		{
 			get
 			{
-				return rbCreateMapReport;
+				return _CreateMapReport;
 			}
 			set
 			{
-				rbCreateMapReport = value;
+				_CreateMapReport = value;
 			}
 		}
-
 
 
 		/// <summary>
@@ -416,14 +513,14 @@ namespace GenerateLineMap
 			// technically, I should probably CLOSE and DISPOSE the streams
 			// but this is just a quick and dirty tool
 
-			var alm = pGetAssemblyLineMap(this.Filename);
+			var alm = GetAssemblyLineMap(this.Filename);
 
-			var CompressedStream = pCompressStream(alm.ToStream());
-			var EncryptedStream = pEncryptStream(CompressedStream);
+			var CompressedStream = CompressStream(alm.ToStream());
+			var EncryptedStream = EncryptStream(CompressedStream);
 
 
 			// swap out the below two lines to generate a linemap (lmp) file that is not compressed or encrypted
-			pStreamToFile(this.OutFilename + ".lmp", EncryptedStream);
+			StreamToFile(this.OutFilename + ".lmp", EncryptedStream);
 			//pStreamToFile(Me.Filename & ".lmp", alm.ToStream);
 
 			// write the report
@@ -439,14 +536,14 @@ namespace GenerateLineMap
 		public void CreateLineMapAPIResource()
 		{
 			// retrieve all the symbols
-			var alm = pGetAssemblyLineMap(this.Filename);
+			var alm = GetAssemblyLineMap(this.Filename);
 
 			// done one step at a time for debugging purposes
-			var CompressedStream = pCompressStream(alm.ToStream());
+			var CompressedStream = CompressStream(alm.ToStream());
 
-			var EncryptedStream = pEncryptStream(CompressedStream);
+			var EncryptedStream = EncryptStream(CompressedStream);
 
-			pStreamToAPIResource(this.OutFilename,
+			StreamToAPIResource(this.OutFilename,
 							  LineMap.LineMapKeys.ResTypeName,
 							  LineMap.LineMapKeys.ResName,
 							  LineMap.LineMapKeys.ResLang,
@@ -465,23 +562,25 @@ namespace GenerateLineMap
 		public void CreateLineMapResource()
 		{
 			// retrieve all the symbols
-			var alm = pGetAssemblyLineMap(this.Filename);
+			var alm = GetAssemblyLineMap(this.Filename);
 
 			// done one step at a time for debugging purposes
 
-			var CompressedStream = pCompressStream(alm.ToStream());
+			var CompressedStream = CompressStream(alm.ToStream());
 
-			var EncryptedStream = pEncryptStream(CompressedStream);
+			var EncryptedStream = EncryptStream(CompressedStream);
 
-			pStreamToResource(this.OutFilename,
+			StreamToResource(this.OutFilename,
 							  LineMap.LineMapKeys.ResName,
 							  EncryptedStream);
 
 			// write the report
 			WriteReport(alm);
 		}
+		#endregion
 
 
+		#region Private members
 		/// <summary>
 		/// Internal function to write out a line map report if asked to
 		/// </summary>
@@ -495,7 +594,7 @@ namespace GenerateLineMap
 
 				using (var tw = new StreamWriter(this.Filename + ".linemapreport", false))
 				{
-					tw.Write(pCreatePDBReport(AssemblyLineMap).ToString());
+					tw.Write(CreatePDBReport(AssemblyLineMap).ToString());
 					tw.Flush();
 				}
 			}
@@ -506,7 +605,7 @@ namespace GenerateLineMap
 		/// Create a linemap report buffer from the PDB for the given executable file
 		/// </summary>
 		/// <remarks></remarks>
-		private StringBuilder pCreatePDBReport(LineMap.AssemblyLineMap AssemblyLineMap)
+		private StringBuilder CreatePDBReport(LineMap.AssemblyLineMap AssemblyLineMap)
 		{
 
 			var sb = new StringBuilder();
@@ -593,7 +692,7 @@ namespace GenerateLineMap
 		/// </summary>
 		/// <param name="FileName"></param>
 		/// <returns></returns>
-		private LineMap.AssemblyLineMap pGetAssemblyLineMap(string FileName)
+		private LineMap.AssemblyLineMap GetAssemblyLineMap(string FileName)
 		{
 			// create a new map to capture symbols and line info with
 			_alm = LineMap.AssemblyLineMaps.Add(FileName);
@@ -675,7 +774,7 @@ namespace GenerateLineMap
 		/// <param name="Filename"></param>
 		/// <param name="MemoryStream"></param>
 		/// <remarks></remarks>
-		private void pStreamToFile(String Filename, MemoryStream MemoryStream)
+		private void StreamToFile(String Filename, MemoryStream MemoryStream)
 		{
 			Log.LogMessage("Writing symbol buffer to file");
 
@@ -695,7 +794,7 @@ namespace GenerateLineMap
 		/// <param name="ResourceName"></param>
 		/// <param name="MemoryStream"></param>
 		/// <remarks></remarks>
-		private void pStreamToAPIResource(string filename, object ResourceType, object ResourceName, Int16 ResourceLanguage, MemoryStream memoryStream)
+		private void StreamToAPIResource(string filename, object ResourceType, object ResourceName, Int16 ResourceLanguage, MemoryStream memoryStream)
 		{
 			var ResWriter = new ResourceWriter();
 
@@ -724,7 +823,7 @@ namespace GenerateLineMap
 		/// <param name="ResourceName"></param>
 		/// <param name="MemoryStream"></param>
 		/// <remarks></remarks>
-		private void pStreamToResource(string OutFilename, string ResourceName, MemoryStream memoryStream)
+		private void StreamToResource(string OutFilename, string ResourceName, MemoryStream memoryStream)
 		{
 			var ResWriter = new ResourceWriterCecil();
 
@@ -751,7 +850,7 @@ namespace GenerateLineMap
 		/// </summary>
 		/// <param name="UncompressedStream"></param>
 		/// <returns></returns>
-		private MemoryStream pCompressStream(MemoryStream UncompressedStream)
+		private MemoryStream CompressStream(MemoryStream UncompressedStream)
 		{
 			var CompressedStream = new System.IO.MemoryStream();
 
@@ -771,7 +870,7 @@ namespace GenerateLineMap
 		/// </summary>
 		/// <param name="CompressedStream"></param>
 		/// <returns></returns>
-		private MemoryStream pEncryptStream(MemoryStream CompressedStream)
+		private MemoryStream EncryptStream(MemoryStream CompressedStream)
 		{
 			var Enc = new System.Security.Cryptography.RijndaelManaged();
 
@@ -791,104 +890,6 @@ namespace GenerateLineMap
 
 			return EncryptedStream;
 		}
-
-
-		#region " Symbol Enumeration Delegates"
-		/// <summary>
-		/// Delegate to handle Symbol Enumeration Callback
-		/// </summary>
-		/// <param name="syminfo"></param>
-		/// <param name="Size"></param>
-		/// <param name="UserContext"></param>
-		/// <returns></returns>
-		/// <remarks></remarks>
-		private delegate int PSYM_ENUMSYMBOLS_CALLBACK(ref SYMBOL_INFO syminfo, int Size, int UserContext);
-
-		private int SymEnumSymbolsCallback_proc(ref SYMBOL_INFO syminfo, int Size, int UserContext)
-		{
-			if ((syminfo.Flags & 
-				(CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_CLR_TOKEN | 
-				CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_METADATA | 
-				CV_SymbolInfoFlags.IMAGEHLP_SYMBOL_FUNCTION)) 
-				!= 0)
-			{
-				// we only really care about CLR metadata tokens
-				// anything else is basically a variable or internal
-				// info we wouldn't be worried about anyway.
-				// This might change and I get to know more about debugging
-				//.net!
-
-				var Tokn = syminfo.Value;
-				var si = new LineMap.AssemblyLineMap.SymbolInfo(syminfo.Name.Substring(0, syminfo.NameLen), syminfo.Address, Tokn);
-
-				_alm.Symbols.Add(Tokn, si);
-			}
-
-			// return this to the call to let it keep enumerating
-			return -1;
-	}
-
-
-		/// <summary>
-		/// Handle the callback to enumerate all the Line numbers in the given DLL/EXE
-		/// based on info from the PDB
-		/// </summary>
-		/// <param name="srcinfo"></param>
-		/// <param name="UserContext"></param>
-		/// <returns></returns>
-		/// <remarks></remarks>
-		private bool SymEnumLinesCallback_proc(ref SRCCODEINFO srcinfo, IntPtr UserContext)
-		{
-			//if (srcinfo.LineNumber == 335) System.Diagnostics.Debugger.Break();
-			//if (srcinfo.LineNumber == 343) System.Diagnostics.Debugger.Break();
-
-			if (srcinfo.LineNumber == 0xFEEFEE)
-			{
-				// skip these entries
-				// I believe they mark the end of a set of linenumbers associated
-				// with a particular method, but they don't appear to contain
-				// valid line number info in any case.
-			}
-			else
-			{
-				try
-				{
-					// add the new line number and it's address
-					// NOTE, this address is an IL Offset, not a native code offset
-
-					var FileName = srcinfo.FileName.Split('\\');
-
-					string Name;
-
-					var i = FileName.GetUpperBound(0);
-
-					if (i > 2)
-					{
-						Name = "...\\" + FileName[i - 2] + "\\" + FileName[i - 1] + "\\" + FileName[i];
-					}
-					else if (i > 1)
-					{
-						Name = "...\\" + FileName[i - 1] + "\\" + FileName[i];
-					}
-					else
-					{
-						Name = Path.GetFileName(srcinfo.FileName);
-					}
-
-					_alm.AddAddressToLine(srcinfo.LineNumber, srcinfo.Address, Name, srcinfo.obj);
-				}
-				catch (Exception ex)
-				{
-					Log.LogError(ex, "Unable to enum lines");
-					// catch everything because we DO NOT
-					// want to throw an exception from here!
-				}
-			}
-
-			// Tell the caller we succeeded
-			return true;
-		}
-
-#endregion
+		#endregion
 	}
 }

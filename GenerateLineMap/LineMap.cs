@@ -40,15 +40,9 @@ using System.Security;
 /// </summary>
 /// <remarks></remarks>
 /// <editHistory></editHistory>
-public class LineMap
+public static class LineMap
 {
 	private const string LINEMAPNAMESPACE = "http://schemas.linemap.net";
-
-	/// <summary>
-	/// No need for a constructor on this class
-	/// </summary>
-	/// <remarks></remarks>
-	private LineMap() { }
 
 	#region " API Declarations for working with Resources"
 	[DllImport("kernel32", EntryPoint = "FindResourceExA", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
@@ -90,6 +84,7 @@ public class LineMap
 
 	/// <summary>
 	/// Tracks symbol cache entries for all assemblies that appear in a stack frame
+	/// Public for serialization purposes
 	/// </summary>
 	/// <remarks></remarks>
 	/// <editHistory></editHistory>
@@ -101,8 +96,13 @@ public class LineMap
 		/// no need to persist this information
 		/// </summary>
 		/// <remarks></remarks>
-
 		public string FileName;
+
+
+		/// <summary>
+		/// Track each Address to Line mapping
+		/// Public for serialization purposes
+		/// </summary>
 		[DataContract(Namespace = LineMap.LINEMAPNAMESPACE)]
 		public class AddressToLine
 		{
@@ -195,8 +195,6 @@ public class LineMap
 		/// <editHistory></editHistory>
 		public class NamesList : List<string>
 		{
-
-
 			/// <summary>
 			/// When adding names, if the name already exists in the list
 			/// don't bother to add it again
@@ -218,7 +216,7 @@ public class LineMap
 
 
 			/// <summary>
-			/// Override this prop so that requested an index that doesn't exist just
+			/// Override this prop so that requesting an index that doesn't exist just
 			/// returns a blank string
 			/// </summary>
 			/// <param name="Index"></param>
@@ -243,13 +241,15 @@ public class LineMap
 				}
 			}
 		}
+
+
 		/// <summary>
 		/// Tracks various string values in a flat list that is indexed into
 		/// </summary>
 		/// <remarks></remarks>
 		[DataMember()]
-
 		public NamesList Names = new NamesList();
+
 
 		/// <summary>
 		/// Create a new map based on an assembly filename
@@ -303,7 +303,7 @@ public class LineMap
 		{
 			//LoadLineMapResource(Assembly.GetExecutingAssembly(), Symbols, Lines)
 
-			this.FileName = Assembly.CodeBase.Replace("file:///", "");
+			this.FileName = Assembly.CodeBase.Replace("file:///", string.Empty);
 
 			try
 			{
@@ -438,12 +438,14 @@ public class LineMap
 
 			try
 			{
-				System.Security.Cryptography.RijndaelManaged Enc = new System.Security.Cryptography.RijndaelManaged();
-				Enc.KeySize = 256;
-				// KEY is 32 byte array
-				Enc.Key = LineMapKeys.ENCKEY;
-				// IV is 16 byte array
-				Enc.IV = LineMapKeys.ENCIV;
+				System.Security.Cryptography.RijndaelManaged Enc = new System.Security.Cryptography.RijndaelManaged
+				{
+					KeySize = 256,
+					// KEY is 32 byte array
+					Key = LineMapKeys.ENCKEY,
+					// IV is 16 byte array
+					IV = LineMapKeys.ENCIV
+				};
 
 				var cryptoStream = new System.Security.Cryptography.CryptoStream(EncryptedStream, Enc.CreateDecryptor(), System.Security.Cryptography.CryptoStreamMode.Read);
 
@@ -617,13 +619,18 @@ public class LineMap
 
 
 /// <summary>
-/// A remapped stack frame with Line# and source file 
+/// A Wrapped StackFrame object that includes logic to resolve
+/// a line number from a LineMap (either a resource or a seperate linemap file)
+/// <code>
+/// var sf = new MappedStackFrame(ExistingStackFrame);
+/// var ln = sf.GetLineNumber();
+/// </code>
 /// </summary>
 public class MappedStackFrame : StackFrame
 {
-	StackFrame _stackFrame = null;
-	int _line = 0;
-	string _sourceFile = "";
+	readonly StackFrame _stackFrame = null;
+	readonly int _line = 0;
+	readonly string _sourceFile = string.Empty;
 
 	public MappedStackFrame(StackFrame stackFrame)
 	{
@@ -632,9 +639,7 @@ public class MappedStackFrame : StackFrame
 
 		_stackFrame = stackFrame;
 		// first, get the base addr of the method
-		// if possible
-
-		// you have to have symbols to do this
+		// if possible. We have to have symbols to do this...
 		if (LineMap.AssemblyLineMaps.Count == 0)
 			return;
 

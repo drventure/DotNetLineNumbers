@@ -213,15 +213,15 @@ public static class ExceptionExtensions
 	private static string SysInfoToString(Exception Ex = null)
 	{
 		string template = Cleanup($@"
-			Date and Time:         {date}
-			Machine Name:          {machineName}
-			IP Address:            {currentIP}
-			Current User:          {userIdentity}
-			Application Domain:    {currentDomain}
-			Assembly Codebase:     {codeBase}
-			Assembly Full Name:    {assemblyName}
-			Assembly Version:      {assemblyVersion}
-			Assembly Build Date:   {assemblyBuildDate}");
+			Date and Time:         {Date}
+			Machine Name:          {MachineName}
+			IP Address:            {CurrentIP}
+			Current User:          {UserIdentity}
+			Application Domain:    {CurrentDomain}
+			Assembly Codebase:     {CodeBase}
+			Assembly Full Name:    {AssemblyName}
+			Assembly Version:      {AssemblyVersion}
+			Assembly Build Date:   {AssemblyBuildDate}");
 
 		return template;
 	}
@@ -230,7 +230,7 @@ public static class ExceptionExtensions
 	/// <summary>
 	/// return the current date for logging purposes
 	/// </summary>
-	private static string date
+	private static string Date
 	{
 		get
 		{
@@ -245,7 +245,7 @@ public static class ExceptionExtensions
 	/// but the alternatives are very ugly
 	/// </summary>
 	/// <returns></returns>
-	private static string currentIP
+	private static string CurrentIP
 		{
 			get
 			{
@@ -265,7 +265,7 @@ public static class ExceptionExtensions
 	/// <summary>
 	/// Return the current machine name for logging purposes
 	/// </summary>
-	private static string machineName
+	private static string MachineName
 	{
 		get
 		{
@@ -285,16 +285,16 @@ public static class ExceptionExtensions
 	/// retrieve user identity with fallback on error to safer method
 	/// </summary>
 	/// <returns></returns>
-	private static string userIdentity
+	private static string UserIdentity
 	{
 		get
 		{
 			try
 			{
-				string ident = currentWindowsIdentity;
+				string ident = CurrentWindowsIdentity;
 				if (string.IsNullOrEmpty(ident))
 				{
-					ident = currentEnvironmentIdentity;
+					ident = CurrentEnvironmentIdentity;
 				}
 				return ident;
 			}
@@ -309,7 +309,7 @@ public static class ExceptionExtensions
 	/// <summary>
 	/// return the current app domain name for logging
 	/// </summary>
-	private static string currentDomain
+	private static string CurrentDomain
 	{
 		get
 		{
@@ -328,7 +328,7 @@ public static class ExceptionExtensions
 	/// <summary>
 	/// Return the codebase location for logging
 	/// </summary>
-	private static string codeBase
+	private static string CodeBase
 	{
 		get
 		{
@@ -347,7 +347,7 @@ public static class ExceptionExtensions
 	/// <summary>
 	/// return the assembly version for logging
 	/// </summary>
-	private static string assemblyVersion
+	private static string AssemblyVersion
 	{
 		get
 		{
@@ -366,7 +366,7 @@ public static class ExceptionExtensions
 	/// <summary>
 	/// Return the Assembly Build date for logging
 	/// </summary>
-	private static string assemblyBuildDate
+	private static string AssemblyBuildDate
 	{
 		get
 		{
@@ -385,7 +385,7 @@ public static class ExceptionExtensions
 	/// <summary>
 	/// return the assemblyName for logging
 	/// </summary>
-	private static string assemblyName
+	private static string AssemblyName
 	{
 		get
 		{
@@ -406,7 +406,7 @@ public static class ExceptionExtensions
 	/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
 	/// </summary>
 	/// <returns></returns>
-	private static string currentWindowsIdentity
+	private static string CurrentWindowsIdentity
 	{
 		get
 		{
@@ -427,7 +427,7 @@ public static class ExceptionExtensions
 	/// exception-safe "domain\username" retrieval from Environment
 	/// </summary>
 	/// <returns></returns>
-	private static string currentEnvironmentIdentity
+	private static string CurrentEnvironmentIdentity
 	{
 		get
 		{
