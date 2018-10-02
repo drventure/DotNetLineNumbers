@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -45,6 +45,18 @@
   <PropertyGroup>
     <StartupObject>GenerateLineMap.Program</StartupObject>
   </PropertyGroup>
+  <PropertyGroup>
+    <!-- This property group adds support for automatically regenerating any T4 templates (*.tt) files in the project -->
+    <!-- 15.0 is for VS2017, adjust if necessary -->
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">15.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <!-- This is what will cause the templates to be transformed when the project is built (default is false) -->
+    <TransformOnBuild>true</TransformOnBuild>
+    <!-- Set to true to force overwriting of read-only output files, e.g. if they're not checked out (default is false) -->
+    <OverwriteReadOnlyOutputFiles>true</OverwriteReadOnlyOutputFiles>
+    <!-- Set to false to transform files even if the output appears to be up-to-date (default is true)  -->
+    <TransformOutOfDateOnly>false</TransformOutOfDateOnly>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Utilities.v4.0" />
@@ -63,9 +75,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
-      <Link>Properties\SharedAssemblyInfo.cs</Link>
-    </Compile>
     <Compile Include="LineMap.cs" />
     <Compile Include="LineMapBuilder.cs" />
     <Compile Include="Log.cs" />
@@ -100,8 +109,17 @@
     <None Include="ILMerge\README.TXT" />
     <None Include="Mono.Cecil\readme.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\VersionInfo\SharedAssemblyInfo.tt">
+      <Link>Properties\SharedAssemblyInfo.tt</Link>
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>SharedAssemblyInfo1.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>"$(DevEnvDir)TextTransform.exe" -a !!BuildConfiguration!$(Configuration) "$(SolutionDir)VersionInfo\SharedAssemblyInfo.tt"</PreBuildEvent>
-  </PropertyGroup>
+  <!-- This import adds support for automatically regenerating any T4 templates (*.tt) files in the project -->
+  <Import Project="$(VSToolsPath)\TextTemplating\Microsoft.TextTemplating.targets" />
 </Project>

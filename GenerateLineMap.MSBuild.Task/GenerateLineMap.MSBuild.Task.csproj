@@ -50,6 +50,9 @@
   <ItemGroup>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SharedAssemblyInfo.tt</DependentUpon>
     </Compile>
     <Compile Include="AdvancedSettings.cs" />
     <Compile Include="ExeLocationHelper.cs" />
@@ -66,6 +69,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\VersionInfo\SharedAssemblyInfo.tt">
+      <Link>Properties\SharedAssemblyInfo.tt</Link>
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
+    </Content>
     <Content Include="build\GenerateLineMap.MSBuild.Task.targets" />
     <None Include="readme.txt" />
   </ItemGroup>
@@ -74,6 +82,9 @@
       <Project>{ea13ab2d-71f0-4634-911b-84bfd0d29232}</Project>
       <Name>GenerateLineMap</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
