@@ -69,12 +69,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\VersionInfo\SharedAssemblyInfo.tt">
+    <None Include="..\VersionInfo\SharedAssemblyInfo.tt">
       <Link>Properties\SharedAssemblyInfo.tt</Link>
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
-    </Content>
-    <Content Include="build\GenerateLineMap.MSBuild.Task.targets" />
+    </None>
+    <None Include="build\GenerateLineMap.MSBuild.Task.targets" />
     <None Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
