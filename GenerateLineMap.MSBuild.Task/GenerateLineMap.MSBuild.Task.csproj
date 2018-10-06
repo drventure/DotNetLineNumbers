@@ -48,6 +48,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\GenerateLineMap\ExceptionExtensions.cs">
+      <Link>ExceptionExtensions.cs</Link>
+    </Content>
+    <Content Include="..\GenerateLineMap\LineMap.cs">
+      <Link>LineMap.cs</Link>
+    </Content>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
       <AutoGen>True</AutoGen>

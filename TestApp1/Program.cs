@@ -26,6 +26,9 @@
 
 using System;
 
+using TestDLL2;
+
+
 namespace TestApp1
 {
 	public class Program
@@ -51,6 +54,21 @@ namespace TestApp1
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine("-----\r\n" + buf + "----");
 				buf = "ERROR: " + ex.ToString();
+				Console.WriteLine(buf);
+				System.Diagnostics.Debug.WriteLine("-----\r\n" + buf + "----");
+				Console.ReadKey();
+			}
+
+
+			try
+			{
+				var lc = new TestDLL2.ListCmds();
+				var l = lc.Make();
+				var r = lc.AddEmUp(l);
+			}
+			catch (Exception ex)
+			{
+				var buf = "ERROR: \r\n" + ex.ToStringExtended();
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine("-----\r\n" + buf + "----");
 			}
