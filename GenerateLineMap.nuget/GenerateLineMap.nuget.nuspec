@@ -27,7 +27,7 @@
     <!-- Add a readme -->
     <file src="readme.txt" target="."/>
 
-    <file src="build\GenerateLineMap.MSBuild.Task.targets" target="build" />
+    <file src="bin\$configuration$\build\GenerateLineMap.MSBuild.Task.targets" target="build" />
     
     <!-- Don't appear to need to include this line as Nuget Pack will automatically pick up the primary output file of the project -->
     <!-- <file src="bin\$configuration$\$id$.dll" target="tools" /> -->

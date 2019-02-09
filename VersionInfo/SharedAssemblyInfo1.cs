@@ -7,7 +7,7 @@ using System.Resources;
 #region "Static Assembly Version info
 [assembly: AssemblyCompany("Darin Higgins")]
 [assembly: AssemblyProduct("GenerateLineMap")]
-[assembly: AssemblyCopyright("Copyright Â© 2019 Darin Higgins")]
+[assembly: AssemblyCopyright("Copyright © 2018 Darin Higgins")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 #if DEBUG
@@ -35,5 +35,5 @@ using System.Resources;
 /// </summary>
 internal struct VersionInfo
 {
-    public const string Version = "0.0.0.66";
+    public const string Version = "0.0.0.65";
 }

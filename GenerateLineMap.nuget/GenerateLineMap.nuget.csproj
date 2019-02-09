@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{43FD3A69-730F-4FA0-9036-0897F3B758EE}</ProjectGuid>
+    <ProjectGuid>{97BE86B7-5777-4835-9340-9C79ED8F2238}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>GenerateLineMap.MSBuild.Task</RootNamespace>
@@ -48,31 +48,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\GenerateLineMap\ExceptionExtensions.cs">
-      <Link>ExceptionExtensions.cs</Link>
-    </Content>
-    <Content Include="..\GenerateLineMap\LineMap.cs">
-      <Link>LineMap.cs</Link>
-    </Content>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>SharedAssemblyInfo.tt</DependentUpon>
     </Compile>
-    <Compile Include="AdvancedSettings.cs" />
-    <Compile Include="ExeLocationHelper.cs" />
-    <Compile Include="GeneralSettings.cs" />
-    <Compile Include="ObjectExtensions.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="GenerateLineMapTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StringExtensions.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="GenerateLineMap.MSBuild.Task.nuspec">
-      <SubType>Designer</SubType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\VersionInfo\SharedAssemblyInfo.tt">
@@ -80,25 +62,23 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
     </None>
-    <Content Include="build\GenerateLineMap.MSBuild.Task.targets">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <None Include="GenerateLineMap.nuget.nuspec" />
     <None Include="readme.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GenerateLineMap\GenerateLineMap.csproj">
-      <Project>{ea13ab2d-71f0-4634-911b-84bfd0d29232}</Project>
-      <Name>GenerateLineMap</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GenerateLineMap.MSBuild.Task\GenerateLineMap.MSBuild.Task.csproj">
+      <Project>{43fd3a69-730f-4fa0-9036-0897f3b758ee}</Project>
+      <Name>GenerateLineMap.MSBuild.Task</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>REM Build the nupkg file directly into a Nuget folder
-IF NOT EXIST "$(SolutionDir)Nuget" mkdir "$(SolutionDir)Nuget"
-Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName) -OutputDirectory "$(SolutionDir)Nuget"
+IF NOT EXIST "$(ProjectDir)Nuget" mkdir "$(ProjectDir)Nuget"
+$(SolutionDir).nugetpack\Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName) -OutputDirectory "$(ProjectDir)Nuget"
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

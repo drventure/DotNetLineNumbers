@@ -46,12 +46,7 @@ namespace GenerateLineMap.MsBuild.Task
 
 	public class GenerateLineMapTask : Microsoft.Build.Utilities.Task
 	{
-		#region Public Properties
-
-		public virtual ITaskItem[] InputAssemblies { get; set; }
-
-		[Required]
-		public string ConfigurationFilePath { get; set; }
+		#region Public Properties (These are supplied by MSBuild, see the .targets files)
 
 		[Required]
 		public string SolutionDir { get; set; }
@@ -72,11 +67,16 @@ namespace GenerateLineMap.MsBuild.Task
 		[Required]
 		public string TargetFileName { get; set; }
 
+		public virtual ITaskItem[] InputAssemblies { get; set; }
+
 		public string TargetFrameworkVersion { get; set; }
 
 		public string TargetArchitecture { get; set; }
 
 		public string KeyFile { get; set; }
+
+		[Required]
+		public string ConfigurationFilePath { get; set; }
 
 		#endregion
 

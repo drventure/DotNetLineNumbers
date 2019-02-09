@@ -31,7 +31,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TestDLL1\TestDLL1.csproj" />
+    <ProjectReference Include="..\TestDLL1\TestDLL1.csproj">
+      <Project>{38A32FC8-1E20-4782-8D1D-D2311A506EA3}</Project>
+      <Name>TestDLL1</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
