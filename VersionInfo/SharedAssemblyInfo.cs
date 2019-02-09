@@ -7,7 +7,7 @@ using System.Resources;
 #region "Static Assembly Version info
 [assembly: AssemblyCompany("Darin Higgins")]
 [assembly: AssemblyProduct("GenerateLineMap")]
-[assembly: AssemblyCopyright("Copyright Â© 2019 Darin Higgins")]
+[assembly: AssemblyCopyright("Copyright © 2019 Darin Higgins")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 #if DEBUG
@@ -16,8 +16,8 @@ using System.Resources;
 [assembly: AssemblyConfiguration("Release")]
 #endif
 
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
+// Setting ComVisible to false makes the types in this assembly not visible
+// to COM components.  If you need to access a type in this assembly from
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
@@ -25,7 +25,7 @@ using System.Resources;
 
 [assembly: AssemblyVersion(VersionInfo.Version)]
 [assembly: AssemblyFileVersion(VersionInfo.Version)]
-//this attrib supports semantic versioning
+//this attribute supports semantic versioning
 [assembly: AssemblyInformationalVersion(VersionInfo.Version)]
 #endregion
 
@@ -35,5 +35,5 @@ using System.Resources;
 /// </summary>
 internal struct VersionInfo
 {
-    public const string Version = "0.0.0.66";
+    public const string Version = "0.0.0.69";
 }

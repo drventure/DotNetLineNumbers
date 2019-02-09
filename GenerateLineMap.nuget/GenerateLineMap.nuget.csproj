@@ -77,8 +77,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>REM Build the nupkg file directly into a Nuget folder
-IF NOT EXIST "$(ProjectDir)Nuget" mkdir "$(ProjectDir)Nuget"
-$(SolutionDir).nugetpack\Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName) -OutputDirectory "$(ProjectDir)Nuget"
+IF NOT EXIST "$(ProjectDir)nuget" mkdir "$(ProjectDir)nuget"
+$(SolutionDir).nugetpack\Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName) -OutputDirectory "$(ProjectDir)nuget"
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

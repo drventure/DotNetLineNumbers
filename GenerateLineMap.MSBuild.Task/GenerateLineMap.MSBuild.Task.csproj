@@ -70,11 +70,6 @@
     <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="GenerateLineMap.MSBuild.Task.nuspec">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\VersionInfo\SharedAssemblyInfo.tt">
       <Link>Properties\SharedAssemblyInfo.tt</Link>
       <Generator>TextTemplatingFileGenerator</Generator>
@@ -83,7 +78,6 @@
     <Content Include="build\GenerateLineMap.MSBuild.Task.targets">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GenerateLineMap\GenerateLineMap.csproj">
@@ -96,10 +90,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>REM Build the nupkg file directly into a Nuget folder
-IF NOT EXIST "$(SolutionDir)Nuget" mkdir "$(SolutionDir)Nuget"
-Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName) -OutputDirectory "$(SolutionDir)Nuget"
-</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
