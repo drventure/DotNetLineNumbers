@@ -1,4 +1,4 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
@@ -30,6 +30,7 @@ using System.IO;
 
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using ExceptionExtensions;
 using ExceptionExtensions.Internal;
 
@@ -89,7 +90,6 @@ namespace GenerateLineMapUnitTests
 				var buf = ex.ToString(ExceptionOptions.Default);
 				Debug.WriteLine(buf);
 				buf.Should().Contain("1st File was not found");
-
 			}
 		}
 	}

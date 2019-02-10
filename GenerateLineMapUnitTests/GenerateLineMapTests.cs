@@ -97,7 +97,7 @@ namespace GenerateLineMapUnitTests
 			// invoke the app main directly
 			GenerateLineMap.Program.Main(new string[] { "path", "/report", "TestApp1.exe", "/out:TestApp1-3.exe" });
 
-			var filename = "TestApp1.exe.linemapreport";
+			var filename = "TestApp1-3.exe.linemapreport";
 			File.Exists(filename).Should().BeTrue();
 
 			var buf = File.ReadAllText("TestApp1-3.exe.linemapreport");

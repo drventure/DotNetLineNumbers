@@ -23,19 +23,27 @@
       -->
     </references>
   </metadata>
+  
   <files>
     <!-- Add a readme -->
     <file src="readme.txt" target="."/>
 
+    <!--Add build targets to the target project's build process-->
     <file src="bin\$configuration$\build\GenerateLineMap.MSBuild.Task.targets" target="build" />
     
     <!-- Don't appear to need to include this line as Nuget Pack will automatically pick up the primary output file of the project -->
     <!-- <file src="bin\$configuration$\$id$.dll" target="tools" /> -->
     <!--<file src="bin\$configuration$\$id$.pdb" target="tools" />-->
 
+    <!--Put the exe in tools because it's not to be redistributed-->
     <file src="bin\$configuration$\GenerateLineMap.exe" target="tools" />
     <!--<file src="bin\$configuration$\GenerateLineMap.pdb" target="tools" />-->
-    
+    <!--Same with Mono Cecil-->
     <file src="bin\$configuration$\Mono.Cecil.dll" target="tools" />
+
+    <!--This is the line number resolver class lib, it DOES need to be redistributed
+    (or you'll need to include the LineMap.cs file directly)-->
+    <file src="bin\$configuration$\DotNetLineNumbers.dll" target="lib" />
+    
   </files>
 </package>

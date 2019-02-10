@@ -1,57 +1,54 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{97BE86B7-5777-4835-9340-9C79ED8F2238}</ProjectGuid>
+    <ProjectGuid>{34D84134-412A-4A14-B8F9-4A1D05B84183}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GenerateLineMap.MSBuild.Task</RootNamespace>
-    <AssemblyName>GenerateLineMap.MSBuild.Task</AssemblyName>
+    <RootNamespace>DotNetLineNumbers</RootNamespace>
+    <AssemblyName>DotNetLineNumbers</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\debug\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <BaseAddress>37748736</BaseAddress>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <BaseAddress>37748736</BaseAddress>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Build" />
-    <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="Microsoft.Build.Utilities.v4.0" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\GenerateLineMap\LineMap.cs">
+    <Compile Include="..\GenerateLineMap\LineMap.cs">
       <Link>LineMap.cs</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </Compile>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
       <AutoGen>True</AutoGen>
@@ -61,39 +58,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\VersionInfo\SharedAssemblyInfo.tt">
+    <Content Include="..\VersionInfo\SharedAssemblyInfo.tt">
       <Link>Properties\SharedAssemblyInfo.tt</Link>
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
-    </None>
-    <None Include="GenerateLineMap.nuget.nuspec" />
-    <None Include="readme.txt" />
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DotNetLineNumbers\DotNetLineNumbers.csproj">
-      <Project>{34d84134-412a-4a14-b8f9-4a1d05b84183}</Project>
-      <Name>DotNetLineNumbers</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\GenerateLineMap.MSBuild.Task\GenerateLineMap.MSBuild.Task.csproj">
-      <Project>{43fd3a69-730f-4fa0-9036-0897f3b758ee}</Project>
-      <Name>GenerateLineMap.MSBuild.Task</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>REM Build the nupkg file directly into a Nuget folder
-IF NOT EXIST "$(ProjectDir)nuget" mkdir "$(ProjectDir)nuget"
-$(SolutionDir).nugetpack\Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName) -OutputDirectory "$(ProjectDir)nuget"
-</PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
