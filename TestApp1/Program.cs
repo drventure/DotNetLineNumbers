@@ -56,7 +56,7 @@ namespace TestApp1
 				buf = "ERROR: " + ex.ToString();
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine("-----\r\n" + buf + "----");
-				Console.ReadKey();
+				//Console.ReadKey();
 			}
 
 

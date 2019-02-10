@@ -1,4 +1,4 @@
-﻿#region MIT License
+#region MIT License
 /*
     MIT License
 
@@ -74,7 +74,7 @@ namespace GenerateLineMap
 		/// <remarks></remarks>
 		public static void Main(string[] args)
 		{
-			string fileName = args[0];
+			string fileName = args.Length > 0 ? args[0] : "";
 			bool bReport = false;
 			bool bFile = false;
 			bool bAPIResource = true;

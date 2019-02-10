@@ -86,7 +86,7 @@ namespace GenerateLineMapUnitTests
 				Debug.WriteLine(consoleOutput.Output);
 
 				// Check that help information shown correctly.
-				consoleOutput.Output.Should().Contain("Retrieved 1 string");
+				consoleOutput.Output.Should().Contain("Retrieved 13 strings");
 			}
 		}
 
@@ -113,13 +113,14 @@ namespace GenerateLineMapUnitTests
 		{
 			using (var consoleOutput = new ConsoleOutput())
 			{
+				//Apply line numbers to app
 				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1-2.exe", "/file", "TestApp1.exe" });
 
 				//call the console app main routine
 				TestApp1.Program.Main(new string[] { });
 
 				// Check that help information shown correctly.
-				consoleOutput.Output.Should().Contain("Program.cs: line 46");
+				consoleOutput.Output.Should().Contain("Program.cs: line 49");
 			}
 		}
 
@@ -129,6 +130,8 @@ namespace GenerateLineMapUnitTests
 		{
 			using (var consoleOutput = new ConsoleOutput())
 			{
+				//Apply line numbers to the test app
+				//Generate a new version of the test app with "-1" suffix
 				GenerateLineMap.Program.Main(new string[] { "path", "/out:TestApp1-1.exe", "TestApp1.exe" });
 
 				//ideally, make sure PDB doesn't exist anymore
@@ -139,11 +142,11 @@ namespace GenerateLineMapUnitTests
 				//	File.Delete("TestApp1.pdb");
 				//}
 
-				//execute test app, should file and write stack trace to console
+				//now, execute test app, should file and write stack trace to console
 				StartConsoleApplication("TestApp1-1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Output.Should().Contain("Program.cs: line 46");
+				consoleOutput.Output.Should().Contain("Program.cs: line 49");
 			}
 		}
 
