@@ -4,12 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.26430.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp1", "TestApp1\TestApp1.csproj", "{126BA7F9-CD7D-4BB3-8D2A-B011A385FC16}"
-	ProjectSection(ProjectDependencies) = postProject
-		{EA13AB2D-71F0-4634-911B-84BFD0D29232} = {EA13AB2D-71F0-4634-911B-84BFD0D29232}
-		{C68DDF56-C26F-4FBC-BDAC-6D1774307951} = {C68DDF56-C26F-4FBC-BDAC-6D1774307951}
-		{43FD3A69-730F-4FA0-9036-0897F3B758EE} = {43FD3A69-730F-4FA0-9036-0897F3B758EE}
-		{5BBF76CD-3207-4295-B25A-963C141328CC} = {5BBF76CD-3207-4295-B25A-963C141328CC}
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateLineMap", "GenerateLineMap\GenerateLineMap.csproj", "{EA13AB2D-71F0-4634-911B-84BFD0D29232}"
 EndProject
@@ -32,6 +26,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAppExceptionExtensions", "TestAppExceptionExtensions\TestAppExceptionExtensions.csproj", "{0E9B8BAD-003F-4F0E-B686-0A17CE41CAC7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestDLL1", "TestDLL1\TestDLL1.csproj", "{38A32FC8-1E20-4782-8D1D-D2311A506EA3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{97BE86B7-5777-4835-9340-9C79ED8F2238} = {97BE86B7-5777-4835-9340-9C79ED8F2238}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestDLL2", "TestDLL2\TestDLL2.csproj", "{61395696-F35A-43BF-A2BE-13FBD450F3A3}"
 EndProject
@@ -42,8 +39,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".NuGetPack", ".NuGetPack", 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateLineMap.nuget", "GenerateLineMap.nuget\GenerateLineMap.nuget.csproj", "{97BE86B7-5777-4835-9340-9C79ED8F2238}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EA13AB2D-71F0-4634-911B-84BFD0D29232} = {EA13AB2D-71F0-4634-911B-84BFD0D29232}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers", "DotNetLineNumbers\DotNetLineNumbers.csproj", "{34D84134-412A-4A14-B8F9-4A1D05B84183}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EA13AB2D-71F0-4634-911B-84BFD0D29232} = {EA13AB2D-71F0-4634-911B-84BFD0D29232}
+		{43FD3A69-730F-4FA0-9036-0897F3B758EE} = {43FD3A69-730F-4FA0-9036-0897F3B758EE}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
