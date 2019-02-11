@@ -38,8 +38,9 @@
     <!--Put the exe in tools because it's not to be redistributed-->
     <file src="bin\$configuration$\GenerateLineMap.exe" target="tools" />
     <!--<file src="bin\$configuration$\GenerateLineMap.pdb" target="tools" />-->
-    <!--Same with Mono Cecil-->
+    <!--Same with Mono Cecil and the build task dll-->
     <file src="bin\$configuration$\Mono.Cecil.dll" target="tools" />
+    <file src="bin\$configuration$\GenerateLineMap.MsBuild.Task.dll" target="tools" />
 
     <!--This is the line number resolver class lib, it DOES need to be redistributed
     (or you'll need to include the LineMap.cs file directly)-->
