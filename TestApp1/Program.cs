@@ -25,7 +25,9 @@
 #endregion
 
 using System;
-	  
+
+using DotNetLineNumbers.Utilities;
+
 using TestDLL2;
 
 

@@ -46,12 +46,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\GenerateLineMap\ExceptionExtensions.cs">
+    <Content Include="..\GenerateLineMap\ExceptionExtensions.cs">
       <Link>ExceptionExtensions.cs</Link>
-    </Compile>
-    <Compile Include="..\GenerateLineMap\LineMap.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\GenerateLineMap\LineMap.cs">
       <Link>LineMap.cs</Link>
-    </Compile>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
       <AutoGen>True</AutoGen>
@@ -59,16 +61,41 @@
       <DependentUpon>SharedAssemblyInfo.tt</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\VersionInfo\SharedAssemblyInfo.tt">
+    <None Include="..\VersionInfo\SharedAssemblyInfo.tt">
       <Link>Properties\SharedAssemblyInfo.tt</Link>
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
-    </Content>
+    </None>
+    <None Include="Directory.build.targets.xxx">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="DotNetLineNumbers.nuget.nuspec">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DotNetLineNumbers.Utilities\DotNetLineNumbers.Utilities.csproj">
+      <Project>{97be86b7-5777-4835-9340-9c79ed8f2238}</Project>
+      <Name>DotNetLineNumbers.Utilities</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GenerateLineMap.MSBuild.Task\GenerateLineMap.MSBuild.Task.csproj">
+      <Project>{43fd3a69-730f-4fa0-9036-0897f3b758ee}</Project>
+      <Name>GenerateLineMap.MSBuild.Task</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>REM Build the nupkg file directly into a Nuget folder
+IF NOT EXIST "$(ProjectDir)nuget" mkdir "$(ProjectDir)nuget"
+$(SolutionDir).nugetpack\Nuget pack "$(ProjectDir)$(ProjectFileName)" -Tool -Verbosity Detailed -Prop Configuration=$(ConfigurationName) -OutputDirectory "$(ProjectDir)nuget"
+
+</PostBuildEvent>
+  </PropertyGroup>
 </Project>

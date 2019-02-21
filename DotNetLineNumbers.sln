@@ -38,13 +38,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".NuGetPack", ".NuGetPack", 
 		.NuGetPack\NuGetPack.exe = .NuGetPack\NuGetPack.exe
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers", "DotNetLineNumbers\DotNetLineNumbers.csproj", "{34D84134-412A-4A14-B8F9-4A1D05B84183}"
-	ProjectSection(ProjectDependencies) = postProject
-		{EA13AB2D-71F0-4634-911B-84BFD0D29232} = {EA13AB2D-71F0-4634-911B-84BFD0D29232}
-		{43FD3A69-730F-4FA0-9036-0897F3B758EE} = {43FD3A69-730F-4FA0-9036-0897F3B758EE}
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers", "DotNetLineNumbers.nuget\DotNetLineNumbers.csproj", "{34D84134-412A-4A14-B8F9-4A1D05B84183}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers.nuget", "DotNetLineNumbers.nuget\DotNetLineNumbers.nuget.csproj", "{97BE86B7-5777-4835-9340-9C79ED8F2238}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers.Utilities", "DotNetLineNumbers.Utilities\DotNetLineNumbers.Utilities.csproj", "{97BE86B7-5777-4835-9340-9C79ED8F2238}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
