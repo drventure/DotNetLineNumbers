@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -81,8 +81,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>SharedAssemblyInfo.tt</DependentUpon>
     </Compile>
-    <Compile Include="ExceptionExtensions.cs" />
-    <Compile Include="LineMap.cs" />
     <Compile Include="LineMapBuilder.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
@@ -125,6 +123,12 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DotNetLineNumbers.Utilities\DotNetLineNumbers.Utilities.csproj">
+      <Project>{97be86b7-5777-4835-9340-9c79ed8f2238}</Project>
+      <Name>DotNetLineNumbers.Utilities</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- This import adds support for automatically regenerating any T4 templates (*.tt) files in the project -->

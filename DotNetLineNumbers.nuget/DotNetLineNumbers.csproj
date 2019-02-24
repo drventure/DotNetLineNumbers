@@ -46,12 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\GenerateLineMap\ExceptionExtensions.cs">
-      <Link>ExceptionExtensions.cs</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\GenerateLineMap\LineMap.cs">
-      <Link>LineMap.cs</Link>
+    <Content Include="..\DotNetLineNumbers.Utilities\DotNetLineNumbers.cs">
+      <Link>DotNetLineNumbers.cs</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">

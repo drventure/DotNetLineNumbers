@@ -26,7 +26,7 @@
 
 using System;
 
-using DotNetLineNumbers.Utilities;
+using DotNetLineNumbers.Extensions;
 
 using TestDLL2;
 

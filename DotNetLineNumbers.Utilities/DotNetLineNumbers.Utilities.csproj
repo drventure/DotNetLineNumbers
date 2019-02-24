@@ -7,7 +7,7 @@
     <ProjectGuid>{97BE86B7-5777-4835-9340-9C79ED8F2238}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DotNetLineNumbers.Utilities</RootNamespace>
+    <RootNamespace>DotNetLineNumbers</RootNamespace>
     <AssemblyName>DotNetLineNumbers.Utilities</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -42,18 +42,13 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\GenerateLineMap\LineMap.cs">
-      <Link>LineMap.cs</Link>
-    </Compile>
-    <Compile Include="..\GenerateLineMap\ExceptionExtensions.cs">
-      <Link>ExceptionExtensions.cs</Link>
-    </Compile>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>SharedAssemblyInfo.tt</DependentUpon>
     </Compile>
+    <Compile Include="DotNetLineNumbers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

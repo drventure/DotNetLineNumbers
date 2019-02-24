@@ -31,8 +31,7 @@ using System.IO;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using ExceptionExtensions;
-using ExceptionExtensions.Internal;
+using DotNetLineNumbers;
 
 
 namespace GenerateLineMapUnitTests
@@ -55,7 +54,9 @@ namespace GenerateLineMapUnitTests
 			}
 			catch (Exception ex)
 			{
-				Debug.WriteLine(ex.ToString(ExceptionOptions.Default));
+				var str = ex.ToStringEnhanced();
+				str.Should().Contain(": line 53,");
+				Debug.WriteLine(str);
 			}
 		}
 
@@ -71,25 +72,12 @@ namespace GenerateLineMapUnitTests
 			}
 			catch (Exception ex)
 			{
-				Debug.WriteLine(ex.ToString(ExceptionOptions.Default));
-			}
-		}
-
-
-		[TestMethod]
-		public void SerializableExceptionToStringTest()
-		{
-			try
-			{
-				throw new FileNotFoundException("3rd File was not found", "ThirdFileNotFound.txt",
-					new FileNotFoundException("2nd File was not found", "SecondFileNotFound.txt",
-					new FileNotFoundException("1st File was not found", "FirstFileNotFound.txt")));
-			}
-			catch (Exception ex)
-			{
-				var buf = ex.ToString(ExceptionOptions.Default);
-				Debug.WriteLine(buf);
-				buf.Should().Contain("1st File was not found");
+				var str = ex.ToStringEnhanced();
+				str.Should().Contain("ThirdFileNotFound");
+				str.Should().Contain("SecondFileNotFound");
+				str.Should().Contain("FirstFileNotFound");
+				str.Should().Contain("1st File was not found");
+				Debug.WriteLine(ex.ToStringEnhanced());
 			}
 		}
 	}

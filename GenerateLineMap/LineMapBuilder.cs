@@ -30,7 +30,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-using DotNetLineNumbers.Utilities;
+using DotNetLineNumbers;
 
 
 namespace GenerateLineMap
@@ -239,7 +239,7 @@ namespace GenerateLineMap
 				//.net!
 
 				var Tokn = syminfo.Value;
-				var si = new LineMap.AssemblyLineMap.SymbolInfo(syminfo.Name.Substring(0, syminfo.NameLen), syminfo.Address, Tokn);
+				var si = new AssemblyLineMap.SymbolInfo(syminfo.Name.Substring(0, syminfo.NameLen), syminfo.Address, Tokn);
 
 				_alm.Symbols.Add(Tokn, si);
 			}
@@ -546,9 +546,9 @@ namespace GenerateLineMap
 			var EncryptedStream = EncryptStream(CompressedStream);
 
 			StreamToAPIResource(this.OutFilename,
-							  LineMap.LineMapKeys.ResTypeName,
-							  LineMap.LineMapKeys.ResName,
-							  LineMap.LineMapKeys.ResLang,
+							  Constants.ResTypeName,
+							  Constants.ResName,
+							  Constants.ResLang,
 							  EncryptedStream);
 
 			// write the report
@@ -573,7 +573,7 @@ namespace GenerateLineMap
 			var EncryptedStream = EncryptStream(CompressedStream);
 
 			StreamToResource(this.OutFilename,
-							  LineMap.LineMapKeys.ResName,
+							  Constants.ResName,
 							  EncryptedStream);
 
 			// write the report
@@ -587,7 +587,7 @@ namespace GenerateLineMap
 		/// Internal function to write out a line map report if asked to
 		/// </summary>
 		/// <remarks></remarks>
-		private void WriteReport(LineMap.AssemblyLineMap AssemblyLineMap)
+		private void WriteReport(AssemblyLineMap AssemblyLineMap)
 		{
 			//only write it if requested
 			if (this.CreateMapReport)
@@ -607,7 +607,7 @@ namespace GenerateLineMap
 		/// Create a linemap report buffer from the PDB for the given executable file
 		/// </summary>
 		/// <remarks></remarks>
-		private StringBuilder CreatePDBReport(LineMap.AssemblyLineMap AssemblyLineMap)
+		private StringBuilder CreatePDBReport(AssemblyLineMap AssemblyLineMap)
 		{
 
 			var sb = new StringBuilder();
@@ -623,7 +623,7 @@ namespace GenerateLineMap
 				var lineex = AssemblyLineMap.AddressToLineMap.Where(l => l.Address == s.Address).FirstOrDefault();
 				var name = lineex?.ObjectName;
 				name = (!string.IsNullOrEmpty(name) ? name + "." : "") + s.Name;
-				return new LineMap.AssemblyLineMap.SymbolInfo(name, s.Address, s.Token);
+				return new AssemblyLineMap.SymbolInfo(name, s.Address, s.Token);
 			}).ToList();
 			symbols.Sort((x, y) => x.Name.CompareTo(y.Name));
 
@@ -656,7 +656,7 @@ namespace GenerateLineMap
 			});
 
 			// let the symbol run till the next transition is detected
-			LineMap.AssemblyLineMap.SymbolInfo sym = null;
+			AssemblyLineMap.SymbolInfo sym = null;
 			foreach (var lineex in AssemblyLineMap.AddressToLineMap)
 			{
 				// find the symbol for this line number
@@ -694,10 +694,10 @@ namespace GenerateLineMap
 		/// </summary>
 		/// <param name="FileName"></param>
 		/// <returns></returns>
-		private LineMap.AssemblyLineMap GetAssemblyLineMap(string FileName)
+		private AssemblyLineMap GetAssemblyLineMap(string FileName)
 		{
 			// create a new map to capture symbols and line info with
-			_alm = LineMap.AssemblyLineMaps.Add(FileName);
+			_alm = Utilities.Bookkeeping.AssemblyLineMaps.Add(FileName);
 
 			if (!System.IO.File.Exists(FileName))
 			{
@@ -767,7 +767,7 @@ namespace GenerateLineMap
 			}
 			return _alm;
 		}
-		private LineMap.AssemblyLineMap _alm;
+		private AssemblyLineMap _alm;
 
 
 		/// <summary>
@@ -880,9 +880,9 @@ namespace GenerateLineMap
 			// setup our encryption key
 			Enc.KeySize = 256;
 			// KEY is 32 byte array
-			Enc.Key = LineMap.LineMapKeys.ENCKEY;
+			Enc.Key = Constants.ENCKEY;
 			// IV is 16 byte array
-			Enc.IV = LineMap.LineMapKeys.ENCIV;
+			Enc.IV = Constants.ENCIV;
 
 			var EncryptedStream = new System.IO.MemoryStream();
 
