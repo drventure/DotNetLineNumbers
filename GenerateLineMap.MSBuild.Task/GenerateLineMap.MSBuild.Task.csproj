@@ -48,17 +48,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\GenerateLineMap\ExceptionExtensions.cs">
-      <Link>ExceptionExtensions.cs</Link>
-    </Content>
-    <Content Include="..\GenerateLineMap\LineMap.cs">
-      <Link>LineMap.cs</Link>
-    </Content>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>SharedAssemblyInfo.tt</DependentUpon>
     </Compile>
     <Compile Include="AdvancedSettings.cs" />
     <Compile Include="ExeLocationHelper.cs" />
@@ -70,11 +61,6 @@
     <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\VersionInfo\SharedAssemblyInfo.tt">
-      <Link>Properties\SharedAssemblyInfo.tt</Link>
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
-    </None>
     <Content Include="build\GenerateLineMap.MSBuild.Task.targets">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <SubType>Designer</SubType>

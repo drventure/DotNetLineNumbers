@@ -31,13 +31,10 @@
     <!--Add build targets to the target project's build process-->
     <file src="bin\$configuration$\build\GenerateLineMap.MSBuild.Task.targets" target="build\DotNetLineNumbers.targets" />
     
-    <!-- Don't appear to need to include this line as Nuget Pack will automatically pick up the primary output file of the project -->
-    <!-- <file src="bin\$configuration$\$id$.dll" target="tools" /> -->
-    <!--<file src="bin\$configuration$\$id$.pdb" target="tools" />-->
-
     <!--Put the exe in tools because it's not to be redistributed-->
     <file src="bin\$configuration$\GenerateLineMap.exe" target="tools" />
-    <!--<file src="bin\$configuration$\GenerateLineMap.pdb" target="tools" />-->
+    <!--The EXE depends on this DLL as well, so also put it in tools-->
+    <file src="bin\$configuration$\DotNetLineNumbers.Utilities.dll" target="tools" />
     <!--Same with Mono Cecil and the build task dll-->
     <file src="bin\$configuration$\Mono.Cecil.dll" target="tools" />
     <file src="bin\$configuration$\GenerateLineMap.MSBuild.Task.dll" target="tools" />

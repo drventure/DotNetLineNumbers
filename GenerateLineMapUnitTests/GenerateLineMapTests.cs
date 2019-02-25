@@ -159,6 +159,8 @@ namespace GenerateLineMapUnitTests
 		/// <span class="code-SummaryComment"><returns>exit code</returns></span>
 		private int StartConsoleApplication(string app, string arguments = "")
 		{
+			File.Exists(app).Should().BeTrue();
+
 			// Initialize process here
 			Process proc = new Process();
 			proc.StartInfo.FileName = app;

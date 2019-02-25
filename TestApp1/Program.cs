@@ -26,7 +26,7 @@
 
 using System;
 
-using DotNetLineNumbers.Extensions;
+using DotNetLineNumbers;
 
 using TestDLL2;
 
@@ -52,7 +52,7 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
-				var buf = "ERROR: \r\n" + ex.ToStringExtended();
+				var buf = "ERROR: \r\n" + ex.ToStringEnhanced();
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine("-----\r\n" + buf + "----");
 				buf = "ERROR: " + ex.ToString();
@@ -69,7 +69,7 @@ namespace TestApp1
 			}
 			catch (Exception ex)
 			{
-				var buf = "ERROR: \r\n" + ex.ToStringExtended();
+				var buf = "ERROR: \r\n" + ex.ToStringEnhanced();
 				Console.WriteLine(buf);
 				System.Diagnostics.Debug.WriteLine("-----\r\n" + buf + "----");
 			}

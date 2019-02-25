@@ -44,9 +44,6 @@
   <ItemGroup>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>SharedAssemblyInfo.tt</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -56,11 +53,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\VersionInfo\SharedAssemblyInfo.tt">
-      <Link>Properties\SharedAssemblyInfo.tt</Link>
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
-    </Content>
     <Content Include="index.html" />
     <Content Include="stylesheet.css" />
   </ItemGroup>

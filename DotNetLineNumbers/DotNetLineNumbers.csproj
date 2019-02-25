@@ -52,23 +52,15 @@
     </Content>
     <Compile Include="..\VersionInfo\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>SharedAssemblyInfo.tt</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\VersionInfo\SharedAssemblyInfo.tt">
-      <Link>Properties\SharedAssemblyInfo.tt</Link>
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>SharedAssemblyInfo.cs</LastGenOutput>
-    </None>
     <None Include="Directory.build.targets.xxx">
       <SubType>Designer</SubType>
     </None>
-    <None Include="DotNetLineNumbers.nuget.nuspec">
+    <None Include="DotNetLineNumbers.nuspec">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
