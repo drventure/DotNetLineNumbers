@@ -594,7 +594,7 @@ namespace GenerateLineMap
 			{
 				Log.LogMessage("Creating symbol buffer report");
 
-				using (var tw = new StreamWriter(this.Filename + ".linemapreport", false))
+				using (var tw = new StreamWriter(this.OutFilename + ".linemapreport", false))
 				{
 					tw.Write(CreatePDBReport(AssemblyLineMap).ToString());
 					tw.Flush();

@@ -86,7 +86,7 @@ namespace GenerateLineMapUnitTests
 				Debug.WriteLine(consoleOutput.Output);
 
 				// Check that help information shown correctly.
-				consoleOutput.Output.Should().Contain("Retrieved 13 strings");
+				consoleOutput.Output.Should().Contain("Retrieved 2 strings");
 			}
 		}
 
@@ -120,7 +120,7 @@ namespace GenerateLineMapUnitTests
 				TestApp1.Program.Main(new string[] { });
 
 				// Check that help information shown correctly.
-				consoleOutput.Output.Should().Contain("Program.cs: line 49");
+				consoleOutput.Output.Should().Contain("Program.cs: line 51");
 			}
 		}
 
@@ -146,7 +146,7 @@ namespace GenerateLineMapUnitTests
 				StartConsoleApplication("TestApp1-1.exe").Should().Be(0);
 
 				// Check that help information shown correctly.
-				consoleOutput.Output.Should().Contain("Program.cs: line 49");
+				consoleOutput.Output.Should().Contain("Program.cs: line 51");
 			}
 		}
 
