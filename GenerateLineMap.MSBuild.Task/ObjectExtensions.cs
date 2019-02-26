@@ -27,6 +27,7 @@
 using System;
 using System.Text;
 
+
 namespace GenerateLineMap.MsBuild.Task
 {
 	static class ObjectExtensions

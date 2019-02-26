@@ -24,7 +24,6 @@
  */
 #endregion
 
-using Microsoft.Build.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,12 +31,15 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
+using Microsoft.Build.Utilities;
+
+
 namespace GenerateLineMap.MsBuild.Task
 {
     static class ExeLocationHelper
     {
 
-        public static bool TryILMergeInSolutionDir(string solutionDir, out string executablePath)
+        public static bool TryGenerateLineMapInSolutionDir(string solutionDir, out string executablePath)
         {
             executablePath = null;
             string basePath = Path.Combine(solutionDir, "packages");
@@ -47,7 +49,7 @@ namespace GenerateLineMap.MsBuild.Task
                 return false;
             }
 
-            // retrieve all ILMerge directories (can have multiple versions)
+            // retrieve all DotNetLineNumbers directories (can have multiple versions)
             IEnumerable<string> dirs = Directory.EnumerateDirectories(basePath, "GenerateLineMap.*", SearchOption.TopDirectoryOnly);
             if (dirs == null || dirs.Count() == 0)
             {
@@ -60,15 +62,15 @@ namespace GenerateLineMap.MsBuild.Task
                 .FirstOrDefault();
 
             // check presence of executable
-            if (TryValidateILMergePath(latestVersionDir, out executablePath))
+            if (TryValidateGenerateLineMapPath(latestVersionDir, out executablePath))
             {
                 return true;
             }
 
             executablePath = null;
             return false;
-
         }
+
 
         public static string ExtractVersionFromName(string nameWithVersion)
         {
@@ -78,12 +80,11 @@ namespace GenerateLineMap.MsBuild.Task
             string version = m.Value.Replace(".", "");
 
             return version;
-
         }
 
-        public static bool TryValidateILMergePath(string basePath, out string executablePath)
-        {
 
+        public static bool TryValidateGenerateLineMapPath(string basePath, out string executablePath)
+        {
             executablePath = null;
             string fullPath = Path.Combine(basePath, @"GenerateLineMap.exe");
 
@@ -103,6 +104,7 @@ namespace GenerateLineMap.MsBuild.Task
             return false;
 
         }
+
 
         public static bool TryLocatePackagesFolder(TaskLoggingHelper logger, out string executablePath)
         {
@@ -135,7 +137,7 @@ namespace GenerateLineMap.MsBuild.Task
 
             if (subDirs == null || subDirs.Count() == 0)
             {
-                logger.LogWarning("No folder starting with 'ILMerge' were found under {0}.", root.FullName);
+                logger.LogWarning("No folder starting with 'GenerateLineMap' were found under {0}.", root.FullName);
                 return false;
             }
 
@@ -152,9 +154,6 @@ namespace GenerateLineMap.MsBuild.Task
             }
 
             return false;
-
         }
-
-
     }
 }

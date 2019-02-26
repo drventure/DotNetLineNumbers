@@ -2,7 +2,7 @@
 /*
     MIT License
 
-    Copyright (c) 2018 Darin Higgins
+    Copyright (c) 2018-2019 Darin Higgins
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace GenerateLineMap.MsBuild.Task
 {
@@ -104,7 +103,7 @@ namespace GenerateLineMap.MsBuild.Task
 			string jsonConfig;
 			string exePath;
 
-			var settings = new Settings();
+			Settings settings = null;
 
 			// try to read configuration if file exists
 			if (!ReadConfigFile(out jsonConfig)) return false;
@@ -121,12 +120,9 @@ namespace GenerateLineMap.MsBuild.Task
 				return false;
 			}
 
-			if (settings.IsNull())
-			{
-				// create instance if seetings still null which indicates a custom json config was not used
-				settings = new Settings();
-			}
-
+			// create instance if settings still null which indicates a custom json config was not used
+			settings = settings ?? new Settings();
+			
 			// apply defaults
 			SetDefaults(settings);
 
@@ -145,7 +141,7 @@ namespace GenerateLineMap.MsBuild.Task
 			}
 			else
 			{
-				exePath = this.GetILMergePath();
+				exePath = this.GetGenerateLineMapPath();
 			}
 
 			return GenerateLineMapBasedOn(settings);
@@ -216,6 +212,7 @@ namespace GenerateLineMap.MsBuild.Task
 				.Replace("$(AssemblyOriginatorKeyFile)", EscapePath(this.KeyFile));
 		}
 
+
 		private void SetDefaults(Settings settings)
 		{
 
@@ -228,7 +225,7 @@ namespace GenerateLineMap.MsBuild.Task
 
 			if (!settings.General.OutputFile.IsNotNullOrWhiteSpace())
 			{
-				settings.General.OutputFile = Path.Combine(this.TargetDir, "ILMerge", this.TargetFileName);
+				settings.General.OutputFile = Path.Combine(this.TargetDir, "GenerateLineMap", this.TargetFileName);
 				Log.LogMessage("Applying default value for OutputFile.");
 			}
 
@@ -283,18 +280,6 @@ namespace GenerateLineMap.MsBuild.Task
 		}
 		
 		
-		private Assembly LoadILMerge(string mergerPath)
-		{
-			if (string.IsNullOrWhiteSpace(mergerPath)) throw new ArgumentNullException(nameof(mergerPath));
-
-			Log.LogMessage($"Loading ILMerge from '{mergerPath}'.");
-
-			Assembly ilmerge = Assembly.LoadFrom(mergerPath);
-
-			return ilmerge;
-		}
-
-
 		private bool ReadConfigFile(out string jsonConfig)
 		{
 			jsonConfig = string.Empty;
@@ -333,14 +318,14 @@ namespace GenerateLineMap.MsBuild.Task
 		}
 
 
-		public string GetILMergePath()
+		public string GetGenerateLineMapPath()
 		{
 			string exePath = null;
 			string errMsg;
 			var failedPaths = new List<string>();
 
 			// look at same directory as this assembly (task dll);
-			if (ExeLocationHelper.TryValidateILMergePath(Path.GetDirectoryName(this.GetType().Assembly.Location), out exePath))
+			if (ExeLocationHelper.TryValidateGenerateLineMapPath(Path.GetDirectoryName(this.GetType().Assembly.Location), out exePath))
 			{
 				Log.LogMessage($"GenerateLineMap.exe found at (task location): {Path.GetDirectoryName(this.GetType().Assembly.Location)}");
 				return exePath;
@@ -353,7 +338,7 @@ namespace GenerateLineMap.MsBuild.Task
 			// look at target dir;
 			if (!string.IsNullOrWhiteSpace(TargetDir))
 			{
-				if (ExeLocationHelper.TryValidateILMergePath(this.TargetDir, out exePath))
+				if (ExeLocationHelper.TryValidateGenerateLineMapPath(this.TargetDir, out exePath))
 				{
 					Log.LogMessage($"GenerateLineMap.exe found at (target dir): {this.TargetDir}");
 					return exePath;
@@ -364,10 +349,10 @@ namespace GenerateLineMap.MsBuild.Task
 				Log.LogMessage(errMsg);
 			}
 
-			// look for "packages" folder at the solution root and if one is found, look for ILMerge package folder
+			// look for "packages" folder at the solution root and if one is found, look for DotNetLineNumbers package folder
 			if (!string.IsNullOrWhiteSpace(this.SolutionDir))
 			{
-				if (ExeLocationHelper.TryILMergeInSolutionDir(this.SolutionDir, out exePath))
+				if (ExeLocationHelper.TryGenerateLineMapInSolutionDir(this.SolutionDir, out exePath))
 				{
 					Log.LogMessage($"GenerateLineMap.exe found at (solution dir): {this.SolutionDir}");
 					return exePath;
@@ -391,7 +376,7 @@ namespace GenerateLineMap.MsBuild.Task
 				Log.LogWarning(err);
 			}
 
-			Log.LogWarning($"Unable to determine custom package location or, location was determined but an ILMerge package folder was not found.");
+			Log.LogWarning($"Unable to determine custom package location or, location was determined but a DotNetLineNumbers package folder was not found.");
 
 			return exePath;
 		}

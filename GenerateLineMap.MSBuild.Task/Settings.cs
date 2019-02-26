@@ -31,12 +31,11 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Text;
-using System.Threading.Tasks;
 using System.Web.Script.Serialization;
+
 
 namespace GenerateLineMap.MsBuild.Task
 {
-
 	/// <summary>
 	/// Settings class for serializing/deserializing our app settings to JSON
 	/// </summary>
@@ -47,6 +46,7 @@ namespace GenerateLineMap.MsBuild.Task
 
         public AdvancedSettings Advanced { get; set; } = new AdvancedSettings();
 
+
         public string ToJson()
         {
             var srl = new JavaScriptSerializer();
@@ -54,9 +54,9 @@ namespace GenerateLineMap.MsBuild.Task
             return json;
         }
 
+
         public static Settings FromJson(string jsonString)
         {
-
             if (string.IsNullOrWhiteSpace(jsonString))
             {
                 throw new ArgumentNullException(nameof(jsonString));

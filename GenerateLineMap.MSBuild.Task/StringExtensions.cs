@@ -27,20 +27,22 @@
 using System;
 using System.Text;
 
+
 namespace GenerateLineMap.MsBuild.Task
 {
     static class StringExtensions
     {
-
         public static bool IsNullOrWhiteSpace(this string value)
         {
             return string.IsNullOrWhiteSpace(value);
         }
 
+
 		public static bool IsNotNullOrWhiteSpace(this string value)
 		{
 			return !string.IsNullOrWhiteSpace(value);
 		}
+
 
 		public static bool IsNumeric(this string value)
         {
