@@ -37,59 +37,20 @@ using System.Text;
 using System.Xml;
 
 
+/// <summary>
+/// Root name space for the DotNetLineNumbers classes and utilities for resolving
+/// line numbers from line map resources embedded within .net executables.
+/// </summary>
 namespace DotNetLineNumbers
 {
-	#region " Constants"
-	/// <summary>
-	/// Track Line Map information for persistence purposes
-	/// </summary>
-	/// <remarks></remarks>
-	/// <editHistory></editHistory>
-	public static class Constants
-	{
-		public const string INDENT = "[[3]]";
-
-		public const string LINEMAPNAMESPACE = "http://schemas.linemap.net";
-		public static byte[] ENCKEY = new byte[32] {
-			1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
-		};
-		public static byte[] ENCIV = new byte[16] {
-			65, 2, 68, 26, 7, 178, 200, 3, 65, 110, 68, 13, 69, 16, 200, 219
-		};
-		public static string ResTypeName = "LMP";
-		public static string ResName = "LMPDATA";
-		public static short ResLang = 0;
-	}
-	#endregion
-
-
-	#region " API Declarations for working with Resources"
-	public static class WindowsAPI
-	{
-		[DllImport("kernel32", EntryPoint = "FindResourceExA", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-		public static extern IntPtr FindResourceEx(Int32 hModule, [MarshalAs(UnmanagedType.LPStr)]
-		string lpType, [MarshalAs(UnmanagedType.LPStr)]
-		string lpName, Int16 wLanguage);
-		[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-		public static extern IntPtr LoadResource(IntPtr hInstance, IntPtr hResInfo);
-		[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-		public static extern IntPtr LockResource(IntPtr hResData);
-		[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-		public static extern IntPtr FreeResource(IntPtr hResData);
-		[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-		public static extern Int32 SizeofResource(IntPtr hInstance, IntPtr hResInfo);
-		[DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-		public static extern void CopyMemory(ref byte pvDest, IntPtr pvSrc, Int32 cbCopy);
-	}
-	#endregion
-
-
 	#region " Enhanced Stack Classes"
 	/// <summary>
-	/// A Wrapped StackFrame object that includes logic to resolve
-	/// a line number from a LineMap (either a resource or a seperate linemap file)
+	/// A StackFrame subclass that includes logic to resolve
+	/// a line number from an existing line map (either a resource or a separate line map file)
+	/// If no line map resource can be found, this automatically falls back to using
+	/// whatever information is available via a normal StackFrame
 	/// <code>
-	/// var sf = new MappedStackFrame(ExistingStackFrame);
+	/// var sf = new EnhancedStackFrame(ExistingStackFrame);
 	/// var ln = sf.GetLineNumber();
 	/// </code>
 	/// </summary>
@@ -99,13 +60,17 @@ namespace DotNetLineNumbers
 		readonly int _line = 0;
 		readonly string _sourceFile = string.Empty;
 
+		/// <summary>
+		/// Retrieve an EnhancedStackFrame from the passed in StackFrame object
+		/// </summary>
+		/// <param name="stackFrame">A normal StackFrame object to enhance.</param>
 		public EnhancedStackFrame(StackFrame stackFrame)
 		{
-			//attempt to load any linemaps from the source assembly
+			//attempt to load any line maps from the source assembly
 			Utilities.Bookkeeping.AssemblyLineMaps.Add(stackFrame.GetMethod().DeclaringType.Assembly);
 
 			_stackFrame = stackFrame;
-			// first, get the base addr of the method
+			// first, get the base address of the method
 			// if possible. We have to have symbols to do this...
 			if (Utilities.Bookkeeping.AssemblyLineMaps.Count == 0)
 				return;
@@ -117,7 +82,7 @@ namespace DotNetLineNumbers
 			// retrieve the cache
 			var alm = Utilities.Bookkeeping.AssemblyLineMaps[stackFrame.GetMethod().DeclaringType.Assembly.CodeBase];
 
-			// does the symbols list contain the metadata token for this method?
+			// does the symbols list contain the meta data token for this method?
 			MemberInfo mi = stackFrame.GetMethod();
 			// Don't call this mdtoken or PostSharp will barf on it! Jeez
 			long mdtokn = mi.MetadataToken;
@@ -144,7 +109,7 @@ namespace DotNetLineNumbers
 					}
 				}
 				// since the address may end up between line numbers,
-				// always return the line num found
+				// always return the line number found
 				// even if it's not an exact match
 				_line = alm.AddressToLineMap[i].Line;
 				_sourceFile = alm.Names[alm.AddressToLineMap[i].SourceFileIndex];
@@ -157,12 +122,20 @@ namespace DotNetLineNumbers
 		}
 
 
+		/// <summary>
+		/// Retrieve the line number recorded for this stack frame
+		/// </summary>
+		/// <returns>An integer line number in the source file that this stack frame points to.</returns>
 		public override int GetFileLineNumber()
 		{
 			return (_line > 0) ? _line : _stackFrame.GetFileLineNumber();
 		}
 
 
+		/// <summary>
+		/// Retrieve the filename recorded for this stack frame
+		/// </summary>
+		/// <returns>A string containing the filename of the source file this stack frame points to.</returns>
 		[SecuritySafeCritical]
 		public override string GetFileName()
 		{
@@ -170,44 +143,58 @@ namespace DotNetLineNumbers
 		}
 
 
+		/// <summary>
+		/// Retrieve the column number recorded for this stack frame
+		/// </summary>
+		/// <returns>An integer containing the column number of the source file this stack frame points to.</returns>
 		public override int GetFileColumnNumber()
 		{
 			return _stackFrame.GetFileColumnNumber();
 		}
 
 
+		/// <summary>
+		/// Retrieve the Intermediate Language (IL) offset recorded for this stack frame
+		/// </summary>
+		/// <returns>An integer containing the IL offset of the source file this stack frame points to.</returns>
 		public override int GetILOffset()
 		{
 			return _stackFrame.GetILOffset();
 		}
 
 
+		/// <summary>
+		/// Retrieve the MethodBase recorded for this stack frame
+		/// </summary>
+		/// <returns>The MethodBase object that this stack frame points to.</returns>
 		public override MethodBase GetMethod()
 		{
 			return _stackFrame.GetMethod();
 		}
 
 
+		/// <summary>
+		/// Retrieve the native code offset recorded for this stack frame
+		/// </summary>
+		/// <returns>An integer containing the native code offset that this stack frame points to.</returns>
 		public override int GetNativeOffset()
 		{
 			return _stackFrame.GetNativeOffset();
 		}
 
 
-		[SecuritySafeCritical]
 		/// <summary>
-		/// turns a single stack frame object into an informative string
+		/// Generate a human readable string description of this stack frame.
 		/// </summary>
-		/// <param name="FrameNum"></param>
-		/// <param name="sf"></param>
-		/// <returns></returns>
+		/// <returns>The string description of this stack frame.</returns>
+		[SecuritySafeCritical]
 		public override string ToString()
 		{
 			//build method name
 			MemberInfo mi = this.GetMethod();
 			string methodName = mi.DeclaringType.Namespace + "." + mi.DeclaringType.Name + "." + mi.Name;
 
-			//build method params
+			//build method parameters
 			ParameterInfo[] objParameters = this.GetMethod().GetParameters();
 			int param = 0;
 			string parameters = "";
@@ -257,7 +244,7 @@ namespace DotNetLineNumbers
 			if (filename == "" || line == "")
 			{
 				// Get the native code offset and convert to a line number
-				// first, make sure our linemap is loaded
+				// first, make sure our line map is loaded
 				try
 				{
 					if (this.GetFileLineNumber() != 0)
@@ -268,73 +255,97 @@ namespace DotNetLineNumbers
 				}
 				catch (Exception ex)
 				{
-					//any problems in loading the Linemap, just write to debugger and call it a day
+					//any problems in loading the Line map, just write to debugger and call it a day
 					line = $"Unable to load line map information. Error: {ex.ToString()}";
 				}
 			}
 
-			return $@"{Constants.INDENT}{methodName}({parameters}) :
-			{Constants.INDENT}{Constants.INDENT}{filename}{line}{column}{il}";
+			return $@"{Utilities.Constants.INDENT}{methodName}({parameters}) :
+			{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{filename}{line}{column}{il}";
 		}
 	}
 
 
+	/// <summary>
+	/// A StackTrace subclass that includes logic to resolve
+	/// a line number from an existing line map (either a resource or a separate line map file)
+	/// for all contained stack frames.
+	/// If no line map resource can be found, this automatically falls back to using
+	/// whatever information is available via a normal StackFrame
+	/// <code>
+	/// var st = new EnhancedStackTrace();
+	/// var ln = st.GetFrame(0).GetLineNumber();
+	/// </code>
+	/// </summary>
 	public class EnhancedStackTrace : StackTrace
 	{
 		private EnhancedStackFrame[] _frames = null;
 		private HashSet<string> _skipClassNames = null;
 
 		#region " Constructors"
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class from the
-		//     caller's frame.
+		/// <summary>
+		/// Initializes a new instance of an EnhancedStackTrace class from the
+		/// caller's frame.
+		/// </summary>
 		public EnhancedStackTrace() : base()
 		{ }
 
+		/// <summary>
+		/// Initializes a new instance of an EnhancedStackTrace class from the
+		/// caller's frame, skipping any frame pointed to the class with the passed class name.
+		/// </summary>
+		/// <param name="skipClassName">A string containing the class name used to skip frames.</param>
 		public EnhancedStackTrace(string skipClassName) : base()
 		{
 			_skipClassNames = new HashSet<string>(new string[] { skipClassName });
 		}
 
+		/// <summary>
+		/// Initializes a new instance of an EnhancedStackTrace class from the
+		/// caller's frame, skipping any frame pointed to any of the named classes.
+		/// </summary>
+		/// <param name="skipClassNames">An array or list of class names used to skip frames.</param>
 		public EnhancedStackTrace(IEnumerable<string> skipClassNames) : base()
 		{
 			_skipClassNames = new HashSet<string>(skipClassNames);
 		}
 
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class from the
-		//     caller's frame, optionally capturing source information.
-		//
-		// Parameters:
-		//   fNeedFileInfo:
-		//     true to capture the file name, line number, and column number; otherwise, false.
+		/// <summary>
+		///  Initializes a new instance of the System.Diagnostics.StackTrace class from the
+		///  caller's frame, optionally capturing source information.
+		/// </summary>
+		/// <param name="fNeedFileInfo">True to capture the file name, line number, and column number; otherwise, false.</param>
 		public EnhancedStackTrace(bool fNeedFileInfo) : base(fNeedFileInfo)
 		{ }
 
+		/// <summary>
+		///  Initializes a new instance of the System.Diagnostics.StackTrace class from the
+		///  caller's frame, optionally capturing source information.
+		/// </summary>
+		/// <param name="fNeedFileInfo">True to capture the file name, line number, and column number; otherwise, false.</param>
+		/// <param name="skipClassName">A string containing the class name used to skip frames.</param>
 		public EnhancedStackTrace(bool fNeedFileInfo, string skipClassName) : base(fNeedFileInfo)
 		{
 			_skipClassNames = new HashSet<string>(new string[] { skipClassName });
 		}
 
+		/// <summary>
+		///  Initializes a new instance of the System.Diagnostics.StackTrace class from the
+		///  caller's frame, optionally capturing source information.
+		/// </summary>
+		/// <param name="fNeedFileInfo">True to capture the file name, line number, and column number; otherwise, false.</param>
+		/// <param name="skipClassNames">An array or list of class names used to skip frames.</param>
 		public EnhancedStackTrace(bool fNeedFileInfo, IEnumerable<string> skipClassNames) : base(fNeedFileInfo)
 		{
 			_skipClassNames = new HashSet<string>(skipClassNames);
 		}
 
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class from the
-		//     caller's frame, skipping the specified number of frames.
-		//
-		// Parameters:
-		//   skipFrames:
-		//     The number of frames up the stack from which to start the trace.
-		//
-		// Exceptions:
-		//   T:System.ArgumentOutOfRangeException:
-		//     The skipFrames parameter is negative.
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class from the
+		/// caller's frame, skipping the specified number of frames.
+		/// </summary>
+		/// <param name="skipFrames">The number of frames up the stack from which to start the trace.</param>
+		/// <exception cref="System.ArgumentOutOfRangeException">The skipFrames parameter is negative.</exception>
 		public EnhancedStackTrace(int skipFrames) : base(skipFrames)
 		{ }
 
@@ -562,483 +573,10 @@ namespace DotNetLineNumbers
 
 
 	/// <summary>
-	/// Tracks symbol cache entries for all assemblies that appear in a stack frame
-	/// Public for serialization purposes
+	/// Internal Utility classes and definitions used internally by DotNetLineNumbers.cs
+	/// and also by the GenerateLineMap utility.
 	/// </summary>
-	/// <remarks></remarks>
-	/// <editHistory></editHistory>
-	[DataContract(Namespace = Constants.LINEMAPNAMESPACE)]
-	public class AssemblyLineMap
-	{
-		/// <summary>
-		/// Track the assembly this map is for
-		/// no need to persist this information
-		/// </summary>
-		/// <remarks></remarks>
-		public string FileName;
-
-
-		/// <summary>
-		/// Track each Address to Line mapping
-		/// Public for serialization purposes
-		/// </summary>
-		[DataContract(Namespace = Constants.LINEMAPNAMESPACE)]
-		public class AddressToLine
-		{
-			// these members must get serialized
-			[DataMember()]
-			public Int64 Address;
-			[DataMember()]
-			public Int32 Line;
-			[DataMember()]
-			public int SourceFileIndex;
-			[DataMember()]
-
-			public int ObjectNameIndex;
-			// these members do not need to be serialized
-			public string SourceFile;
-
-			public string ObjectName;
-
-			/// <summary>
-			/// Parameterless constructor for serialization
-			/// </summary>
-			/// <remarks></remarks>
-			public AddressToLine() { }
-
-
-			public AddressToLine(Int32 Line, Int64 Address, string SourceFile, int SourceFileIndex, string ObjectName, int ObjectNameIndex)
-			{
-				this.Line = Line;
-				this.Address = Address;
-				this.SourceFile = SourceFile;
-				this.SourceFileIndex = SourceFileIndex;
-				this.ObjectName = ObjectName;
-				this.ObjectNameIndex = ObjectNameIndex;
-			}
-		}
-
-
-		/// <summary>
-		/// Track the Line number list enumerated from the PDB
-		/// Note, the list is already sorted
-		/// </summary>
-		/// <remarks></remarks>
-		[DataMember()]
-		public List<AddressToLine> AddressToLineMap = new List<AddressToLine>();
-
-
-		/// <summary>
-		/// Private class to track Symbols read from the PDB file
-		/// </summary>
-		/// <remarks></remarks>
-		/// <editHistory></editHistory>
-		[DataContract(Namespace = Constants.LINEMAPNAMESPACE)]
-		public class SymbolInfo
-		{
-			// these need to be persisted
-			[DataMember()]
-			public long Address;
-			[DataMember()]
-
-			public long Token;
-			// these aren't persisted
-
-			public string Name;
-
-			/// <summary>
-			/// Parameterless constructor for serialization
-			/// </summary>
-			/// <remarks></remarks>
-			public SymbolInfo() { }
-
-
-			public SymbolInfo(string Name, long Address, long Token)
-			{
-				this.Name = Name;
-				this.Address = Address;
-				this.Token = Token;
-			}
-		}
-		/// <summary>
-		/// Track the Symbols enumerated from the PDB keyed by their token
-		/// </summary>
-		/// <remarks></remarks>
-		[DataMember()]
-		public Dictionary<long, SymbolInfo> Symbols = new Dictionary<long, SymbolInfo>();
-
-		/// <summary>
-		/// Track a list of string values
-		/// </summary>
-		/// <remarks></remarks>
-		/// <editHistory></editHistory>
-		public class NamesList : List<string>
-		{
-			/// <summary>
-			/// When adding names, if the name already exists in the list
-			/// don't bother to add it again
-			/// </summary>
-			/// <param name="Name"></param>
-			/// <returns></returns>
-			public new int Add(string Name)
-			{
-				//Don't lower case everything
-				//Name = Name.ToLower();
-				var i = this.IndexOf(Name);
-				if (i >= 0)
-					return i;
-
-				// gotta add the name
-				base.Add(Name);
-				return this.Count - 1;
-			}
-
-
-			/// <summary>
-			/// Override this prop so that requesting an index that doesn't exist just
-			/// returns a blank string
-			/// </summary>
-			/// <param name="Index"></param>
-			/// <value></value>
-			/// <remarks></remarks>
-			public new string this[int Index]
-			{
-				get
-				{
-					if (Index >= 0 & Index < this.Count)
-					{
-						return base[Index];
-					}
-					else
-					{
-						return string.Empty;
-					}
-				}
-				set
-				{
-					base[Index] = value;
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// Tracks various string values in a flat list that is indexed into
-		/// </summary>
-		/// <remarks></remarks>
-		[DataMember()]
-		public NamesList Names = new NamesList();
-
-
-		/// <summary>
-		/// Create a new map based on an assembly filename
-		/// </summary>
-		/// <param name="FileName"></param>
-		/// <remarks></remarks>
-		public AssemblyLineMap(string FileName)
-		{
-			this.FileName = FileName;
-			Load();
-		}
-
-
-		/// <summary>
-		/// Parameterless constructor for serialization
-		/// </summary>
-		/// <remarks></remarks>
-
-		public AssemblyLineMap() { }
-
-
-		/// <summary>
-		/// Clear out all internal information
-		/// </summary>
-		/// <remarks></remarks>
-		public void Clear()
-		{
-			this.Symbols.Clear();
-			this.AddressToLineMap.Clear();
-			this.Names.Clear();
-		}
-
-
-		/// <summary>
-		/// Load a LINEMAP file
-		/// </summary>
-		/// <remarks></remarks>
-		private void Load()
-		{
-			Stream buf = FileToStream(this.FileName + ".lmp");
-			var buf2 = DecryptStream(buf);
-			Transfer(Depersist(DecompressStream(buf2)));
-		}
-
-
-		/// <summary>
-		/// Create a new assemblylinemap based on an assembly
-		/// </summary>
-		/// <remarks></remarks>
-		public AssemblyLineMap(Assembly Assembly)
-		{
-			//LoadLineMapResource(Assembly.GetExecutingAssembly(), Symbols, Lines)
-
-			this.FileName = Assembly.CodeBase.Replace("file:///", string.Empty);
-
-			try
-			{
-				// Get the hInstance of the indicated exe/dll image
-				var curmodule = Assembly.GetLoadedModules()[0];
-				var hInst = System.Runtime.InteropServices.Marshal.GetHINSTANCE(curmodule);
-
-				// retrieve a handle to the Linemap resource
-				// Since it's a standard Win32 resource, the nice .NET resource functions
-				// can't be used
-				//
-				// Important Note: The FindResourceEx function appears to be case
-				// sensitive in that you really HAVE to pass in UPPER CASE search
-				// arguments
-				var hres = WindowsAPI.FindResourceEx(hInst.ToInt32(), Constants.ResTypeName, Constants.ResName, Constants.ResLang);
-
-				byte[] bytes = null;
-				if (hres != IntPtr.Zero)
-				{
-					// Load the resource to get it into memory
-					var hresdata = WindowsAPI.LoadResource(hInst, hres);
-
-					IntPtr lpdata = WindowsAPI.LockResource(hresdata);
-					var sz = WindowsAPI.SizeofResource(hInst, hres);
-
-					if (lpdata != IntPtr.Zero & sz > 0)
-					{
-						// able to lock it,
-						// so copy the data into a byte array
-						bytes = new byte[sz];
-						WindowsAPI.CopyMemory(ref bytes[0], lpdata, sz);
-						WindowsAPI.FreeResource(hresdata);
-					}
-				}
-				else
-				{
-					//Check for a side by side linemap file
-					string mapfile = this.FileName + ".lmp";
-					if (File.Exists(mapfile))
-					{
-						//load it from there
-						bytes = File.ReadAllBytes(mapfile);
-					}
-				}
-
-				if (bytes != null)
-				{
-					// deserialize the symbol map and line num list
-					using (System.IO.MemoryStream MemStream = new MemoryStream(bytes))
-					{
-						// release the byte array to free up the memory
-						bytes = null;
-						// and depersist the object
-						Stream temp = MemStream;
-						var temp2 = DecryptStream(temp);
-						Transfer(Depersist(DecompressStream(temp2)));
-					}
-				}
-
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
-				// yes, it's bad form to catch all exceptions like this
-				// but this is part of an exception handler
-				// so it really can't be allowed to fail with an exception!
-			}
-
-			try
-			{
-				if (this.Symbols.Count == 0)
-				{
-					// weren't able to load resources, so try the LINEMAP (LMP) file
-					Load();
-				}
-
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
-			}
-		}
-
-
-		/// <summary>
-		/// Transfer a given AssemblyLineMap's contents to this one
-		/// </summary>
-		/// <param name="alm"></param>
-		/// <remarks></remarks>
-		private void Transfer(AssemblyLineMap alm)
-		{
-			// transfer Internal variables over
-			this.AddressToLineMap = alm.AddressToLineMap;
-			this.Symbols = alm.Symbols;
-			this.Names = alm.Names;
-		}
-
-
-		/// <summary>
-		/// Read an entire file into a memory stream
-		/// </summary>
-		/// <param name="Filename"></param>
-		/// <returns></returns>
-		private MemoryStream FileToStream(string Filename)
-		{
-			if (File.Exists(Filename))
-			{
-				using (System.IO.FileStream FileStream = new System.IO.FileStream(Filename, FileMode.Open))
-				{
-					if (FileStream.Length > 0)
-					{
-						byte[] Buffer = null;
-						Buffer = new byte[Convert.ToInt32(FileStream.Length - 1) + 1];
-						FileStream.Read(Buffer, 0, Convert.ToInt32(FileStream.Length));
-						return new MemoryStream(Buffer);
-					}
-				}
-			}
-
-			// just return an empty stream
-			return new MemoryStream();
-		}
-
-
-		/// <summary>
-		/// Decrypt a stream based on fixed internal keys
-		/// </summary>
-		/// <param name="EncryptedStream"></param>
-		/// <returns></returns>
-		private MemoryStream DecryptStream(Stream EncryptedStream)
-		{
-
-			try
-			{
-				System.Security.Cryptography.RijndaelManaged Enc = new System.Security.Cryptography.RijndaelManaged
-				{
-					KeySize = 256,
-					// KEY is 32 byte array
-					Key = Constants.ENCKEY,
-					// IV is 16 byte array
-					IV = Constants.ENCIV
-				};
-
-				var cryptoStream = new System.Security.Cryptography.CryptoStream(EncryptedStream, Enc.CreateDecryptor(), System.Security.Cryptography.CryptoStreamMode.Read);
-
-				byte[] buf = null;
-				buf = new byte[1024];
-				MemoryStream DecryptedStream = new MemoryStream();
-				while (EncryptedStream.Length > 0)
-				{
-					var l = cryptoStream.Read(buf, 0, 1024);
-					if (l == 0)
-						break; // TODO: might not be correct. Was : Exit Do
-					if (l < 1024)
-						Array.Resize(ref buf, l);
-					DecryptedStream.Write(buf, 0, buf.GetUpperBound(0) + 1);
-					if (l < 1024)
-						break; // TODO: might not be correct. Was : Exit Do
-				}
-				DecryptedStream.Position = 0;
-				return DecryptedStream;
-
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
-				// any problems, nothing much to do, so return an empty stream
-				return new MemoryStream();
-			}
-		}
-
-
-		/// <summary>
-		/// Uncompress a memory stream
-		/// </summary>
-		/// <param name="CompressedStream"></param>
-		/// <returns></returns>
-		private MemoryStream DecompressStream(MemoryStream CompressedStream)
-		{
-
-			System.IO.Compression.GZipStream GZip = new System.IO.Compression.GZipStream(CompressedStream, System.IO.Compression.CompressionMode.Decompress);
-
-			byte[] buf = null;
-			buf = new byte[1024];
-			MemoryStream UncompressedStream = new MemoryStream();
-			while (CompressedStream.Length > 0)
-			{
-				var l = GZip.Read(buf, 0, 1024);
-				if (l == 0)
-					break; // TODO: might not be correct. Was : Exit Do
-				if (l < 1024)
-					Array.Resize(ref buf, l);
-				UncompressedStream.Write(buf, 0, buf.GetUpperBound(0) + 1);
-				if (l < 1024)
-					break; // TODO: might not be correct. Was : Exit Do
-			}
-			UncompressedStream.Position = 0;
-			return UncompressedStream;
-		}
-
-
-		private AssemblyLineMap Depersist(MemoryStream MemoryStream)
-		{
-			MemoryStream.Position = 0;
-
-			if (MemoryStream.Length != 0)
-			{
-				var binaryDictionaryreader = XmlDictionaryReader.CreateBinaryReader(MemoryStream, new XmlDictionaryReaderQuotas());
-				var serializer = new DataContractSerializer(typeof(AssemblyLineMap));
-				return (AssemblyLineMap)serializer.ReadObject(binaryDictionaryreader);
-			}
-			else
-			{
-				// jsut return an empty object
-				return new AssemblyLineMap();
-			}
-		}
-
-
-		/// <summary>
-		/// Stream this object to a memory stream and return it
-		/// All other persistence is handled externally because none of that 
-		/// is necessary under normal usage, only when generating a linemap
-		/// </summary>
-		/// <returns></returns>
-		public MemoryStream ToStream()
-		{
-			System.IO.MemoryStream MemStream = new System.IO.MemoryStream();
-
-			var binaryDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(MemStream);
-			var serializer = new DataContractSerializer(typeof(AssemblyLineMap));
-			serializer.WriteObject(binaryDictionaryWriter, this);
-			binaryDictionaryWriter.Flush();
-
-			return MemStream;
-		}
-
-
-		/// <summary>
-		/// Helper function to add an address to line map entry
-		/// </summary>
-		/// <param name="Line"></param>
-		/// <param name="Address"></param>
-		/// <param name="SourceFile"></param>
-		/// <param name="ObjectName"></param>
-		/// <remarks></remarks>
-		public void AddAddressToLine(Int32 Line, Int64 Address, string SourceFile, string ObjectName)
-		{
-			var SourceFileIndex = this.Names.Add(SourceFile);
-			var ObjectNameIndex = this.Names.Add(ObjectName);
-			var atl = new AssemblyLineMap.AddressToLine(Line, Address, SourceFile, SourceFileIndex, ObjectName, ObjectNameIndex);
-			this.AddressToLineMap.Add(atl);
-		}
-	}
-
-
+	/// <exclude />
 	public static class Utilities
 	{
 		/// <summary>
@@ -1069,7 +607,7 @@ namespace DotNetLineNumbers
 		public static class Bookkeeping
 		{
 			/// <summary>
-			/// Define a collection of assemblylinemaps (one for each assembly we
+			/// Define a collection of assembly line maps (one for each assembly we
 			/// need to generate a stack trace through)
 			/// </summary>
 			/// <remarks></remarks>
@@ -1078,7 +616,7 @@ namespace DotNetLineNumbers
 			{
 
 				/// <summary>
-				/// Load a linemap file given the NAME of an assembly
+				/// Load a line map file given the NAME of an assembly
 				/// obviously, the Assembly must exist.
 				/// </summary>
 				/// <param name="FileName"></param>
@@ -1122,9 +660,564 @@ namespace DotNetLineNumbers
 			}
 			public static AssemblyLineMapCollection AssemblyLineMaps = new AssemblyLineMapCollection();
 		}
+
+
+		/// <summary>
+		/// Tracks symbol cache entries for all assemblies that appear in a stack frame
+		/// Public for serialization purposes
+		/// </summary>
+		/// <remarks></remarks>
+		/// <editHistory></editHistory>
+		[DataContract(Namespace = Constants.LINEMAPNAMESPACE)]
+		public class AssemblyLineMap
+		{
+			/// <summary>
+			/// Track the assembly this map is for
+			/// no need to persist this information
+			/// </summary>
+			/// <remarks></remarks>
+			public string FileName;
+
+
+			/// <summary>
+			/// Track each Address to Line mapping
+			/// Public for serialization purposes
+			/// </summary>
+			[DataContract(Namespace = Constants.LINEMAPNAMESPACE)]
+			public class AddressToLine
+			{
+				// these members must get serialized
+				[DataMember()]
+				public Int64 Address;
+				[DataMember()]
+				public Int32 Line;
+				[DataMember()]
+				public int SourceFileIndex;
+				[DataMember()]
+
+				public int ObjectNameIndex;
+				// these members do not need to be serialized
+				public string SourceFile;
+
+				public string ObjectName;
+
+				/// <summary>
+				/// Parameterless constructor for serialization
+				/// </summary>
+				/// <remarks></remarks>
+				public AddressToLine() { }
+
+
+				public AddressToLine(Int32 Line, Int64 Address, string SourceFile, int SourceFileIndex, string ObjectName, int ObjectNameIndex)
+				{
+					this.Line = Line;
+					this.Address = Address;
+					this.SourceFile = SourceFile;
+					this.SourceFileIndex = SourceFileIndex;
+					this.ObjectName = ObjectName;
+					this.ObjectNameIndex = ObjectNameIndex;
+				}
+			}
+
+
+			/// <summary>
+			/// Track the Line number list enumerated from the PDB
+			/// Note, the list is already sorted
+			/// </summary>
+			/// <remarks></remarks>
+			[DataMember()]
+			public List<AddressToLine> AddressToLineMap = new List<AddressToLine>();
+
+
+			/// <summary>
+			/// Private class to track Symbols read from the PDB file
+			/// </summary>
+			/// <remarks></remarks>
+			/// <editHistory></editHistory>
+			[DataContract(Namespace = Constants.LINEMAPNAMESPACE)]
+			public class SymbolInfo
+			{
+				// these need to be persisted
+				[DataMember()]
+				public long Address;
+				[DataMember()]
+
+				public long Token;
+				// these aren't persisted
+
+				public string Name;
+
+				/// <summary>
+				/// Parameterless constructor for serialization
+				/// </summary>
+				/// <remarks></remarks>
+				public SymbolInfo() { }
+
+
+				public SymbolInfo(string Name, long Address, long Token)
+				{
+					this.Name = Name;
+					this.Address = Address;
+					this.Token = Token;
+				}
+			}
+			/// <summary>
+			/// Track the Symbols enumerated from the PDB keyed by their token
+			/// </summary>
+			/// <remarks></remarks>
+			[DataMember()]
+			public Dictionary<long, SymbolInfo> Symbols = new Dictionary<long, SymbolInfo>();
+
+			/// <summary>
+			/// Track a list of string values
+			/// </summary>
+			/// <remarks></remarks>
+			/// <editHistory></editHistory>
+			public class NamesList : List<string>
+			{
+				/// <summary>
+				/// When adding names, if the name already exists in the list
+				/// don't bother to add it again
+				/// </summary>
+				/// <param name="Name"></param>
+				/// <returns></returns>
+				public new int Add(string Name)
+				{
+					//Don't lower case everything
+					//Name = Name.ToLower();
+					var i = this.IndexOf(Name);
+					if (i >= 0)
+						return i;
+
+					// gotta add the name
+					base.Add(Name);
+					return this.Count - 1;
+				}
+
+
+				/// <summary>
+				/// Override this prop so that requesting an index that doesn't exist just
+				/// returns a blank string
+				/// </summary>
+				/// <param name="Index"></param>
+				/// <value></value>
+				/// <remarks></remarks>
+				public new string this[int Index]
+				{
+					get
+					{
+						if (Index >= 0 & Index < this.Count)
+						{
+							return base[Index];
+						}
+						else
+						{
+							return string.Empty;
+						}
+					}
+					set
+					{
+						base[Index] = value;
+					}
+				}
+			}
+
+
+			/// <summary>
+			/// Tracks various string values in a flat list that is indexed into
+			/// </summary>
+			/// <remarks></remarks>
+			[DataMember()]
+			public NamesList Names = new NamesList();
+
+
+			/// <summary>
+			/// Create a new map based on an assembly filename
+			/// </summary>
+			/// <param name="FileName"></param>
+			/// <remarks></remarks>
+			public AssemblyLineMap(string FileName)
+			{
+				this.FileName = FileName;
+				Load();
+			}
+
+
+			/// <summary>
+			/// Parameterless constructor for serialization
+			/// </summary>
+			/// <remarks></remarks>
+
+			public AssemblyLineMap() { }
+
+
+			/// <summary>
+			/// Clear out all internal information
+			/// </summary>
+			/// <remarks></remarks>
+			public void Clear()
+			{
+				this.Symbols.Clear();
+				this.AddressToLineMap.Clear();
+				this.Names.Clear();
+			}
+
+
+			/// <summary>
+			/// Load a LINEMAP file
+			/// </summary>
+			/// <remarks></remarks>
+			private void Load()
+			{
+				Stream buf = FileToStream(this.FileName + ".lmp");
+				var buf2 = DecryptStream(buf);
+				Transfer(Depersist(DecompressStream(buf2)));
+			}
+
+
+			/// <summary>
+			/// Create a new assembly line map based on an assembly
+			/// </summary>
+			/// <remarks></remarks>
+			public AssemblyLineMap(Assembly Assembly)
+			{
+				//LoadLineMapResource(Assembly.GetExecutingAssembly(), Symbols, Lines)
+
+				this.FileName = Assembly.CodeBase.Replace("file:///", string.Empty);
+
+				try
+				{
+					// Get the hInstance of the indicated exe/dll image
+					var curmodule = Assembly.GetLoadedModules()[0];
+					var hInst = System.Runtime.InteropServices.Marshal.GetHINSTANCE(curmodule);
+
+					// retrieve a handle to the Line map resource
+					// Since it's a standard Win32 resource, the nice .NET resource functions
+					// can't be used
+					//
+					// Important Note: The FindResourceEx function appears to be case
+					// sensitive in that you really HAVE to pass in UPPER CASE search
+					// arguments
+					var hres = WindowsAPI.FindResourceEx(hInst.ToInt32(), Constants.ResTypeName, Constants.ResName, Constants.ResLang);
+
+					byte[] bytes = null;
+					if (hres != IntPtr.Zero)
+					{
+						// Load the resource to get it into memory
+						var hresdata = WindowsAPI.LoadResource(hInst, hres);
+
+						IntPtr lpdata = WindowsAPI.LockResource(hresdata);
+						var sz = WindowsAPI.SizeofResource(hInst, hres);
+
+						if (lpdata != IntPtr.Zero & sz > 0)
+						{
+							// able to lock it,
+							// so copy the data into a byte array
+							bytes = new byte[sz];
+							WindowsAPI.CopyMemory(ref bytes[0], lpdata, sz);
+							WindowsAPI.FreeResource(hresdata);
+						}
+					}
+					else
+					{
+						//Check for a side by side line map file
+						string mapfile = this.FileName + ".lmp";
+						if (File.Exists(mapfile))
+						{
+							//load it from there
+							bytes = File.ReadAllBytes(mapfile);
+						}
+					}
+
+					if (bytes != null)
+					{
+						// deserialize the symbol map and line number list
+						using (System.IO.MemoryStream MemStream = new MemoryStream(bytes))
+						{
+							// release the byte array to free up the memory
+							bytes = null;
+							// and depersist the object
+							Stream temp = MemStream;
+							var temp2 = DecryptStream(temp);
+							Transfer(Depersist(DecompressStream(temp2)));
+						}
+					}
+
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
+					// yes, it's bad form to catch all exceptions like this
+					// but this is part of an exception handler
+					// so it really can't be allowed to fail with an exception!
+				}
+
+				try
+				{
+					if (this.Symbols.Count == 0)
+					{
+						// weren't able to load resources, so try the LINEMAP (LMP) file
+						Load();
+					}
+
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
+				}
+			}
+
+
+			/// <summary>
+			/// Transfer a given AssemblyLineMap's contents to this one
+			/// </summary>
+			/// <param name="alm"></param>
+			/// <remarks></remarks>
+			private void Transfer(AssemblyLineMap alm)
+			{
+				// transfer Internal variables over
+				this.AddressToLineMap = alm.AddressToLineMap;
+				this.Symbols = alm.Symbols;
+				this.Names = alm.Names;
+			}
+
+
+			/// <summary>
+			/// Read an entire file into a memory stream
+			/// </summary>
+			/// <param name="Filename"></param>
+			/// <returns></returns>
+			private MemoryStream FileToStream(string Filename)
+			{
+				if (File.Exists(Filename))
+				{
+					using (System.IO.FileStream FileStream = new System.IO.FileStream(Filename, FileMode.Open))
+					{
+						if (FileStream.Length > 0)
+						{
+							byte[] Buffer = null;
+							Buffer = new byte[Convert.ToInt32(FileStream.Length - 1) + 1];
+							FileStream.Read(Buffer, 0, Convert.ToInt32(FileStream.Length));
+							return new MemoryStream(Buffer);
+						}
+					}
+				}
+
+				// just return an empty stream
+				return new MemoryStream();
+			}
+
+
+			/// <summary>
+			/// Decrypt a stream based on fixed internal keys
+			/// </summary>
+			/// <param name="EncryptedStream"></param>
+			/// <returns></returns>
+			private MemoryStream DecryptStream(Stream EncryptedStream)
+			{
+
+				try
+				{
+					System.Security.Cryptography.RijndaelManaged Enc = new System.Security.Cryptography.RijndaelManaged
+					{
+						KeySize = 256,
+						// KEY is 32 byte array
+						Key = Constants.ENCKEY,
+						// IV is 16 byte array
+						IV = Constants.ENCIV
+					};
+
+					var cryptoStream = new System.Security.Cryptography.CryptoStream(EncryptedStream, Enc.CreateDecryptor(), System.Security.Cryptography.CryptoStreamMode.Read);
+
+					byte[] buf = null;
+					buf = new byte[1024];
+					MemoryStream DecryptedStream = new MemoryStream();
+					while (EncryptedStream.Length > 0)
+					{
+						var l = cryptoStream.Read(buf, 0, 1024);
+						if (l == 0)
+							break; // TODO: might not be correct. Was : Exit Do
+						if (l < 1024)
+							Array.Resize(ref buf, l);
+						DecryptedStream.Write(buf, 0, buf.GetUpperBound(0) + 1);
+						if (l < 1024)
+							break; // TODO: might not be correct. Was : Exit Do
+					}
+					DecryptedStream.Position = 0;
+					return DecryptedStream;
+
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine(string.Format("ERROR: {0}", ex.ToString()));
+					// any problems, nothing much to do, so return an empty stream
+					return new MemoryStream();
+				}
+			}
+
+
+			/// <summary>
+			/// Uncompress a memory stream
+			/// </summary>
+			/// <param name="CompressedStream"></param>
+			/// <returns></returns>
+			private MemoryStream DecompressStream(MemoryStream CompressedStream)
+			{
+
+				System.IO.Compression.GZipStream GZip = new System.IO.Compression.GZipStream(CompressedStream, System.IO.Compression.CompressionMode.Decompress);
+
+				byte[] buf = null;
+				buf = new byte[1024];
+				MemoryStream UncompressedStream = new MemoryStream();
+				while (CompressedStream.Length > 0)
+				{
+					var l = GZip.Read(buf, 0, 1024);
+					if (l == 0)
+						break; // TODO: might not be correct. Was : Exit Do
+					if (l < 1024)
+						Array.Resize(ref buf, l);
+					UncompressedStream.Write(buf, 0, buf.GetUpperBound(0) + 1);
+					if (l < 1024)
+						break; // TODO: might not be correct. Was : Exit Do
+				}
+				UncompressedStream.Position = 0;
+				return UncompressedStream;
+			}
+
+
+			private AssemblyLineMap Depersist(MemoryStream MemoryStream)
+			{
+				MemoryStream.Position = 0;
+
+				if (MemoryStream.Length != 0)
+				{
+					var binaryDictionaryreader = XmlDictionaryReader.CreateBinaryReader(MemoryStream, new XmlDictionaryReaderQuotas());
+					var serializer = new DataContractSerializer(typeof(AssemblyLineMap));
+					return (AssemblyLineMap)serializer.ReadObject(binaryDictionaryreader);
+				}
+				else
+				{
+					// just return an empty object
+					return new AssemblyLineMap();
+				}
+			}
+
+
+			/// <summary>
+			/// Stream this object to a memory stream and return it
+			/// All other persistence is handled externally because none of that 
+			/// is necessary under normal usage, only when generating a line map
+			/// </summary>
+			/// <returns></returns>
+			public MemoryStream ToStream()
+			{
+				System.IO.MemoryStream MemStream = new System.IO.MemoryStream();
+
+				var binaryDictionaryWriter = XmlDictionaryWriter.CreateBinaryWriter(MemStream);
+				var serializer = new DataContractSerializer(typeof(AssemblyLineMap));
+				serializer.WriteObject(binaryDictionaryWriter, this);
+				binaryDictionaryWriter.Flush();
+
+				return MemStream;
+			}
+
+
+			/// <summary>
+			/// Helper function to add an address to line map entry
+			/// </summary>
+			/// <param name="Line"></param>
+			/// <param name="Address"></param>
+			/// <param name="SourceFile"></param>
+			/// <param name="ObjectName"></param>
+			/// <remarks></remarks>
+			public void AddAddressToLine(Int32 Line, Int64 Address, string SourceFile, string ObjectName)
+			{
+				var SourceFileIndex = this.Names.Add(SourceFile);
+				var ObjectNameIndex = this.Names.Add(ObjectName);
+				var atl = new AssemblyLineMap.AddressToLine(Line, Address, SourceFile, SourceFileIndex, ObjectName, ObjectNameIndex);
+				this.AddressToLineMap.Add(atl);
+			}
+		}
+
+
+		#region " Constants"
+		/// <summary>
+		/// Constant values used for resolving line number information from a line map resource
+		/// </summary>
+		/// <remarks></remarks>
+		/// <editHistory></editHistory>
+		public static class Constants
+		{
+			/// <summary>
+			/// Tag used for indenting error and stack information to be more readable in string format
+			/// </summary>
+			public const string INDENT = "[[3]]";
+
+			/// <summary>
+			/// Name space used for LineMap XML resource
+			/// </summary>
+			public const string LINEMAPNAMESPACE = "http://schemas.linemap.net";
+
+			/// <summary>
+			/// Encryption key used to obfuscate line map information in the compiled executable
+			/// </summary>
+			public static byte[] ENCKEY = new byte[32] {
+			1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
+		};
+			/// <summary>
+			/// Encryption key used to obfuscate line map information in the compiled executable
+			/// </summary>
+			public static byte[] ENCIV = new byte[16] {
+			65, 2, 68, 26, 7, 178, 200, 3, 65, 110, 68, 13, 69, 16, 200, 219
+		};
+
+			/// <summary>
+			/// Extension of a standalone line map resource
+			/// </summary>
+			public static string ResTypeName = "LMP";
+
+			/// <summary>
+			/// Name to give to the embedded line map resource
+			/// </summary>
+			public static string ResName = "LMPDATA";
+
+			/// <summary>
+			/// Resource Language to use for embedded line map resource
+			/// </summary>
+			public static short ResLang = 0;
+		}
+		#endregion
+
+
+		#region " API Declarations for working with Resources"
+		/// <summary>
+		/// Static class to define WindowsAPI calls used during creation, embedding, and reading of line map resources
+		/// </summary>
+		public static class WindowsAPI
+		{
+			[DllImport("kernel32", EntryPoint = "FindResourceExA", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+			public static extern IntPtr FindResourceEx(Int32 hModule, [MarshalAs(UnmanagedType.LPStr)]
+		string lpType, [MarshalAs(UnmanagedType.LPStr)]
+		string lpName, Int16 wLanguage);
+			[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+			public static extern IntPtr LoadResource(IntPtr hInstance, IntPtr hResInfo);
+			[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+			public static extern IntPtr LockResource(IntPtr hResData);
+			[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+			public static extern IntPtr FreeResource(IntPtr hResData);
+			[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+			public static extern Int32 SizeofResource(IntPtr hInstance, IntPtr hResInfo);
+			[DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+			public static extern void CopyMemory(ref byte pvDest, IntPtr pvSrc, Int32 cbCopy);
+		}
+		#endregion
 	}
 
 
+	/// <summary>
+	/// Static class that contains extension methods to the Exception base class
+	/// for assistance with resolving line numbers using line map resources.
+	/// </summary>
 	public static class ExceptionExtensions
 	{
 		#region Public Members
@@ -1132,11 +1225,11 @@ namespace DotNetLineNumbers
 		/// <summary>
 		/// translate exception object to string, with additional system info
 		/// </summary>
-		/// <param name="Ex"></param>
-		/// <returns></returns>
-		public static string ToStringEnhanced(this Exception Ex)
+		/// <param name="ex">An Exception object to resolve into a detailed stack trace string representation.</param>
+		/// <returns>A detailed string rendering of the Exception, with stack trace information and line numbers where possible.</returns>
+		public static string ToStringEnhanced(this Exception ex)
 		{
-			return CleanupAndIndent(Ex.ToStringEnhancedInternal());
+			return CleanupAndIndent(ex.ToStringEnhancedInternal());
 		}
 
 
@@ -1164,7 +1257,7 @@ namespace DotNetLineNumbers
 
 				//TODO Clean this up, needs 23 spaces for formatting to line up
 				//Any better way to do this?
-				var msg = Cleanup($@"{ex.ToString()}").Replace("\r\n", $"\r\n{Constants.INDENT}{Constants.INDENT}{Constants.INDENT}{Constants.INDENT}{Constants.INDENT}{Constants.INDENT}{Constants.INDENT}{Constants.INDENT}");
+				var msg = Cleanup($@"{ex.ToString()}").Replace("\r\n", $"\r\n{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}");
 
 
 				string template = Cleanup($@"
@@ -1266,7 +1359,7 @@ namespace DotNetLineNumbers
 
 
 		/// <summary>
-		/// retrieve user identity with fallback on error to safer method
+		/// retrieve user identity with fall back on error to safer method
 		/// </summary>
 		/// <returns></returns>
 		private static string UserIdentity
@@ -1429,11 +1522,11 @@ namespace DotNetLineNumbers
 
 
 		/// <summary>
-		/// returns build datetime of assembly
+		/// returns build date time of assembly
 		/// assumes default assembly value in AssemblyInfo:
 		/// {Assembly: AssemblyVersion("1.0.*")}
 		///
-		/// filesystem create time is used, if revision and build were overridden by user
+		/// file system create time is used, if revision and build were overridden by user
 		/// </summary>
 		/// <param name="objAssembly"></param>
 		/// <param name="bForceFileDate"></param>
@@ -1465,7 +1558,7 @@ namespace DotNetLineNumbers
 
 
 		/// <summary>
-		/// exception-safe file attrib retrieval; we don't care if this fails
+		/// exception-safe file attribute retrieval; we don't care if this fails
 		/// </summary>
 		/// <param name="objAssembly"></param>
 		/// <returns></returns>
@@ -1486,12 +1579,13 @@ namespace DotNetLineNumbers
 		/// <summary>
 		/// enhanced stack trace generator
 		/// </summary>
-		/// <returns></returns>
+		/// <param name="ex">An Exception object to generate a stack trace from.</param>
+		/// <returns>An EnhancedStackTrace object based on the stack trace from the given exception.</returns>
 		public static EnhancedStackTrace GetEnhancedStackTrace(this Exception ex)
 		{
 			if (ex == null)
 			{
-				//ignore any stackframes from THIS class
+				//ignore any stack frames from THIS class
 				return (new EnhancedStackTrace(true, MethodBase.GetCurrentMethod().DeclaringType.Name));
 			}
 			else
@@ -1533,7 +1627,7 @@ namespace DotNetLineNumbers
 		private static string CleanupAndIndent(string buf)
 		{
 			//cleanup and then put spaces back in for markers
-			return Cleanup(buf).Replace($"{Constants.INDENT}", "   ");
+			return Cleanup(buf).Replace($"{Utilities.Constants.INDENT}", "   ");
 		}
 
 		#endregion

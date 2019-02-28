@@ -42,6 +42,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers.Utilities
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers", "DotNetLineNumbers\DotNetLineNumbers.csproj", "{34D84134-412A-4A14-B8F9-4A1D05B84183}"
 EndProject
+Project("{7CF6DF6D-3B04-46F8-A40B-537D21BCA0B4}") = "DotNetLineNumbersHelp", "DotNetLineNumbersHelp\DotNetLineNumbersHelp.shfbproj", "{99AD4255-53F4-417F-ACE6-43B68E52BBB9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -183,6 +185,18 @@ Global
 		{34D84134-412A-4A14-B8F9-4A1D05B84183}.Release|x64.Build.0 = Release|Any CPU
 		{34D84134-412A-4A14-B8F9-4A1D05B84183}.Release|x86.ActiveCfg = Release|Any CPU
 		{34D84134-412A-4A14-B8F9-4A1D05B84183}.Release|x86.Build.0 = Release|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Debug|x64.Build.0 = Debug|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Debug|x86.Build.0 = Debug|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Release|x64.ActiveCfg = Release|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Release|x64.Build.0 = Release|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Release|x86.ActiveCfg = Release|Any CPU
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
