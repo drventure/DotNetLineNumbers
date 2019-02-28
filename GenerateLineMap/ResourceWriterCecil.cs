@@ -39,7 +39,7 @@ using System.Resources;
 /// 
 /// </summary>
 /// <remarks></remarks>
-public class ResourceWriterCecil
+internal class ResourceWriterCecil
 {
 	private bool _Inited;
 	private AssemblyDefinition _Asm;

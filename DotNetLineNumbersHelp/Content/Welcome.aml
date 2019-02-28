@@ -2,7 +2,6 @@
 <topic id="23481939-ae4d-421c-82af-5d68ccd57ba6" revisionNumber="1">
 	<developerConceptualDocument xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5" xmlns:xlink="http://www.w3.org/1999/xlink">
 		<introduction>
-			<para>Documentation for DotNetLineNumbers</para>
       <para>This project provides a means of embedding line number information directly into .NET executables (both
             EXEs and DLLs) and then extracting that information at runtime to provide detailed stack trace information
             without having to distribute the application PDB files.</para>
@@ -11,6 +10,11 @@
 		<section>
 			<title>Getting Started</title>
 			<content>
+        <para>
+          For details on executing the GenerateLineMap.exe file directly, see
+          <link xlink:href="dad3a78e-e827-489a-8a32-f1de43032c4f" />
+        </para>
+        <para>Other boilerplate stuff follows.</para>
 				<para>To get started, add a documentation source to the project (a Visual Studio solution, project, or
 assembly and XML comments file).  See the <legacyBold>Getting Started</legacyBold> topics in the Sandcastle Help
 File Builder's help file for more information.  The following default items are included in this project:</para>

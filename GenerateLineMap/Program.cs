@@ -68,10 +68,13 @@ namespace GenerateLineMap
 			}
 		}
 
+
 		/// <summary>
-		/// Command line application entry point
+		/// Invoke the main GenerateLineMap functionality as if executed from the command line.
+		/// This is primarily intended to be invoked by the MSBuild Task for generating a line map
+		/// resource after a successful build.
 		/// </summary>
-		/// <remarks></remarks>
+		/// <param name="args">string array containing command line arguments to use.</param>
 		public static void Main(string[] args)
 		{
 			string fileName = args.Length > 0 ? args[0] : "";

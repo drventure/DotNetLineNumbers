@@ -28,6 +28,7 @@
     </TransformComponentArguments>
     <DocumentationSources>
       <DocumentationSource sourceFile="..\DotNetLineNumbers.Utilities\DotNetLineNumbers.Utilities.csproj" xmlns="" />
+      <DocumentationSource sourceFile="..\GenerateLineMap\GenerateLineMap.csproj" />
     </DocumentationSources>
     <HelpTitle>DotNetLineNumbers API Guide</HelpTitle>
     <HelpFileVersion>0.0.0.1</HelpFileVersion>
@@ -73,6 +74,7 @@
     <Folder Include="media" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Content\GenerateLineMapCommandLine.aml" />
     <None Include="Content\VersionHistory\v1.0.0.0.aml" />
     <None Include="Content\VersionHistory\VersionHistory.aml" />
     <None Include="Content\Welcome.aml" />
@@ -87,6 +89,11 @@
     <ProjectReference Include="..\DotNetLineNumbers.Utilities\DotNetLineNumbers.Utilities.csproj">
       <Name>DotNetLineNumbers.Utilities</Name>
       <Project>{97be86b7-5777-4835-9340-9c79ed8f2238}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\GenerateLineMap\GenerateLineMap.csproj">
+      <Name>GenerateLineMap</Name>
+      <Project>{ea13ab2d-71f0-4634-911b-84bfd0d29232}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

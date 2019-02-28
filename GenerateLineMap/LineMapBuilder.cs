@@ -41,10 +41,10 @@ namespace GenerateLineMap
 	/// </summary>
 	/// <remarks>
 	/// If some of the functions seem a little odd here, that's mostly because
-	/// I was experimenting with "Fluent" style apis during most of the 
+	/// I was experimenting with "Fluent" style APIs during most of the 
 	/// development of this project.
 	/// </remarks>
-	public class LineMapBuilder
+	internal class LineMapBuilder
 	{
 
 		#region " Structures"
@@ -239,7 +239,7 @@ namespace GenerateLineMap
 				//.net!
 
 				var Tokn = syminfo.Value;
-				var si = new AssemblyLineMap.SymbolInfo(syminfo.Name.Substring(0, syminfo.NameLen), syminfo.Address, Tokn);
+				var si = new Internals.AssemblyLineMap.SymbolInfo(syminfo.Name.Substring(0, syminfo.NameLen), syminfo.Address, Tokn);
 
 				_alm.Symbols.Add(Tokn, si);
 			}
@@ -265,7 +265,7 @@ namespace GenerateLineMap
 			if (srcinfo.LineNumber == 0xFEEFEE)
 			{
 				// skip these entries
-				// I believe they mark the end of a set of linenumbers associated
+				// I believe they mark the end of a set of line numbers associated
 				// with a particular method, but they don't appear to contain
 				// valid line number info in any case.
 			}
@@ -299,7 +299,7 @@ namespace GenerateLineMap
 				}
 				catch (Exception ex)
 				{
-					Log.LogError(ex, "Unable to enum lines");
+					Log.LogError(ex, "Unable to enumerate lines");
 					// catch everything because we DO NOT
 					// want to throw an exception from here!
 				}
@@ -338,7 +338,7 @@ namespace GenerateLineMap
 		);
 
 
-		// I believe this is deprecatedin dbghelp 6.0 or later
+		// I believe this is deprecated in dbghelp 6.0 or later
 		//Private Declare Function SymLoadModule Lib "dbghelp.dll" ( _
 		//  ByVal hProcess As Integer, _
 		//  ByVal hFile As Integer, _
@@ -503,8 +503,8 @@ namespace GenerateLineMap
 
 
 		/// <summary>
-		/// Create a linemap file from the PDB for the given executable file
-		/// Theoretically, you could read the LineMap info from the linemap file
+		/// Create a line map file from the PDB for the given executable file
+		/// Theoretically, you could read the LineMap info from the line map file
 		/// OR from a resource in the EXE/DLL, but I doubt you'd ever really want
 		/// to. This is mainly for testing all the streaming functions
 		/// </summary>
@@ -521,7 +521,7 @@ namespace GenerateLineMap
 			var EncryptedStream = EncryptStream(CompressedStream);
 
 
-			// swap out the below two lines to generate a linemap (lmp) file that is not compressed or encrypted
+			// swap out the below two lines to generate a line map (lmp) file that is not compressed or encrypted
 			StreamToFile(this.OutFilename + ".lmp", EncryptedStream);
 			//pStreamToFile(Me.Filename & ".lmp", alm.ToStream);
 
@@ -531,7 +531,7 @@ namespace GenerateLineMap
 
 
 		/// <summary>
-		/// Inject a linemap resource into the given EXE/DLL file
+		/// Inject a line map resource into the given EXE/DLL file
 		/// from the PDB for that file
 		/// </summary>
 		/// <remarks></remarks>
@@ -546,9 +546,9 @@ namespace GenerateLineMap
 			var EncryptedStream = EncryptStream(CompressedStream);
 
 			StreamToAPIResource(this.OutFilename,
-							  Constants.ResTypeName,
-							  Constants.ResName,
-							  Constants.ResLang,
+							  Internals.Constants.ResTypeName,
+							  Internals.Constants.ResName,
+							  Internals.Constants.ResLang,
 							  EncryptedStream);
 
 			// write the report
@@ -557,7 +557,7 @@ namespace GenerateLineMap
 
 
 		/// <summary>
-		/// Inject a linemap .net resource into the given EXE/DLL file
+		/// Inject a line map .net resource into the given EXE/DLL file
 		/// from the PDB for that file
 		/// </summary>
 		/// <remarks></remarks>
@@ -573,7 +573,7 @@ namespace GenerateLineMap
 			var EncryptedStream = EncryptStream(CompressedStream);
 
 			StreamToResource(this.OutFilename,
-							  Constants.ResName,
+							  Internals.Constants.ResName,
 							  EncryptedStream);
 
 			// write the report
@@ -587,7 +587,7 @@ namespace GenerateLineMap
 		/// Internal function to write out a line map report if asked to
 		/// </summary>
 		/// <remarks></remarks>
-		private void WriteReport(AssemblyLineMap AssemblyLineMap)
+		private void WriteReport(Internals.AssemblyLineMap AssemblyLineMap)
 		{
 			//only write it if requested
 			if (this.CreateMapReport)
@@ -604,10 +604,10 @@ namespace GenerateLineMap
 
 
 		/// <summary>
-		/// Create a linemap report buffer from the PDB for the given executable file
+		/// Create a line map report buffer from the PDB for the given executable file
 		/// </summary>
 		/// <remarks></remarks>
-		private StringBuilder CreatePDBReport(AssemblyLineMap AssemblyLineMap)
+		private StringBuilder CreatePDBReport(Internals.AssemblyLineMap AssemblyLineMap)
 		{
 
 			var sb = new StringBuilder();
@@ -623,7 +623,7 @@ namespace GenerateLineMap
 				var lineex = AssemblyLineMap.AddressToLineMap.Where(l => l.Address == s.Address).FirstOrDefault();
 				var name = lineex?.ObjectName;
 				name = (!string.IsNullOrEmpty(name) ? name + "." : "") + s.Name;
-				return new AssemblyLineMap.SymbolInfo(name, s.Address, s.Token);
+				return new Internals.AssemblyLineMap.SymbolInfo(name, s.Address, s.Token);
 			}).ToList();
 			symbols.Sort((x, y) => x.Name.CompareTo(y.Name));
 
@@ -656,7 +656,7 @@ namespace GenerateLineMap
 			});
 
 			// let the symbol run till the next transition is detected
-			AssemblyLineMap.SymbolInfo sym = null;
+			Internals.AssemblyLineMap.SymbolInfo sym = null;
 			foreach (var lineex in AssemblyLineMap.AddressToLineMap)
 			{
 				// find the symbol for this line number
@@ -690,14 +690,14 @@ namespace GenerateLineMap
 
 
 		/// <summary>
-		/// Retrieve symbols and linenums and write them to a memory stream
+		/// Retrieve symbols and line numbers and write them to a memory stream
 		/// </summary>
 		/// <param name="FileName"></param>
 		/// <returns></returns>
-		private AssemblyLineMap GetAssemblyLineMap(string FileName)
+		private Internals.AssemblyLineMap GetAssemblyLineMap(string FileName)
 		{
 			// create a new map to capture symbols and line info with
-			_alm = Utilities.Bookkeeping.AssemblyLineMaps.Add(FileName);
+			_alm = Internals.Bookkeeping.AssemblyLineMaps.Add(FileName);
 
 			if (!System.IO.File.Exists(FileName))
 			{
@@ -719,7 +719,7 @@ namespace GenerateLineMap
 
 					if (dwModuleBase != 0)
 					{
-						// this appearently is required in some cases where the moduleinfo load may be deferred
+						// this apparently is required in some cases where the module info load may be deferred
 						IMAGEHLP_MODULE64 moduleInfo = IMAGEHLP_MODULE64.Create();
 						var r = SymGetModuleInfo(hProcess, 0, ref moduleInfo);
 
@@ -731,7 +731,7 @@ namespace GenerateLineMap
 							throw new UnableToEnumerateSymbolsException();
 						}
 
-						// now enum all the source lines and their respective addresses
+						// now enumerate all the source lines and their respective addresses
 						var pSymEnumLinesCallback_proc = new PSYM_ENUMLINES_CALLBACK(SymEnumLinesCallback_proc);
 
 						if (SymEnumSourceLines(hProcess, dwModuleBase, 0, 0, 0, 0, pSymEnumLinesCallback_proc, 0) == 0)
@@ -744,7 +744,7 @@ namespace GenerateLineMap
 			}
 			catch (Exception ex)
 			{
-				// return return vars
+				// return vars
 				Log.LogError(ex, "Unable to retrieve symbols.");
 				_alm.Clear();
 
@@ -767,11 +767,11 @@ namespace GenerateLineMap
 			}
 			return _alm;
 		}
-		private AssemblyLineMap _alm;
+		private Internals.AssemblyLineMap _alm;
 
 
 		/// <summary>
-		/// Given a Filename and memorystream, write the stream to the file
+		/// Given a Filename and memory stream, write the stream to the file
 		/// </summary>
 		/// <param name="Filename"></param>
 		/// <param name="MemoryStream"></param>
@@ -790,7 +790,7 @@ namespace GenerateLineMap
 
 		/// <summary>
 		/// Write out a memory stream to a named resource in the given 
-		/// WIN32 format executable file (iether EXE or DLL)
+		/// WIN32 format executable file (either EXE or DLL)
 		/// </summary>
 		/// <param name="Filename"></param>
 		/// <param name="ResourceName"></param>
@@ -807,8 +807,8 @@ namespace GenerateLineMap
 				File.SetAttributes(filename, FileAttributes.Normal);
 			}
 
-			// convert memorystream to byte array and write out to 
-			// the linemap resource
+			// convert memory stream to byte array and write out to 
+			// the line map resource
 			Log.LogMessage("Writing symbol buffer to resource");
 
 			ResWriter.FileName = filename;
@@ -819,7 +819,7 @@ namespace GenerateLineMap
 
 		/// <summary>
 		/// Write out a memory stream to a named resource in the given 
-		/// WIN32 format executable file (iether EXE or DLL)
+		/// WIN32 format executable file (either EXE or DLL)
 		/// </summary>
 		/// <param name="OutFilename"></param>
 		/// <param name="ResourceName"></param>
@@ -835,8 +835,8 @@ namespace GenerateLineMap
 				System.IO.File.Copy(this.Filename, OutFilename);
 			}
 
-			// convert memorystream to byte array and write out to 
-			// the linemap resource
+			// convert memory stream to byte array and write out to 
+			// the line map resource
 
 			Log.LogMessage("Writing symbol buffer to resource");
 
@@ -856,7 +856,7 @@ namespace GenerateLineMap
 		{
 			var CompressedStream = new System.IO.MemoryStream();
 
-			// note, the LeaveOpen parm MUST BE true into order to read the memory stream afterwards!
+			// note, the LeaveOpen parameter MUST BE true into order to read the memory stream afterwards!
 			Log.LogMessage("Compressing symbol buffer");
 
 			using (var GZip = new System.IO.Compression.GZipStream(CompressedStream, System.IO.Compression.CompressionMode.Compress, true))
@@ -880,9 +880,9 @@ namespace GenerateLineMap
 			// setup our encryption key
 			Enc.KeySize = 256;
 			// KEY is 32 byte array
-			Enc.Key = Constants.ENCKEY;
+			Enc.Key = Internals.Constants.ENCKEY;
 			// IV is 16 byte array
-			Enc.IV = Constants.ENCIV;
+			Enc.IV = Internals.Constants.ENCIV;
 
 			var EncryptedStream = new System.IO.MemoryStream();
 

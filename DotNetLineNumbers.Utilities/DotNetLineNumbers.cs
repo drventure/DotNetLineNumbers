@@ -67,20 +67,20 @@ namespace DotNetLineNumbers
 		public EnhancedStackFrame(StackFrame stackFrame)
 		{
 			//attempt to load any line maps from the source assembly
-			Utilities.Bookkeeping.AssemblyLineMaps.Add(stackFrame.GetMethod().DeclaringType.Assembly);
+			Internals.Bookkeeping.AssemblyLineMaps.Add(stackFrame.GetMethod().DeclaringType.Assembly);
 
 			_stackFrame = stackFrame;
 			// first, get the base address of the method
 			// if possible. We have to have symbols to do this...
-			if (Utilities.Bookkeeping.AssemblyLineMaps.Count == 0)
+			if (Internals.Bookkeeping.AssemblyLineMaps.Count == 0)
 				return;
 
 			// first, check if for symbols for the assembly for this stack frame
-			if (!Utilities.Bookkeeping.AssemblyLineMaps.Keys.Contains(stackFrame.GetMethod().DeclaringType.Assembly.CodeBase))
+			if (!Internals.Bookkeeping.AssemblyLineMaps.Keys.Contains(stackFrame.GetMethod().DeclaringType.Assembly.CodeBase))
 				return;
 
 			// retrieve the cache
-			var alm = Utilities.Bookkeeping.AssemblyLineMaps[stackFrame.GetMethod().DeclaringType.Assembly.CodeBase];
+			var alm = Internals.Bookkeeping.AssemblyLineMaps[stackFrame.GetMethod().DeclaringType.Assembly.CodeBase];
 
 			// does the symbols list contain the meta data token for this method?
 			MemberInfo mi = stackFrame.GetMethod();
@@ -211,9 +211,9 @@ namespace DotNetLineNumbers
 				//file is available via PDB so use it
 				filename = System.IO.Path.GetFileName(this.GetFileName());
 			}
-			else if (Utilities.ParentAssembly != null)
+			else if (Internals.ParentAssembly != null)
 			{
-				filename = System.IO.Path.GetFileName(Utilities.ParentAssembly.CodeBase);
+				filename = System.IO.Path.GetFileName(Internals.ParentAssembly.CodeBase);
 			}
 			else
 			{
@@ -260,8 +260,8 @@ namespace DotNetLineNumbers
 				}
 			}
 
-			return $@"{Utilities.Constants.INDENT}{methodName}({parameters}) :
-			{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{filename}{line}{column}{il}";
+			return $@"{Internals.Constants.INDENT}{methodName}({parameters}) :
+			{Internals.Constants.INDENT}{Internals.Constants.INDENT}{filename}{line}{column}{il}";
 		}
 	}
 
@@ -572,12 +572,432 @@ namespace DotNetLineNumbers
 	#endregion
 
 
+	#region " Exception Extension Methods"
 	/// <summary>
-	/// Internal Utility classes and definitions used internally by DotNetLineNumbers.cs
-	/// and also by the GenerateLineMap utility.
+	/// Static class that contains extension methods to the Exception base class
+	/// for assistance with resolving line numbers using line map resources.
+	/// </summary>
+	public static class ExceptionExtensions
+	{
+		#region Public Members
+
+		/// <summary>
+		/// translate exception object to string, with additional system info
+		/// </summary>
+		/// <param name="ex">An Exception object to resolve into a detailed stack trace string representation.</param>
+		/// <returns>A detailed string rendering of the Exception, with stack trace information and line numbers where possible.</returns>
+		public static string ToStringEnhanced(this Exception ex)
+		{
+			return CleanupAndIndent(ex.ToStringEnhancedInternal());
+		}
+
+
+		/// <summary>
+		/// translate exception object to string, with additional system info
+		/// </summary>
+		/// <param name="Ex"></param>
+		/// <returns></returns>
+		private static string ToStringEnhancedInternal(this Exception ex)
+		{
+			try
+			{
+				//-- sometimes the original exception is wrapped in a more relevant outer exception
+				//-- the detail exception is the "inner" exception
+				//-- see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
+				string innertemplate = "";
+				if ((ex.InnerException != null))
+				{
+					innertemplate = Cleanup($@"
+					(Inner Exception)
+					{ex.InnerException.ToStringEnhancedInternal()} 
+					(Outer Exception)
+					");
+				}
+
+				var msg = Cleanup($@"{ex.ToString()}").Replace("\r\n", $"\r\n{" ",24}");
+
+				string template = Cleanup($@"
+				{innertemplate}{SysInfoToString()}
+				Exception Source:       {ex.Source} 
+				Exception Type:         {ex.GetType().FullName}
+				Exception Message:      {msg}
+				Exception Target Site:  {ex.TargetSite?.Name}
+				{ex.GetEnhancedStackTrace().ToString()}");
+
+				return template;
+			}
+			catch (Exception localEx)
+			{
+				//there was a problem rendering the extended exception, fall back to generic ToString()
+				return ex.ToString() + "\r\nProblem rendering Exception: " + localEx.ToString();
+			}
+		}
+		#endregion
+
+
+		#region Private Members
+
+		/// <summary>
+		/// gather some system information that is helpful to diagnosing
+		/// exception
+		/// </summary>
+		/// <param name="ex"></param>
+		/// <returns></returns>
+		private static string SysInfoToString(Exception Ex = null)
+		{
+			string template = Cleanup($@"
+			Date and Time:          {Date}
+			Machine Name:           {MachineName}
+			IP Address:             {CurrentIP}
+			Current User:           {UserIdentity}
+			Application Domain:     {CurrentDomain}
+			Assembly Codebase:      {CodeBase}
+			Assembly Full Name:     {AssemblyName}
+			Assembly Version:       {AssemblyVersion}
+			Assembly Build Date:    {AssemblyBuildDate}");
+
+			return template;
+		}
+
+
+		/// <summary>
+		/// return the current date for logging purposes
+		/// </summary>
+		private static string Date
+		{
+			get
+			{
+				return DateTime.Now.ToString();
+			}
+		}
+
+
+		/// <summary>
+		/// get IP address of this machine
+		/// not an ideal method for a number of reasons (guess why!)
+		/// but the alternatives are very ugly
+		/// </summary>
+		/// <returns></returns>
+		private static string CurrentIP
+		{
+			get
+			{
+				try
+				{
+					return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
+				}
+				catch
+				{
+					//just provide a default value
+					return "127.0.0.1";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// Return the current machine name for logging purposes
+		/// </summary>
+		private static string MachineName
+		{
+			get
+			{
+				try
+				{
+					return Environment.MachineName;
+				}
+				catch
+				{
+					return "unavailable";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// retrieve user identity with fall back on error to safer method
+		/// </summary>
+		/// <returns></returns>
+		private static string UserIdentity
+		{
+			get
+			{
+				try
+				{
+					string ident = CurrentWindowsIdentity;
+					if (string.IsNullOrEmpty(ident))
+					{
+						ident = CurrentEnvironmentIdentity;
+					}
+					return ident;
+				}
+				catch
+				{
+					return "unavailable";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// return the current app domain name for logging
+		/// </summary>
+		private static string CurrentDomain
+		{
+			get
+			{
+				try
+				{
+					return System.AppDomain.CurrentDomain.FriendlyName;
+				}
+				catch
+				{
+					return "unavailable";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// Return the codebase location for logging
+		/// </summary>
+		private static string CodeBase
+		{
+			get
+			{
+				try
+				{
+					return Internals.ParentAssembly.CodeBase;
+				}
+				catch
+				{
+					return "unavailable";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// return the assembly version for logging
+		/// </summary>
+		private static string AssemblyVersion
+		{
+			get
+			{
+				try
+				{
+					return Internals.ParentAssembly.GetName().Version.ToString();
+				}
+				catch
+				{
+					return "unavailable";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// Return the Assembly Build date for logging
+		/// </summary>
+		private static string AssemblyBuildDate
+		{
+			get
+			{
+				try
+				{
+					return GetAssemblyBuildDate(Internals.ParentAssembly).ToString();
+				}
+				catch
+				{
+					return "unavailable";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// return the assemblyName for logging
+		/// </summary>
+		private static string AssemblyName
+		{
+			get
+			{
+				try
+				{
+					return Internals.ParentAssembly.FullName;
+				}
+				catch
+				{
+					return "unavailable";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// exception-safe WindowsIdentity.GetCurrent retrieval returns "domain\username"
+		/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
+		/// </summary>
+		/// <returns></returns>
+		private static string CurrentWindowsIdentity
+		{
+			get
+			{
+				try
+				{
+					return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+				}
+				catch
+				{
+					//just provide a default value
+					return "";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// exception-safe "domain\username" retrieval from Environment
+		/// </summary>
+		/// <returns></returns>
+		private static string CurrentEnvironmentIdentity
+		{
+			get
+			{
+				try
+				{
+					return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
+				}
+				catch
+				{
+					//just provide a default value
+					return "";
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// returns build date time of assembly
+		/// assumes default assembly value in AssemblyInfo:
+		/// {Assembly: AssemblyVersion("1.0.*")}
+		///
+		/// file system create time is used, if revision and build were overridden by user
+		/// </summary>
+		/// <param name="objAssembly"></param>
+		/// <param name="bForceFileDate"></param>
+		/// <returns></returns>
+		private static DateTime GetAssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
+		{
+			System.Version objVersion = objAssembly.GetName().Version;
+			DateTime dtBuild = default(DateTime);
+
+			if (bForceFileDate)
+			{
+				dtBuild = GetAssemblyFileTime(objAssembly);
+			}
+			else
+			{
+				dtBuild = ((DateTime.Parse("01/01/2000")).AddDays(objVersion.Build).AddSeconds(objVersion.Revision * 2));
+				if (TimeZone.IsDaylightSavingTime(DateTime.Now, TimeZone.CurrentTimeZone.GetDaylightChanges(DateTime.Now.Year)))
+				{
+					dtBuild = dtBuild.AddHours(1);
+				}
+				if (dtBuild > DateTime.Now | objVersion.Build < 730 | objVersion.Revision == 0)
+				{
+					dtBuild = GetAssemblyFileTime(objAssembly);
+				}
+			}
+
+			return dtBuild;
+		}
+
+
+		/// <summary>
+		/// exception-safe file attribute retrieval; we don't care if this fails
+		/// </summary>
+		/// <param name="objAssembly"></param>
+		/// <returns></returns>
+		private static DateTime GetAssemblyFileTime(System.Reflection.Assembly objAssembly)
+		{
+			try
+			{
+				return System.IO.File.GetLastWriteTime(objAssembly.Location);
+			}
+			catch
+			{
+				//just provide a default value
+				return DateTime.MinValue;
+			}
+		}
+
+
+		/// <summary>
+		/// enhanced stack trace generator
+		/// </summary>
+		/// <param name="ex">An Exception object to generate a stack trace from.</param>
+		/// <returns>An EnhancedStackTrace object based on the stack trace from the given exception.</returns>
+		public static EnhancedStackTrace GetEnhancedStackTrace(this Exception ex)
+		{
+			if (ex == null)
+			{
+				//ignore any stack frames from THIS class
+				return (new EnhancedStackTrace(true, MethodBase.GetCurrentMethod().DeclaringType.Name));
+			}
+			else
+			{
+				return (new EnhancedStackTrace(ex, true));
+			}
+		}
+
+
+		/// <summary>
+		/// Cleanup the templated string.
+		/// A bit brute force, but this doesn't have to be performant
+		/// </summary>
+		/// <param name="buf"></param>
+		/// <returns></returns>
+		private static string Cleanup(string buf)
+		{
+			var i = buf.IndexOf("\r\n   at ");
+			if (i > 0) buf = buf.Substring(0, i - 1);
+
+			//trim leading and trailing crlfs
+			buf = buf.Trim(new char[] { '\r', '\n' });
+			//remove tabs (they could end up in the string via the IDE)
+			buf = buf.Replace("\t", "");
+			//remove leading line spacing (as a result of @"" strings in the IDE)
+			buf = buf.Replace("\r\n    ", "\r\n ");
+			buf = buf.Replace("\r\n   ", "\r\n ");
+			buf = buf.Replace("\r\n  ", "\r\n ");
+			return buf;
+		}
+
+
+		/// <summary>
+		/// Cleanup and indent the templated string.
+		/// A bit brute force, but this doesn't have to be performant
+		/// </summary>
+		/// <param name="buf"></param>
+		/// <returns></returns>
+		private static string CleanupAndIndent(string buf)
+		{
+			//cleanup and then put spaces back in for markers
+			return Cleanup(buf).Replace($"{Internals.Constants.INDENT}", "   ");
+		}
+
+		#endregion
+	}
+	#endregion
+
+
+	#region " Internal classes, and definitions for shared use by GenerateLineMap"
+	/// <summary>
+	/// Internal Utility classes and definitions used by DotNetLineNumbers.cs
+	/// and the GenerateLineMap utility.
 	/// </summary>
 	/// <exclude />
-	public static class Utilities
+	public static class Internals
 	{
 		/// <summary>
 		/// Retrieve the root assembly of the executing assembly
@@ -604,6 +1024,10 @@ namespace DotNetLineNumbers
 		}
 
 
+		/// <summary>
+		/// Internal static class to contain definitions for the AssemblyLineMap objects
+		/// and keep them out of the general DotNetLineNumbers name space.
+		/// </summary>
 		public static class Bookkeeping
 		{
 			/// <summary>
@@ -881,8 +1305,6 @@ namespace DotNetLineNumbers
 			/// <remarks></remarks>
 			public AssemblyLineMap(Assembly Assembly)
 			{
-				//LoadLineMapResource(Assembly.GetExecutingAssembly(), Symbols, Lines)
-
 				this.FileName = Assembly.CodeBase.Replace("file:///", string.Empty);
 
 				try
@@ -1212,425 +1634,5 @@ namespace DotNetLineNumbers
 		}
 		#endregion
 	}
-
-
-	/// <summary>
-	/// Static class that contains extension methods to the Exception base class
-	/// for assistance with resolving line numbers using line map resources.
-	/// </summary>
-	public static class ExceptionExtensions
-	{
-		#region Public Members
-
-		/// <summary>
-		/// translate exception object to string, with additional system info
-		/// </summary>
-		/// <param name="ex">An Exception object to resolve into a detailed stack trace string representation.</param>
-		/// <returns>A detailed string rendering of the Exception, with stack trace information and line numbers where possible.</returns>
-		public static string ToStringEnhanced(this Exception ex)
-		{
-			return CleanupAndIndent(ex.ToStringEnhancedInternal());
-		}
-
-
-		/// <summary>
-		/// translate exception object to string, with additional system info
-		/// </summary>
-		/// <param name="Ex"></param>
-		/// <returns></returns>
-		private static string ToStringEnhancedInternal(this Exception ex)
-		{
-			try
-			{
-				//-- sometimes the original exception is wrapped in a more relevant outer exception
-				//-- the detail exception is the "inner" exception
-				//-- see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnbda/html/exceptdotnet.asp
-				string innertemplate = "";
-				if ((ex.InnerException != null))
-				{
-					innertemplate = Cleanup($@"
-					(Inner Exception)
-					{ex.InnerException.ToStringEnhancedInternal()} 
-					(Outer Exception)
-					");
-				}
-
-				//TODO Clean this up, needs 23 spaces for formatting to line up
-				//Any better way to do this?
-				var msg = Cleanup($@"{ex.ToString()}").Replace("\r\n", $"\r\n{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}{Utilities.Constants.INDENT}");
-
-
-				string template = Cleanup($@"
-				{innertemplate}{SysInfoToString()}
-				Exception Source:       {ex.Source} 
-				Exception Type:         {ex.GetType().FullName}
-				Exception Message:      {msg}
-				Exception Target Site:  {ex.TargetSite?.Name}
-				{ex.GetEnhancedStackTrace().ToString()}");
-
-				return template;
-			}
-			catch (Exception localEx)
-			{
-				//there was a problem rendering the extended exception, fall back to generic ToString()
-				return ex.ToString() + "\r\nProblem rendering Exception: " + localEx.ToString();
-			}
-		}
-		#endregion
-
-
-		#region Private Members
-
-		/// <summary>
-		/// gather some system information that is helpful to diagnosing
-		/// exception
-		/// </summary>
-		/// <param name="ex"></param>
-		/// <returns></returns>
-		private static string SysInfoToString(Exception Ex = null)
-		{
-			string template = Cleanup($@"
-			Date and Time:          {Date}
-			Machine Name:           {MachineName}
-			IP Address:             {CurrentIP}
-			Current User:           {UserIdentity}
-			Application Domain:     {CurrentDomain}
-			Assembly Codebase:      {CodeBase}
-			Assembly Full Name:     {AssemblyName}
-			Assembly Version:       {AssemblyVersion}
-			Assembly Build Date:    {AssemblyBuildDate}");
-
-			return template;
-		}
-
-
-		/// <summary>
-		/// return the current date for logging purposes
-		/// </summary>
-		private static string Date
-		{
-			get
-			{
-				return DateTime.Now.ToString();
-			}
-		}
-
-
-		/// <summary>
-		/// get IP address of this machine
-		/// not an ideal method for a number of reasons (guess why!)
-		/// but the alternatives are very ugly
-		/// </summary>
-		/// <returns></returns>
-		private static string CurrentIP
-		{
-			get
-			{
-				try
-				{
-					return System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList[0].ToString();
-				}
-				catch
-				{
-					//just provide a default value
-					return "127.0.0.1";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// Return the current machine name for logging purposes
-		/// </summary>
-		private static string MachineName
-		{
-			get
-			{
-				try
-				{
-					return Environment.MachineName;
-				}
-				catch
-				{
-					return "unavailable";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// retrieve user identity with fall back on error to safer method
-		/// </summary>
-		/// <returns></returns>
-		private static string UserIdentity
-		{
-			get
-			{
-				try
-				{
-					string ident = CurrentWindowsIdentity;
-					if (string.IsNullOrEmpty(ident))
-					{
-						ident = CurrentEnvironmentIdentity;
-					}
-					return ident;
-				}
-				catch
-				{
-					return "unavailable";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// return the current app domain name for logging
-		/// </summary>
-		private static string CurrentDomain
-		{
-			get
-			{
-				try
-				{
-					return System.AppDomain.CurrentDomain.FriendlyName;
-				}
-				catch
-				{
-					return "unavailable";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// Return the codebase location for logging
-		/// </summary>
-		private static string CodeBase
-		{
-			get
-			{
-				try
-				{
-					return Utilities.ParentAssembly.CodeBase;
-				}
-				catch
-				{
-					return "unavailable";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// return the assembly version for logging
-		/// </summary>
-		private static string AssemblyVersion
-		{
-			get
-			{
-				try
-				{
-					return Utilities.ParentAssembly.GetName().Version.ToString();
-				}
-				catch
-				{
-					return "unavailable";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// Return the Assembly Build date for logging
-		/// </summary>
-		private static string AssemblyBuildDate
-		{
-			get
-			{
-				try
-				{
-					return GetAssemblyBuildDate(Utilities.ParentAssembly).ToString();
-				}
-				catch
-				{
-					return "unavailable";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// return the assemblyName for logging
-		/// </summary>
-		private static string AssemblyName
-		{
-			get
-			{
-				try
-				{
-					return Utilities.ParentAssembly.FullName;
-				}
-				catch
-				{
-					return "unavailable";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// exception-safe WindowsIdentity.GetCurrent retrieval returns "domain\username"
-		/// per MS, this sometimes randomly fails with "Access Denied" particularly on NT4
-		/// </summary>
-		/// <returns></returns>
-		private static string CurrentWindowsIdentity
-		{
-			get
-			{
-				try
-				{
-					return System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-				}
-				catch
-				{
-					//just provide a default value
-					return "";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// exception-safe "domain\username" retrieval from Environment
-		/// </summary>
-		/// <returns></returns>
-		private static string CurrentEnvironmentIdentity
-		{
-			get
-			{
-				try
-				{
-					return System.Environment.UserDomainName + "\\" + System.Environment.UserName;
-				}
-				catch
-				{
-					//just provide a default value
-					return "";
-				}
-			}
-		}
-
-
-		/// <summary>
-		/// returns build date time of assembly
-		/// assumes default assembly value in AssemblyInfo:
-		/// {Assembly: AssemblyVersion("1.0.*")}
-		///
-		/// file system create time is used, if revision and build were overridden by user
-		/// </summary>
-		/// <param name="objAssembly"></param>
-		/// <param name="bForceFileDate"></param>
-		/// <returns></returns>
-		private static DateTime GetAssemblyBuildDate(System.Reflection.Assembly objAssembly, bool bForceFileDate = false)
-		{
-			System.Version objVersion = objAssembly.GetName().Version;
-			DateTime dtBuild = default(DateTime);
-
-			if (bForceFileDate)
-			{
-				dtBuild = GetAssemblyFileTime(objAssembly);
-			}
-			else
-			{
-				dtBuild = ((DateTime.Parse("01/01/2000")).AddDays(objVersion.Build).AddSeconds(objVersion.Revision * 2));
-				if (TimeZone.IsDaylightSavingTime(DateTime.Now, TimeZone.CurrentTimeZone.GetDaylightChanges(DateTime.Now.Year)))
-				{
-					dtBuild = dtBuild.AddHours(1);
-				}
-				if (dtBuild > DateTime.Now | objVersion.Build < 730 | objVersion.Revision == 0)
-				{
-					dtBuild = GetAssemblyFileTime(objAssembly);
-				}
-			}
-
-			return dtBuild;
-		}
-
-
-		/// <summary>
-		/// exception-safe file attribute retrieval; we don't care if this fails
-		/// </summary>
-		/// <param name="objAssembly"></param>
-		/// <returns></returns>
-		private static DateTime GetAssemblyFileTime(System.Reflection.Assembly objAssembly)
-		{
-			try
-			{
-				return System.IO.File.GetLastWriteTime(objAssembly.Location);
-			}
-			catch
-			{
-				//just provide a default value
-				return DateTime.MinValue;
-			}
-		}
-
-
-		/// <summary>
-		/// enhanced stack trace generator
-		/// </summary>
-		/// <param name="ex">An Exception object to generate a stack trace from.</param>
-		/// <returns>An EnhancedStackTrace object based on the stack trace from the given exception.</returns>
-		public static EnhancedStackTrace GetEnhancedStackTrace(this Exception ex)
-		{
-			if (ex == null)
-			{
-				//ignore any stack frames from THIS class
-				return (new EnhancedStackTrace(true, MethodBase.GetCurrentMethod().DeclaringType.Name));
-			}
-			else
-			{
-				return (new EnhancedStackTrace(ex, true));
-			}
-		}
-
-
-		/// <summary>
-		/// Cleanup the templated string.
-		/// A bit brute force, but this doesn't have to be performant
-		/// </summary>
-		/// <param name="buf"></param>
-		/// <returns></returns>
-		private static string Cleanup(string buf)
-		{
-			var i = buf.IndexOf("\r\n   at ");
-			if (i > 0) buf = buf.Substring(0, i - 1);
-
-			//trim leading and trailing crlfs
-			buf = buf.Trim(new char[] { '\r', '\n' });
-			//remove tabs (they could end up in the string via the IDE)
-			buf = buf.Replace("\t", "");
-			//remove leading line spacing (as a result of @"" strings in the IDE)
-			buf = buf.Replace("\r\n    ", "\r\n ");
-			buf = buf.Replace("\r\n   ", "\r\n ");
-			buf = buf.Replace("\r\n  ", "\r\n ");
-			return buf;
-		}
-
-
-		/// <summary>
-		/// Cleanup and indent the templated string.
-		/// A bit brute force, but this doesn't have to be performant
-		/// </summary>
-		/// <param name="buf"></param>
-		/// <returns></returns>
-		private static string CleanupAndIndent(string buf)
-		{
-			//cleanup and then put spaces back in for markers
-			return Cleanup(buf).Replace($"{Utilities.Constants.INDENT}", "   ");
-		}
-
-		#endregion
-	}
-
+	#endregion
 }

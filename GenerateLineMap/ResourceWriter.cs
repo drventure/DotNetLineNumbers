@@ -38,7 +38,7 @@ namespace GenerateLineMap
 	/// </summary>
 	/// <remarks></remarks>
 	/// <editHistory></editHistory>
-	public class ResourceWriter : IDisposable
+	internal class ResourceWriter : IDisposable
 	{
 
 		#region " Enumerations"
@@ -338,7 +338,7 @@ namespace GenerateLineMap
 	/// to write the linemap into the resources of an exe/dll
 	/// </summary>
 	/// <remarks></remarks>
-	public static class ResourceAPIs
+	internal static class ResourceAPIs
 	{
 		[DllImport("KERNEL32.DLL", EntryPoint = "BeginUpdateResourceW", SetLastError = true, CharSet = CharSet.Unicode)]
 		public static extern IntPtr BeginUpdateResource([MarshalAs(UnmanagedType.LPWStr)]

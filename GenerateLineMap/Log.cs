@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,6 +7,9 @@ using Microsoft.Build.Utilities;
 
 namespace GenerateLineMap
 {
+	/// <summary>
+	/// Public Log class to implement ILog interface for integration with MSBuild logging.
+	/// </summary>
 	public static class Log 
 	{
 		public static ILog Logger;
