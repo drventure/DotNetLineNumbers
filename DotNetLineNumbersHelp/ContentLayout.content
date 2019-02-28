@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Topics>
-  <Topic id="23481939-ae4d-421c-82af-5d68ccd57ba6" visible="True" isDefault="true" isSelected="true" title="Welcome">
+  <Topic id="23481939-ae4d-421c-82af-5d68ccd57ba6" visible="True" isDefault="true" title="Welcome">
     <HelpKeywords>
       <HelpKeyword index="K" term="Welcome" />
     </HelpKeywords>
@@ -10,9 +10,9 @@
     <HelpKeywords>
       <HelpKeyword index="K" term="version, history" />
     </HelpKeywords>
-    <Topic id="3c73e474-2355-43a9-9175-a0b3f6040c53" visible="True" title="Version 1.0.0.0">
+    <Topic id="3c73e474-2355-43a9-9175-a0b3f6040c53" visible="True" isSelected="true">
       <HelpKeywords>
-        <HelpKeyword index="K" term="version, 1.0.0.0" />
+        <HelpKeyword index="K" term="version, 0.0.0.1" />
       </HelpKeywords>
     </Topic>
   </Topic>

@@ -37,12 +37,16 @@ using System.Text;
 using System.Xml;
 
 
-/// <summary>
-/// Root name space for the DotNetLineNumbers classes and utilities for resolving
-/// line numbers from line map resources embedded within .net executables.
-/// </summary>
 namespace DotNetLineNumbers
 {
+	/// <summary>
+	/// Root name space for the DotNetLineNumbers classes and utilities for resolving
+	/// line numbers from line map resources embedded within .net executables.
+	/// </summary>
+	internal class NamespaceDoc
+	{ }
+
+
 	#region " Enhanced Stack Classes"
 	/// <summary>
 	/// A StackFrame subclass that includes logic to resolve
@@ -290,6 +294,7 @@ namespace DotNetLineNumbers
 		public EnhancedStackTrace() : base()
 		{ }
 
+
 		/// <summary>
 		/// Initializes a new instance of an EnhancedStackTrace class from the
 		/// caller's frame, skipping any frame pointed to the class with the passed class name.
@@ -299,6 +304,7 @@ namespace DotNetLineNumbers
 		{
 			_skipClassNames = new HashSet<string>(new string[] { skipClassName });
 		}
+
 
 		/// <summary>
 		/// Initializes a new instance of an EnhancedStackTrace class from the
@@ -310,6 +316,7 @@ namespace DotNetLineNumbers
 			_skipClassNames = new HashSet<string>(skipClassNames);
 		}
 
+
 		/// <summary>
 		///  Initializes a new instance of the System.Diagnostics.StackTrace class from the
 		///  caller's frame, optionally capturing source information.
@@ -317,6 +324,7 @@ namespace DotNetLineNumbers
 		/// <param name="fNeedFileInfo">True to capture the file name, line number, and column number; otherwise, false.</param>
 		public EnhancedStackTrace(bool fNeedFileInfo) : base(fNeedFileInfo)
 		{ }
+
 
 		/// <summary>
 		///  Initializes a new instance of the System.Diagnostics.StackTrace class from the
@@ -329,6 +337,7 @@ namespace DotNetLineNumbers
 			_skipClassNames = new HashSet<string>(new string[] { skipClassName });
 		}
 
+
 		/// <summary>
 		///  Initializes a new instance of the System.Diagnostics.StackTrace class from the
 		///  caller's frame, optionally capturing source information.
@@ -340,6 +349,7 @@ namespace DotNetLineNumbers
 			_skipClassNames = new HashSet<string>(skipClassNames);
 		}
 
+
 		/// <summary>
 		/// Initializes a new instance of the System.Diagnostics.StackTrace class from the
 		/// caller's frame, skipping the specified number of frames.
@@ -349,138 +359,135 @@ namespace DotNetLineNumbers
 		public EnhancedStackTrace(int skipFrames) : base(skipFrames)
 		{ }
 
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class using the
-		//     provided exception object.
-		//
-		// Parameters:
-		//   e:
-		//     The exception object from which to construct the stack trace.
-		//
-		// Exceptions:
-		//   T:System.ArgumentNullException:
-		//     The parameter e is null.
+
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class using the
+		/// provided exception object.
+		/// </summary>
+		/// <param name="e">The Exception from which to generate this stack trace.</param>
+		/// <exception cref="System.ArgumentNullException">The e parameter is null.</exception>
 		public EnhancedStackTrace(Exception e) : base(e)
 		{ }
+				   
 
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class using the
+		/// provided exception object, skipping frames of the given named class.
+		/// </summary>
+		/// <param name="e">The Exception from which to generate this stack trace.</param>
+		/// <param name="skipClassName">A string containing the class name used to skip frames.</param>
+		/// <exception cref="System.ArgumentNullException">The e parameter is null.</exception>
 		public EnhancedStackTrace(Exception e, string skipClassName) : base(e)
 		{
 			_skipClassNames = new HashSet<string>(new string[] { skipClassName });
 		}
 
+
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class using the
+		/// provided exception object, skipping frames of the given named classes.
+		/// </summary>
+		/// <param name="e">The Exception from which to generate this stack trace.</param>
+		/// <param name="skipClassNames">An array or list of class names used to skip frames.</param>
+		/// <exception cref="System.ArgumentNullException">The e parameter is null.</exception>
 		public EnhancedStackTrace(Exception e, IEnumerable<string> skipClassNames) : base(e)
 		{
 			_skipClassNames = new HashSet<string>(skipClassNames);
 		}
 
 
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class that contains
-		//     a single frame.
-		//
-		// Parameters:
-		//   frame:
-		//     The frame that the System.Diagnostics.StackTrace object should contain.
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class that contains
+		/// a single frame.
+		/// </summary>
+		/// <param name="frame">The frame that the System.Diagnostics.StackTrace object should contain.</param>
 		public EnhancedStackTrace(EnhancedStackFrame frame) : base(frame)
 		{ }
 
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class from the
-		//     caller's frame, skipping the specified number of frames and optionally capturing
-		//     source information.
-		//
-		// Parameters:
-		//   skipFrames:
-		//     The number of frames up the stack from which to start the trace.
-		//
-		//   fNeedFileInfo:
-		//     true to capture the file name, line number, and column number; otherwise, false.
-		//
-		// Exceptions:
-		//   T:System.ArgumentOutOfRangeException:
-		//     The skipFrames parameter is negative.
+
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class from the
+		/// caller's frame, skipping the specified number of frames and optionally capturing
+		/// source information.
+		/// </summary>
+		/// <param name="skipFrames">The number of frames up the stack from which to start the trace.</param>
+		/// <param name="fNeedFileInfo">true to capture the file name, line number, and column number; otherwise, false.</param>
+		/// <exception cref="System.ArgumentOutOfRangeException">The skipFrames parameter is negative.</exception>
 		public EnhancedStackTrace(int skipFrames, bool fNeedFileInfo) : base(skipFrames, fNeedFileInfo)
 		{ }
 
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class, using
-		//     the provided exception object and optionally capturing source information.
-		//
-		// Parameters:
-		//   e:
-		//     The exception object from which to construct the stack trace.
-		//
-		//   fNeedFileInfo:
-		//     true to capture the file name, line number, and column number; otherwise, false.
-		//
-		// Exceptions:
-		//   T:System.ArgumentNullException:
-		//     The parameter e is null.
+
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class, using
+		/// the provided exception object and optionally capturing source information.
+		/// </summary>
+		/// <param name="e">The Exception from which to generate this stack trace.</param>
+		/// <param name="fNeedFileInfo">true to capture the file name, line number, and column number; otherwise, false.</param>
+		/// <exception cref="System.ArgumentNullException">The e parameter is null.</exception>
 		public EnhancedStackTrace(Exception e, bool fNeedFileInfo) : base(e, fNeedFileInfo)
 		{ }
 
+
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class, using
+		/// the provided exception object and optionally capturing source information.
+		/// </summary>
+		/// <param name="e">The Exception from which to generate this stack trace.</param>
+		/// <param name="fNeedFileInfo">true to capture the file name, line number, and column number; otherwise, false.</param>
+		/// <param name="skipClassName">A string containing the class name used to skip frames.</param>
+		/// <exception cref="System.ArgumentNullException">The e parameter is null.</exception>
 		public EnhancedStackTrace(Exception e, bool fNeedFileInfo, string skipClassName) : base(e, fNeedFileInfo)
 		{
 			_skipClassNames = new HashSet<string>(new string[] { skipClassName });
 		}
 
+
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class, using
+		/// the provided exception object and optionally capturing source information.
+		/// </summary>
+		/// <param name="e">The Exception from which to generate this stack trace.</param>
+		/// <param name="fNeedFileInfo">true to capture the file name, line number, and column number; otherwise, false.</param>
+		/// <param name="skipClassNames">An array or list of class names used to skip frames.</param>
+		/// <exception cref="System.ArgumentNullException">The e parameter is null.</exception>
 		public EnhancedStackTrace(Exception e, bool fNeedFileInfo, IEnumerable<string> skipClassNames) : base(e, fNeedFileInfo)
 		{
 			_skipClassNames = new HashSet<string>(skipClassNames);
 		}
 
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class using the
-		//     provided exception object and skipping the specified number of frames.
-		//
-		// Parameters:
-		//   e:
-		//     The exception object from which to construct the stack trace.
-		//
-		//   skipFrames:
-		//     The number of frames up the stack from which to start the trace.
-		//
-		// Exceptions:
-		//   T:System.ArgumentNullException:
-		//     The parameter e is null.
-		//
-		//   T:System.ArgumentOutOfRangeException:
-		//     The skipFrames parameter is negative.
+
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class using the
+		/// provided exception object and skipping the specified number of frames.
+		/// </summary>
+		/// <param name="e">The Exception from which to generate this stack trace.</param>
+		/// <param name="skipFrames">The number of frames up the stack from which to start the trace.</param>
+		/// <exception cref="System.ArgumentNullException">The e parameter is null.</exception>
+		/// <exception cref="System.ArgumentOutOfRangeException">The skipFrames parameter is negative.</exception>
 		public EnhancedStackTrace(Exception e, int skipFrames) : base(e, skipFrames)
 		{ }
 
-		//
-		// Summary:
-		//     Initializes a new instance of the System.Diagnostics.StackTrace class using the
-		//     provided exception object, skipping the specified number of frames and optionally
-		//     capturing source information.
-		//
-		// Parameters:
-		//   e:
-		//     The exception object from which to construct the stack trace.
-		//
-		//   skipFrames:
-		//     The number of frames up the stack from which to start the trace.
-		//
-		//   fNeedFileInfo:
-		//     true to capture the file name, line number, and column number; otherwise, false.
-		//
-		// Exceptions:
-		//   T:System.ArgumentNullException:
-		//     The parameter e is null.
-		//
-		//   T:System.ArgumentOutOfRangeException:
-		//     The skipFrames parameter is negative.
+
+		/// <summary>
+		/// Initializes a new instance of the System.Diagnostics.StackTrace class using the
+		/// provided exception object, skipping the specified number of frames and optionally
+		/// capturing source information.
+		/// </summary>
+		/// <param name="e">The Exception from which to generate this stack trace.</param>
+		/// <param name="skipFrames">The number of frames up the stack from which to start the trace.</param>
+		/// <param name="fNeedFileInfo">true to capture the file name, line number, and column number; otherwise, false.</param>
+		/// <exception cref="System.ArgumentNullException">The e parameter is null.</exception>
+		/// <exception cref="System.ArgumentOutOfRangeException">The skipFrames parameter is negative.</exception>
 		public EnhancedStackTrace(Exception e, int skipFrames, bool fNeedFileInfo) : base(e, skipFrames, fNeedFileInfo)
 		{ }
 		#endregion
 
 
+		/// <summary>
+		/// Retrieve a specific frame from the collection of frames that make up the trace.
+		/// </summary>
+		/// <param name="index">0-based index of the frame to retrieve.</param>
+		/// <returns>An EnhancedStackFrame object</returns>
 		public new EnhancedStackFrame GetFrame(int index)
 		{
 			if (_frames == null) return null;
@@ -490,7 +497,7 @@ namespace DotNetLineNumbers
 
 
 		/// <summary>
-		/// Override the FrameCount property so that it takes into account skipped frames as well
+		/// Override the FrameCount property so that it takes into account skipped frames as well.
 		/// </summary>
 		public new int FrameCount
 		{
@@ -501,13 +508,12 @@ namespace DotNetLineNumbers
 		}
 
 
-		//
-		// Summary:
-		//     Returns a copy of all stack frames in the current stack trace.
-		//
-		// Returns:
-		//     An array of type System.Diagnostics.StackFrame representing the function calls
-		//     in the stack trace.
+		/// <summary>
+		/// Returns a copy of all stack frames in the current stack trace.
+		/// </summary>
+		/// <returns>
+		/// An array of type System.Diagnostics.StackFrame representing the function calls in the stack trace.
+		/// </returns>
 		[ComVisible(false)]
 		public new EnhancedStackFrame[] GetFrames()
 		{
@@ -539,11 +545,9 @@ namespace DotNetLineNumbers
 
 
 		/// <summary>
-		/// enhanced stack trace generator
+		/// Convert this Stack Trace into a readable string representation.
 		/// </summary>
-		/// <param name="stackTrace"></param>
-		/// <param name="SkipClassNameToSkip"></param>
-		/// <returns></returns>
+		/// <returns>A string representation of this stack trace.</returns>
 		public override string ToString()
 		{
 			try

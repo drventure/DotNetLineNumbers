@@ -37,6 +37,14 @@ using Microsoft.VisualBasic.ApplicationServices;
 namespace GenerateLineMap
 {
 	/// <summary>
+	/// Root name space for the GenerateLineMap command line utility to embed line number resources into 
+	/// .Net executables.
+	/// </summary>
+	internal class NamespaceDoc
+	{ }
+
+
+	/// <summary>
 	/// Main Module for the GenerateLineMap utility
 	/// (c) 2008-2011 Darin Higgins All Rights Reserved
 	/// This is a command line utility, so this is the main entry point.
@@ -58,7 +66,9 @@ namespace GenerateLineMap
 
 
 		/// <summary>
-		/// Write only prop allows the build task to tell us to use the MSBuild logger instead
+		/// Write only prop allows the build task to tell us to use the MSBuild logger instead.
+		/// You can also supply your own class that implements TaskLoggingHelper and set it here
+		/// to redirect all logging to your own code.
 		/// </summary>
 		public static TaskLoggingHelper MSBuildLogger
 		{
@@ -74,7 +84,9 @@ namespace GenerateLineMap
 		/// This is primarily intended to be invoked by the MSBuild Task for generating a line map
 		/// resource after a successful build.
 		/// </summary>
-		/// <param name="args">string array containing command line arguments to use.</param>
+		/// <param name="args">string array containing command line arguments to use. These are 
+		/// the same arguments as those described in GenerateLineMap Command Line Usage.
+		/// </param>
 		public static void Main(string[] args)
 		{
 			string fileName = args.Length > 0 ? args[0] : "";

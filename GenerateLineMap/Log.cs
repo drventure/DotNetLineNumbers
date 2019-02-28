@@ -10,6 +10,7 @@ namespace GenerateLineMap
 	/// <summary>
 	/// Public Log class to implement ILog interface for integration with MSBuild logging.
 	/// </summary>
+	/// <exclude />
 	public static class Log 
 	{
 		public static ILog Logger;
@@ -30,6 +31,10 @@ namespace GenerateLineMap
 	}
 
 
+	/// <summary>
+	/// Interface that must be implemented to support integration with MSBuild logging.
+	/// </summary>
+	/// <exclude />
 	public interface ILog
 	{
 		void LogMessage(string message, params object[] messageargs);
@@ -38,6 +43,10 @@ namespace GenerateLineMap
 	}
 
 
+	/// <summary>
+	/// Public class required to support integration with MSBuild logging.
+	/// </summary>
+	/// <exclude />
 	public class MSBuildLogger : ILog
 	{
 		private TaskLoggingHelper _log;
@@ -66,6 +75,10 @@ namespace GenerateLineMap
 	}
 
 
+	/// <summary>
+	/// Alternate logging class used when GenerateLineMap is run directly from the command line.
+	/// </summary>
+	/// <exclude />
 	public class ConsoleLogger : ILog
 	{
 		private string Combine(string message, params object[] messageargs)
@@ -90,6 +103,4 @@ namespace GenerateLineMap
 			Console.WriteLine("WARNING: " + Combine(message, messageargs));
 		}
 	}
-
-
 }
