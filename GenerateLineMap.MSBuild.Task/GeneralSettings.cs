@@ -36,7 +36,9 @@ namespace GenerateLineMap.MsBuild.Task
 {
 
 	/// <summary>
-	/// General settings persistance class
+	/// General settings persistence class
+	/// Not currently used. 
+	/// Would be used by a VS UI Extension
 	/// </summary>
     public class GeneralSettings
     {

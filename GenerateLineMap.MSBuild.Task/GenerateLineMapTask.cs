@@ -218,44 +218,41 @@ namespace GenerateLineMap.MsBuild.Task
 
 			if (settings.IsNull()) throw new ArgumentNullException(nameof(settings));
 
-			if (settings.General.IsNull())
-			{
-				settings.General = new GeneralSettings();
-			}
+			settings.General = settings.General ?? new GeneralSettings();
+			settings.Advanced = settings.Advanced ?? new AdvancedSettings();
 
-			if (!settings.General.OutputFile.IsNotNullOrWhiteSpace())
-			{
-				settings.General.OutputFile = Path.Combine(this.TargetDir, "GenerateLineMap", this.TargetFileName);
-				Log.LogMessage("Applying default value for OutputFile.");
-			}
-
-			if (settings.Advanced.IsNull())
-			{
-				settings.Advanced = new AdvancedSettings();
-			}
+			//Not using persistent settings right now. Eventually...
+			//if (settings.General.OutputFile.IsNullOrWhiteSpace())
+			//{
+			//	settings.General.OutputFile = Path.Combine(this.TargetDir, "GenerateLineMap", this.TargetFileName);
+			//	Log.LogMessage("Applying default value for OutputFile.");
+			//}
 		}
 
 
 		private bool GenerateLineMapBasedOn(Settings settings)
 		{
+			Log.LogMessage("Setting up GenerateLineMap.");
+
 			bool success = true;
+
+			//for debugging
 			//Assembly ilmerge = LoadILMerge(mergerPath);
 			//Type ilmergeType = ilmerge.GetType("ILMerging.ILMerge", true, true);
 			//if (ilmergeType.IsNull()) throw new InvalidOperationException("Cannot find 'ILMerging.ILMerge' in executable.");
-
-			Log.LogMessage("Setting up GenerateLineMap.");
 
 			//string[] tp = settings.General.TargetPlatform.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
 
 			try
 			{
-				string outputDir = Path.GetDirectoryName(settings.General.OutputFile);
-				if (!Directory.Exists(outputDir))
-				{
-					Log.LogWarning($"Output directory not found. An attempt to create the directory will be made: {outputDir}");
-					Directory.CreateDirectory(outputDir);
-					Log.LogMessage("Output directory created.");
-				}
+				//Not using these settings right now
+				//string outputDir = Path.GetDirectoryName(settings.General.OutputFile);
+				//if (!Directory.Exists(outputDir))
+				//{
+				//	Log.LogWarning($"Output directory not found. An attempt to create the directory will be made: {outputDir}");
+				//	Directory.CreateDirectory(outputDir);
+				//	Log.LogMessage("Output directory created.");
+				//}
 
 				var outfile = string.Format("/out:\"{0}\"", this.TargetPath);
 				var cmdline = string.Format("GenerateLineMap {0} {1}", outfile, this.TargetPath);
@@ -267,6 +264,7 @@ namespace GenerateLineMap.MsBuild.Task
 				//and actually perform the line map generation
 				GenerateLineMap.Program.Main(new string[] { "{ignoredpathargument}", outfile, this.TargetPath });
 
+				//TODO Eventually support fix ups to replace any strong name and signing that had been performed
 				//if (merger.StrongNameLost)
 				//	Log.LogMessage(MessageImportance.High, "StrongNameLost = true");
 			}

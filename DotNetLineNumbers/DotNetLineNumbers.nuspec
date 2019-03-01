@@ -6,7 +6,7 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <licenseUrl>http://www.codingfengshui.com</licenseUrl>
+    <license type="expression">MIT</license>
     <projectUrl>http://www.codingfengshui.com</projectUrl>
     <iconUrl>http://www.codingfengshui.com</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -41,7 +41,7 @@
 
     <!--This is the line number resolver class lib, it DOES need to be redistributed
     (or you'll need to include the LineMap.cs file directly)-->
-    <file src="bin\$configuration$\DotNetLineNumbers.Utilities.dll" target="lib" />
+    <file src="bin\$configuration$\DotNetLineNumbers.Utilities.dll" target="lib/{framework name}[{version}]" />
 
   </files>
 </package>
