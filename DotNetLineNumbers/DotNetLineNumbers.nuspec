@@ -9,13 +9,14 @@
     <license type="expression">MIT</license>
     <projectUrl>http://www.codingfengshui.com</projectUrl>
     <iconUrl>http://www.codingfengshui.com</iconUrl>
+    <repository type="git" url="https://github.com/drventure/Generate-Line-Map-Utility" />
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <developmentDependency>true</developmentDependency>
     <dependencies />
     <description>$description$</description>
     <releaseNotes></releaseNotes>
     <copyright>Darin Higgins (c) 2019</copyright>
-    <tags>generatelinemap msbuild</tags>
+    <tags>generatelinemap msbuild line numbers</tags>
     <references>
       <!-- 
         null references entry because the dll and exe should NOT get referenced in the target project
@@ -25,8 +26,11 @@
   </metadata>
   
   <files>
-    <!-- Add a readme -->
+    <!-- Add a read me -->
     <file src="readme.txt" target="."/>
+
+    <!-- Make the DotNetLineNumbers.cs file available but don't add to project -->
+    <file src="bin\$configuration$\DotNetLineNumbers.cs" target="."/>
 
     <!--Add build targets to the target project's build process-->
     <file src="bin\$configuration$\build\GenerateLineMap.MSBuild.Task.targets" target="build\DotNetLineNumbers.targets" />
@@ -41,7 +45,7 @@
 
     <!--This is the line number resolver class lib, it DOES need to be redistributed
     (or you'll need to include the LineMap.cs file directly)-->
-    <file src="bin\$configuration$\DotNetLineNumbers.Utilities.dll" target="lib/{framework name}[{version}]" />
+    <file src="bin\$configuration$\DotNetLineNumbers.Utilities.dll" target="lib/net451" />
 
   </files>
 </package>
