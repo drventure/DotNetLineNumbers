@@ -124,15 +124,8 @@ AutoTest.Net/
 # Installshield output folder
 [Ee]xpress/
 
-# DocProject is a documentation generator add-in
-DocProject/buildhelp/
-DocProject/Help/*.HxT
-DocProject/Help/*.HxC
-DocProject/Help/*.hhc
-DocProject/Help/*.hhk
-DocProject/Help/*.hhp
-DocProject/Help/Html2
-DocProject/Help/html
+# These are all sandcastle temporary files
+/DotNetLineNumbersHelp/Help
 
 # Click-Once directory
 publish/
@@ -251,9 +244,4 @@ paket-files/
 .idea/
 *.sln.iml
 /.NuGetPack
-/DotNetLineNumbersHelp/Help/Working/ddueXml/f6686bef-440f-44c9-9534-0d4a61191595.xml
-/DotNetLineNumbersHelp/Help/Working/ddueXml/3c73e474-2355-43a9-9175-a0b3f6040c53.xml
-/DotNetLineNumbersHelp/Help/Working/ddueXml/23481939-ae4d-421c-82af-5d68ccd57ba6.xml
-/DotNetLineNumbersHelp/Help/Working/Output/HtmlHelp1/html
-/DotNetLineNumbersHelp/Help/Working
-/DotNetLineNumbersHelp/Help
+

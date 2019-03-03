@@ -59,7 +59,6 @@
       <Link>DotNetLineNumbers.chm</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Directory.build.targets.xxx">
@@ -82,7 +81,11 @@
       <Name>GenerateLineMap.MSBuild.Task</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="..\readme.txt">
+      <Link>readme.txt</Link>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>REM Build the nupkg file directly into a Nuget folder

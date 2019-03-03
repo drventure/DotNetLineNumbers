@@ -1,4 +1,4 @@
-==============================================================================
+------------------------------------------------------------------------------
 DotNetLineNumbers and GenerateLineMap utility
 Copyright (c) 2010-2019 Darin Higgins 
 
@@ -7,26 +7,26 @@ the excellent "ILMerge_MSBuild_Task" project by
 Emerson Brito and without which, I'd probably never have
 figured out how to get the build task functioning!
 
-==============================================================================
+------------------------------------------------------------------------------
 INSTALLING
-==============================================================================
+------------------------------------------------------------------------------
 
 VS Package Manager
 
 	PM> Install-Package DotNetLineNumbers -Version 1.0.0 
 
 
-==============================================================================
+------------------------------------------------------------------------------
 REQUIREMENTS
-==============================================================================
+------------------------------------------------------------------------------
 
 Currently, the nuget is built with .net framework 4.5.1.
 It has not been tested with any other versions.
 
 
-==============================================================================
+------------------------------------------------------------------------------
 ABOUT
-==============================================================================
+------------------------------------------------------------------------------
 
 This nuget installs the GenerateLineMap utility and MSBuild task
 to automatically pull line number information from an assembly's PDB file
@@ -34,11 +34,11 @@ and create a resource from it that can be used for determining line number
 information when rendering a stack trace in a production release build.
 
 Access those line numbers by referencing the included DotNetLineNumbers.dll
-or by including the DotNetLineNumbers.cs file in you project.
+or by including the DotNetLineNumbers.cs file in your project.
 
 The process uses information from the PDB, but then embeds that info into the
 executable as a resource so that you do NOT have to distribute PDBs with your 
-release-build application.
+release-build application just to retrieve line number debugging information.
 
 Works with DLL or EXE projects.
 
@@ -50,9 +50,9 @@ The best workaround I can come up with for now is to use one of the signing
 tools to "resign" the assembly via a Post Build Task.
 
 
-==============================================================================
+------------------------------------------------------------------------------
 BUILDING
-==============================================================================
+------------------------------------------------------------------------------
 
 Once you've add the nuget to your project, you should be able to build as 
 normal. 
@@ -72,20 +72,30 @@ Note that once the build is complete, you can delete the *.PDB files.
 You DO NOT need to distribute the PDB files with your application.
 
 
-==============================================================================
-QUICK START USAGE
-==============================================================================
+------------------------------------------------------------------------------
+REFERENCING THE UTILITY CLASSES
+------------------------------------------------------------------------------
 
-When you've added the package to your project, the nuget will automatically
+Once you've added the package to your project, the nuget will automatically
 add a reference to DotNetLineNumbers.Utilities.dll.
 
-You can use this reference directly, or, if you prefer, delete that reference
-and add the file: 
+You can use this reference directly via the USING statement
+
+	using DotNetLineNumbers
+
+Alternately, delete the reference to that dll and add the file: 
 
 	DotNetLineNumbers.cs 
 
 located in .\packages\DotNetLineNumbers[version] to your project.
 The DLL is directly compiled from this .cs file.
+
+This avoids having to include a separate dll in your distribution.
+
+
+------------------------------------------------------------------------------
+BASIC USAGE
+------------------------------------------------------------------------------
 
 To render an exception with additional stack trace information and line numbers,
 call:
@@ -114,11 +124,17 @@ corresponding to the stack frame:
 For more details, see the help file.
 
 
-==============================================================================
+------------------------------------------------------------------------------
 HELP FILE
-==============================================================================
+------------------------------------------------------------------------------
 
 For detailed help, see the locally installed help file here:
 
 	.\packages\DotNetLineNumbers[version]\DotNetLineNumbers.chm
 
+
+------------------------------------------------------------------------------
+PROJECT WIKI
+------------------------------------------------------------------------------
+
+See the [Project Wiki](https://github.com/drventure/GenerateLineMap-MSBuild-Task/wiki) for more details.

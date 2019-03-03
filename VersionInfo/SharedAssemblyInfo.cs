@@ -26,7 +26,7 @@ using System.Resources;
 [assembly: AssemblyVersion(VersionInfo.Version)]
 [assembly: AssemblyFileVersion(VersionInfo.Version)]
 //this attribute supports semantic versioning
-[assembly: AssemblyInformationalVersion(VersionInfo.Version)]
+[assembly: AssemblyInformationalVersion(VersionInfo.InformationalVersion)]
 #endregion
 
 /// <summary>
@@ -35,5 +35,7 @@ using System.Resources;
 /// </summary>
 internal struct VersionInfo
 {
-    public const string Version = "0.0.0.164";
+    public const string Version = "0.0.0.166";
+
+    public const string InformationalVersion = "0.0.0.166-beta";
 }
