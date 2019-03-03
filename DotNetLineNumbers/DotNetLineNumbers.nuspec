@@ -15,7 +15,7 @@
     <dependencies />
     <description>$description$</description>
     <releaseNotes></releaseNotes>
-    <copyright>Darin Higgins (c) 2019</copyright>
+    <copyright>Darin Higgins (c) 2010-2019</copyright>
     <tags>generatelinemap msbuild line numbers</tags>
     <references>
       <!-- 
