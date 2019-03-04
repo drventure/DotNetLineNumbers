@@ -41,6 +41,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers.Utilities", "DotNetLineNumbers.Utilities\DotNetLineNumbers.Utilities.csproj", "{97BE86B7-5777-4835-9340-9C79ED8F2238}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetLineNumbers", "DotNetLineNumbers\DotNetLineNumbers.csproj", "{34D84134-412A-4A14-B8F9-4A1D05B84183}"
+	ProjectSection(ProjectDependencies) = postProject
+		{99AD4255-53F4-417F-ACE6-43B68E52BBB9} = {99AD4255-53F4-417F-ACE6-43B68E52BBB9}
+	EndProjectSection
 EndProject
 Project("{7CF6DF6D-3B04-46F8-A40B-537D21BCA0B4}") = "DotNetLineNumbersHelp", "DotNetLineNumbersHelp\DotNetLineNumbersHelp.shfbproj", "{99AD4255-53F4-417F-ACE6-43B68E52BBB9}"
 EndProject

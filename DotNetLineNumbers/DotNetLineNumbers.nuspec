@@ -27,7 +27,7 @@
   
   <files>
     <!-- Add a read me -->
-    <file src="readme.txt" target="."/>
+    <file src="bin\$configuration$\readme.txt" target="."/>
 
     <!-- Make the DotNetLineNumbers.cs file available but don't add to project -->
     <file src="bin\$configuration$\DotNetLineNumbers.cs" target="."/>
@@ -46,6 +46,9 @@
     <!--This is the line number resolver class lib, it DOES need to be redistributed
     (or you'll need to include the LineMap.cs file directly)-->
     <file src="bin\$configuration$\DotNetLineNumbers.Utilities.dll" target="lib/net451" />
+
+    <!-- And the help file -->
+    <file src="bin\$configuration$\DotNetLineNumbers.chm" target="." />
 
   </files>
 </package>
