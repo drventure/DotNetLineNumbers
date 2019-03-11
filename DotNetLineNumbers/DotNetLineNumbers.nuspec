@@ -45,7 +45,7 @@
 
     <!--This is the line number resolver class lib, it DOES need to be redistributed
     (or you'll need to include the LineMap.cs file directly)-->
-    <file src="bin\$configuration$\DotNetLineNumbers.Utilities.dll" target="lib/net45" />
+    <file src="bin\$configuration$\DotNetLineNumbers.Utilities.dll" target="lib/net4" />
 
     <!-- And the help file -->
     <file src="bin\$configuration$\DotNetLineNumbers.chm" target="." />
