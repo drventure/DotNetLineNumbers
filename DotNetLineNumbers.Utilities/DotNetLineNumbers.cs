@@ -599,7 +599,7 @@ namespace DotNetLineNumbers
 		/// <summary>
 		/// translate exception object to string, with additional system info
 		/// </summary>
-		/// <param name="Ex"></param>
+		/// <param name="ex"></param>
 		/// <returns></returns>
 		private static string ToStringEnhancedInternal(this Exception ex)
 		{
@@ -645,9 +645,8 @@ namespace DotNetLineNumbers
 		/// gather some system information that is helpful to diagnosing
 		/// exception
 		/// </summary>
-		/// <param name="ex"></param>
 		/// <returns></returns>
-		private static string SysInfoToString(Exception Ex = null)
+		private static string SysInfoToString()
 		{
 			string template = Cleanup($@"
 			Date and Time:          {Date}
@@ -1070,6 +1069,12 @@ namespace DotNetLineNumbers
 				}
 
 
+				/// <summary>
+				/// Load a line map file given an assembly reference
+				/// obviously, the Assembly must exist.
+				/// </summary>
+				/// <param name="Assembly"></param>
+				/// <remarks></remarks>				
 				public AssemblyLineMap Add(Assembly Assembly)
 				{
 					var FileName = Assembly.CodeBase;
@@ -1086,6 +1091,10 @@ namespace DotNetLineNumbers
 					}
 				}
 			}
+
+			/// <summary>
+			/// The collection of Assembly Line Maps used to resolve line numbers
+			/// </summary>
 			public static AssemblyLineMapCollection AssemblyLineMaps = new AssemblyLineMapCollection();
 		}
 
@@ -1115,18 +1124,41 @@ namespace DotNetLineNumbers
 			public class AddressToLine
 			{
 				// these members must get serialized
+
+				/// <summary>
+				/// The address of the line
+				/// </summary>
 				[DataMember()]
 				public Int64 Address;
+
+				/// <summary>
+				/// The line number
+				/// </summary>
 				[DataMember()]
 				public Int32 Line;
+
+				/// <summary>
+				/// An index into the source file names array
+				/// </summary>
 				[DataMember()]
 				public int SourceFileIndex;
-				[DataMember()]
 
+				/// <summary>
+				/// An index into the Object names array
+				/// </summary>
+				[DataMember()]
 				public int ObjectNameIndex;
+
+
 				// these members do not need to be serialized
+				/// <summary>
+				/// The source file name
+				/// </summary>
 				public string SourceFile;
 
+				/// <summary>
+				/// The Object Name
+				/// </summary>
 				public string ObjectName;
 
 				/// <summary>
@@ -1136,6 +1168,15 @@ namespace DotNetLineNumbers
 				public AddressToLine() { }
 
 
+				/// <summary>
+				/// Default constructor
+				/// </summary>
+				/// <param name="Line"></param>
+				/// <param name="Address"></param>
+				/// <param name="SourceFile"></param>
+				/// <param name="SourceFileIndex"></param>
+				/// <param name="ObjectName"></param>
+				/// <param name="ObjectNameIndex"></param>
 				public AddressToLine(Int32 Line, Int64 Address, string SourceFile, int SourceFileIndex, string ObjectName, int ObjectNameIndex)
 				{
 					this.Line = Line;
@@ -1166,13 +1207,25 @@ namespace DotNetLineNumbers
 			public class SymbolInfo
 			{
 				// these need to be persisted
+
+				/// <summary>
+				/// The address of the Symbol
+				/// </summary>
 				[DataMember()]
 				public long Address;
-				[DataMember()]
 
+				/// <summary>
+				/// The token retrieved from the PDB
+				/// </summary>
+				[DataMember()]
 				public long Token;
+				
+				
 				// these aren't persisted
 
+				/// <summary>
+				/// The Symbol Name
+				/// </summary>
 				public string Name;
 
 				/// <summary>
@@ -1182,6 +1235,12 @@ namespace DotNetLineNumbers
 				public SymbolInfo() { }
 
 
+				/// <summary>
+				/// Default constructor
+				/// </summary>
+				/// <param name="Name"></param>
+				/// <param name="Address"></param>
+				/// <param name="Token"></param>
 				public SymbolInfo(string Name, long Address, long Token)
 				{
 					this.Name = Name;
@@ -1622,19 +1681,19 @@ namespace DotNetLineNumbers
 		public static class WindowsAPI
 		{
 			[DllImport("kernel32", EntryPoint = "FindResourceExA", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-			public static extern IntPtr FindResourceEx(Int32 hModule, [MarshalAs(UnmanagedType.LPStr)]
+			internal static extern IntPtr FindResourceEx(Int32 hModule, [MarshalAs(UnmanagedType.LPStr)]
 		string lpType, [MarshalAs(UnmanagedType.LPStr)]
 		string lpName, Int16 wLanguage);
 			[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-			public static extern IntPtr LoadResource(IntPtr hInstance, IntPtr hResInfo);
+			internal static extern IntPtr LoadResource(IntPtr hInstance, IntPtr hResInfo);
 			[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-			public static extern IntPtr LockResource(IntPtr hResData);
+			internal static extern IntPtr LockResource(IntPtr hResData);
 			[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-			public static extern IntPtr FreeResource(IntPtr hResData);
+			internal static extern IntPtr FreeResource(IntPtr hResData);
 			[DllImport("kernel32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-			public static extern Int32 SizeofResource(IntPtr hInstance, IntPtr hResInfo);
+			internal static extern Int32 SizeofResource(IntPtr hInstance, IntPtr hResInfo);
 			[DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-			public static extern void CopyMemory(ref byte pvDest, IntPtr pvSrc, Int32 cbCopy);
+			internal static extern void CopyMemory(ref byte pvDest, IntPtr pvSrc, Int32 cbCopy);
 		}
 		#endregion
 	}

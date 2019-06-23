@@ -792,9 +792,11 @@ namespace GenerateLineMap
 		/// Write out a memory stream to a named resource in the given 
 		/// WIN32 format executable file (either EXE or DLL)
 		/// </summary>
-		/// <param name="Filename"></param>
+		/// <param name="filename"></param>
+		/// <param name="ResourceType"></param>
 		/// <param name="ResourceName"></param>
-		/// <param name="MemoryStream"></param>
+		/// <param name="ResourceLanguage"></param>
+		/// <param name="memoryStream"></param>
 		/// <remarks></remarks>
 		private void StreamToAPIResource(string filename, object ResourceType, object ResourceName, Int16 ResourceLanguage, MemoryStream memoryStream)
 		{
@@ -823,7 +825,7 @@ namespace GenerateLineMap
 		/// </summary>
 		/// <param name="OutFilename"></param>
 		/// <param name="ResourceName"></param>
-		/// <param name="MemoryStream"></param>
+		/// <param name="memoryStream"></param>
 		/// <remarks></remarks>
 		private void StreamToResource(string OutFilename, string ResourceName, MemoryStream memoryStream)
 		{

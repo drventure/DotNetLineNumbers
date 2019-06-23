@@ -6,7 +6,6 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <license type="expression">MIT</license>
     <projectUrl>http://www.codingfengshui.com</projectUrl>
     <iconUrl>http://www.codingfengshui.com</iconUrl>
     <repository type="git" url="https://github.com/drventure/Generate-Line-Map-Utility" />

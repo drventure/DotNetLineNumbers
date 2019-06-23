@@ -63,8 +63,8 @@
     <StartupObject>TestApp1.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DotNetLineNumbers.Utilities, Version=0.0.0.166, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\DotNetLineNumbers.0.0.0.166-beta\lib\net451\DotNetLineNumbers.Utilities.dll</HintPath>
+    <Reference Include="DotNetLineNumbers.Utilities, Version=0.0.0.173, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\DotNetLineNumbers.0.0.0.173-beta\lib\net4\DotNetLineNumbers.Utilities.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -98,11 +98,11 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\DotNetLineNumbers.0.0.0.166-beta\build\DotNetLineNumbers.targets" Condition="Exists('..\packages\DotNetLineNumbers.0.0.0.166-beta\build\DotNetLineNumbers.targets')" />
+  <Import Project="..\packages\DotNetLineNumbers.0.0.0.173-beta\build\DotNetLineNumbers.targets" Condition="Exists('..\packages\DotNetLineNumbers.0.0.0.173-beta\build\DotNetLineNumbers.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\DotNetLineNumbers.0.0.0.166-beta\build\DotNetLineNumbers.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\DotNetLineNumbers.0.0.0.166-beta\build\DotNetLineNumbers.targets'))" />
+    <Error Condition="!Exists('..\packages\DotNetLineNumbers.0.0.0.173-beta\build\DotNetLineNumbers.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\DotNetLineNumbers.0.0.0.173-beta\build\DotNetLineNumbers.targets'))" />
   </Target>
 </Project>
